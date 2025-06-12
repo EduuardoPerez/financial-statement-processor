@@ -2,6 +2,11 @@ import pdfplumber
 import pandas as pd
 import re
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+logger = logging.getLogger(__name__)
 
 
 def detect_payment_method(full_text):
@@ -29,6 +34,78 @@ def detect_payment_method(full_text):
 
     # Could add more bank/card combinations here in the future
     return "Unknown Payment Method"
+
+
+def extract_balance_from_pdf(full_text, payment_method):
+    """
+    Extract reported balance from PDF text
+    Returns dict with 'ars' and 'usd' balance amounts
+    """
+    balance = {"ars": 0.0, "usd": 0.0}
+
+    # Both banks use the same format: SALDO ACTUAL $ 1.095.461,57 U$S 3,00
+    pattern = r"SALDO ACTUAL \$ ([\d,.]+) U\$S ([\d,.]+)"
+    match = re.search(pattern, full_text)
+    if match:
+        try:
+            ars_str = match.group(1)
+            usd_str = match.group(2)
+
+            # Handle European format for ARS: 1.095.461,57 -> 1095461.57
+            if "." in ars_str and "," in ars_str:
+                ars_str = ars_str.replace(".", "").replace(",", ".")
+            elif "," in ars_str:
+                ars_str = ars_str.replace(",", ".")
+
+            # Handle European format for USD: 3,00 -> 3.00
+            if "," in usd_str:
+                usd_str = usd_str.replace(",", ".")
+
+            balance["ars"] = float(ars_str)
+            balance["usd"] = float(usd_str)
+        except ValueError:
+            pass
+
+    return balance
+
+
+def validate_balance(reported_balance, computed_balance, filename):
+    """
+    Validate computed totals against reported balance and log results
+    """
+    logger.info(f"[INFO] Validating balance for: {filename}")
+
+    # Calculate differences
+    ars_diff = reported_balance["ars"] - computed_balance["ars"]
+    usd_diff = reported_balance["usd"] - computed_balance["usd"]
+
+    # Format numbers with thousand separators for logging
+    reported_ars = f"{reported_balance['ars']:,.2f}"
+    computed_ars = f"{computed_balance['ars']:,.2f}"
+    reported_usd = f"{reported_balance['usd']:,.2f}"
+    computed_usd = f"{computed_balance['usd']:,.2f}"
+
+    logger.info(
+        f"        Reported ARS: {reported_ars} | "
+        f"Computed ARS: {computed_ars} | Δ: {ars_diff:.2f}"
+    )
+    logger.info(
+        f"        Reported USD: {reported_usd} | "
+        f"Computed USD: {computed_usd} | Δ: {usd_diff:.2f}"
+    )
+
+    # Log warnings for mismatches (don't raise errors)
+    if abs(ars_diff) > 0.01:  # Allow for small rounding differences
+        logger.warning(
+            f"[WARNING] ARS balance mismatch in {filename}: "
+            f"difference of {ars_diff:.2f}"
+        )
+
+    if abs(usd_diff) > 0.01:
+        logger.warning(
+            f"[WARNING] USD balance mismatch in {filename}: "
+            f"difference of {usd_diff:.2f}"
+        )
 
 
 def parse_visa_pdf(pdf_path, output_path):
@@ -341,6 +418,27 @@ def parse_visa_pdf(pdf_path, output_path):
     df["Date"] = pd.to_datetime(df["Date"])
     df = df.sort_values("Date")
     df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Extract balance from PDF and validate
+    reported_balance = extract_balance_from_pdf(full_text, payment_method)
+
+    # Calculate computed balance (excluding payments)
+    # ARS: sum all ARS transactions except "SU PAGO EN PESOS"
+    ars_transactions = df[df["Currency"] == "ARS"]
+    ars_non_payments = ars_transactions[
+        ars_transactions["Description"] != "SU PAGO EN PESOS"
+    ]
+    computed_ars_total = ars_non_payments["Amount"].sum()
+
+    # USD: sum all USD transactions (no USD payments in current data)
+    usd_transactions = df[df["Currency"] == "USD"]
+    computed_usd_total = usd_transactions["Amount"].sum()
+
+    computed_balance = {"ars": computed_ars_total, "usd": computed_usd_total}
+
+    # Validate balance
+    filename = os.path.basename(pdf_path)
+    validate_balance(reported_balance, computed_balance, filename)
 
     # Ensure output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
