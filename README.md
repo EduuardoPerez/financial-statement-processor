@@ -55,8 +55,17 @@ pip install -e .
 
 ### Basic Usage
 
+#### Using uv (Recommended)
+
 ```bash
-# Activate virtual environment if using pip
+# Run the processor with uv
+uv run python parse_visa_statement.py
+```
+
+#### Using pip (Alternative)
+
+```bash
+# Activate virtual environment
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Run the processor
@@ -117,11 +126,39 @@ Date        Description                           Currency  Amount    Payment Me
 
 ### Running Tests
 
+#### Using uv (Recommended)
+
 ```bash
-# Compare output with expected results
-python parse_visa_statement.py
-# Check that output/MACRO-VISA-transactions.xlsx matches expected format
+# Run the main processor to generate output
+uv run python parse_visa_statement.py
+
+# Run all tests
+uv run pytest
+
+# Run tests with verbose output
+uv run pytest -v
+
+# Run specific test file
+uv run pytest test_parse_visa_statement.py
+
+# Run specific test with detailed output
+uv run pytest test_parse_visa_statement.py::TestParseVisaStatement::test_parse_visa_pdf_integration -v
 ```
+
+#### Using pip (Alternative)
+
+```bash
+# Activate virtual environment
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Run the main processor
+python parse_visa_statement.py
+
+# Run tests
+pytest -v
+```
+
+**Note**: Check that `output/MACRO-VISA-transactions.xlsx` matches the expected format in `expected_output/`
 
 ### Adding Support for New Banks
 

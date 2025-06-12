@@ -1,0 +1,164 @@
+# System Patterns - Financial Statement Processor
+
+## Architecture Overview
+
+### Single-Module Design Pattern
+
+- **Current Approach**: All logic in `parse_visa_statement.py` for simplicity
+- **Benefits**: Easy to understand, minimal complexity, fast execution
+- **Future Evolution**: Will modularize as we add more banks
+
+### Processing Pipeline Architecture
+
+```
+PDF Input → Text Extraction → Pattern Matching → Data Transformation → Excel Output
+```
+
+## Core Design Patterns
+
+### 1. Strategy Pattern for Bank Detection
+
+- **Pattern**: `detect_payment_method()` function analyzes PDF content
+- **Implementation**: String matching against known bank indicators
+- **Extensibility**: New banks add their indicator patterns
+
+```python
+def detect_payment_method(full_text):
+    # Macro bank indicators
+    macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
+    # Future: add BBVA, Santander indicators
+```
+
+### 2. Line-by-Line Processing Pattern
+
+- **Approach**: Process PDF text line by line with regex matching
+- **Benefits**: Handles variable PDF formatting, robust against layout changes
+- **Key Insight**: Each transaction starts with date pattern `\d{2}\.\d{2}\.\d{2}`
+
+### 3. Multi-Stage Parsing Pattern
+
+- **Stage 1**: Date pattern detection to identify transaction lines
+- **Stage 2**: Transaction type classification (payment, tax, purchase, adjustment)
+- **Stage 3**: Amount extraction with European format handling
+- **Stage 4**: Currency detection (ARS/USD)
+
+### 4. European Number Format Handling
+
+- **Challenge**: Argentine banks use 1.234,56 format
+- **Solution**: Progressive format detection and conversion
+- **Pattern**: Check for both dots and commas, handle accordingly
+
+```python
+# European format: 6.847,70 -> 6847.70
+if "." in amount_str and "," in amount_str:
+    amount_str = amount_str.replace(".", "").replace(",", ".")
+elif "," in amount_str:
+    amount_str = amount_str.replace(",", ".")
+```
+
+## Transaction Type Detection Patterns
+
+### 1. Tax Transaction Pattern
+
+- **Identifiers**: "IMPUESTO", "IIBB", "IVA", "DB.RG", "DB.IMPUESTO"
+- **Amount**: Always positive (charges)
+- **Currency**: Typically ARS
+
+### 2. Payment Transaction Pattern
+
+- **Identifier**: "SU PAGO EN PESOS"
+- **Amount**: Always negative (credits)
+- **Format**: Special handling for trailing dash `701.084,93-`
+
+### 3. Adjustment Transaction Pattern
+
+- **Identifier**: "AJUSTE"
+- **Amount**: Always negative (credits/discounts)
+- **Description**: Standardized to "AJUSTE P/DESCNTO. EN COMERCIO"
+
+### 4. Regular Purchase Pattern
+
+- **Structure**: `Date + Reference + Description + Amount`
+- **Reference**: Alphanumeric pattern `[A-Z0-9*]+[*KQV]?`
+- **Currency**: Detected by "USD" presence or defaulted to ARS
+
+## Data Transformation Patterns
+
+### 1. Date Standardization
+
+- **Input**: DD.MM.YY format
+- **Output**: YYYY-MM-DD format
+- **Logic**: Years < 50 = 20XX, years >= 50 = 19XX
+
+### 2. Amount Normalization
+
+- **Input**: Various European formats
+- **Output**: Python float
+- **Edge Cases**: Negative amounts, trailing dashes, multiple decimal separators
+
+### 3. Description Cleaning
+
+- **Pattern**: Remove amount from end of description
+- **Result**: Clean transaction description with reference number
+
+## Error Handling Patterns
+
+### 1. Graceful Degradation
+
+- **Approach**: Continue processing even if individual transactions fail
+- **Benefit**: Partial success better than complete failure
+- **Implementation**: Try/except around amount conversion
+
+### 2. Validation Through Testing
+
+- **Pattern**: Comprehensive test suite validates all parsing logic
+- **Coverage**: Integration tests with real PDF data
+- **Confidence**: Expected vs actual output comparison
+
+## Extensibility Patterns
+
+### 1. Bank-Agnostic Core
+
+- **Design**: Payment method detection separates bank logic from parsing logic
+- **Benefit**: New banks only need new detection patterns
+- **Future**: Each bank could have specialized parsing functions
+
+### 2. Modular Transaction Handlers
+
+- **Current**: Specialized handling for each transaction type
+- **Future**: Could extract to separate handler classes
+- **Pattern**: Chain of responsibility for transaction type detection
+
+### 3. Output Format Abstraction
+
+- **Current**: Excel output hardcoded
+- **Future**: Output interface could support CSV, JSON, etc.
+- **Pattern**: Strategy pattern for different output formats
+
+## Performance Patterns
+
+### 1. Single-Pass Processing
+
+- **Efficiency**: Read PDF once, process all transactions in single pass
+- **Memory**: Low memory footprint, suitable for large statements
+- **Scalability**: Ready for batch processing multiple files
+
+### 2. Regex Optimization
+
+- **Approach**: Compile patterns once, reuse for all lines
+- **Current**: Simple string operations for readability
+- **Future**: Could optimize with compiled regex patterns
+
+## Quality Assurance Patterns
+
+### 1. Expected Output Validation
+
+- **Pattern**: Compare generated output with known-good reference files
+- **Files**: `expected_output/` directory contains reference data
+- **Validation**: Transaction count, amounts, dates, currency distribution
+
+### 2. Data Integrity Checks
+
+- **Amount Totals**: Verify sum of ARS and USD transactions
+- **Transaction Types**: Confirm all special transaction types detected
+- **Date Ranges**: Validate date parsing covers full statement period
