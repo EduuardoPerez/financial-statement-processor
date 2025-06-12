@@ -7,19 +7,25 @@ import os
 def detect_payment_method(full_text):
     """
     Detect payment method from PDF content
-    Returns the payment method string (e.g., "Macro VISA")
+    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA")
     """
     text_upper = full_text.upper()
 
-    # Check for Macro bank indicators
+    # Check for Macro bank indicators first (more specific)
     macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
     macro_found = any(indicator in text_upper for indicator in macro_indicators)
+
+    # Check for BBVA bank indicators (more specific than just VISA SIGNATURE)
+    bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
+    bbva_found = any(indicator in text_upper for indicator in bbva_indicators)
 
     # Check for VISA indicators
     visa_found = "VISA" in text_upper
 
     if macro_found and visa_found:
         return "Macro VISA"
+    elif bbva_found and visa_found:
+        return "BBVA VISA"
 
     # Could add more bank/card combinations here in the future
     return "Unknown Payment Method"
@@ -141,6 +147,62 @@ def parse_visa_pdf(pdf_path, output_path):
                         continue
                 continue
 
+            # Handle BBVA bonification lines (BONIF.)
+            if "BONIF." in remaining_line:
+                # Handle format like "BONIF. CONSUMO CABIFY25169EPTMFAA 1.190,07-"
+                amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+                if amount_match:
+                    amount_str = amount_match.group(1)
+                    # Convert European format
+                    if "." in amount_str and "," in amount_str:
+                        amount_str = amount_str.replace(".", "").replace(",", ".")
+                    elif "," in amount_str:
+                        amount_str = amount_str.replace(",", ".")
+                    try:
+                        amount = -float(amount_str)  # Always negative for bonifications
+                        description = remaining_line.rsplit(amount_match.group(0), 1)[
+                            0
+                        ].strip()
+                        transaction = {
+                            "Date": convert_date(date_str),
+                            "Description": description,
+                            "Currency": "ARS",
+                            "Amount": amount,
+                            "Payment Method": payment_method,
+                        }
+                        transactions.append(transaction)
+                    except ValueError:
+                        continue
+                continue
+
+            # Handle OFF/promo lines (similar to bonifications)
+            if "OFF " in remaining_line or "Promo" in remaining_line:
+                # Handle format like "OFF Promo Visa Subtes 304,15-"
+                amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+                if amount_match:
+                    amount_str = amount_match.group(1)
+                    # Convert European format
+                    if "." in amount_str and "," in amount_str:
+                        amount_str = amount_str.replace(".", "").replace(",", ".")
+                    elif "," in amount_str:
+                        amount_str = amount_str.replace(",", ".")
+                    try:
+                        amount = -float(amount_str)  # Always negative for promos
+                        description = remaining_line.rsplit(amount_match.group(0), 1)[
+                            0
+                        ].strip()
+                        transaction = {
+                            "Date": convert_date(date_str),
+                            "Description": description,
+                            "Currency": "ARS",
+                            "Amount": amount,
+                            "Payment Method": payment_method,
+                        }
+                        transactions.append(transaction)
+                    except ValueError:
+                        continue
+                continue
+
             # Parse regular transactions - more flexible approach
             # Look for reference number pattern at start
             ref_match = re.match(r"([A-Z0-9*]+[*KQV]?)\s+", remaining_line)
@@ -154,9 +216,11 @@ def parse_visa_pdf(pdf_path, output_path):
                 if usd_match:
                     amount = float(usd_match.group(1).replace(",", "."))
                     desc_before_usd = after_ref.split("USD")[0].strip()
+                    # Include USD amount in description to match expected format
+                    usd_amount_str = usd_match.group(1)
                     transaction = {
                         "Date": convert_date(date_str),
-                        "Description": f"{ref_number} {desc_before_usd}".strip(),
+                        "Description": f"{ref_number} {desc_before_usd} USD {usd_amount_str}".strip(),
                         "Currency": "USD",
                         "Amount": amount,
                         "Payment Method": payment_method,
@@ -305,11 +369,20 @@ def convert_date(date_str):
 
 
 if __name__ == "__main__":
+    # Example usage - processes both bank types automatically based on PDF content
+
+    # Process Macro VISA statement
+    print("=== Processing Macro VISA Statement ===")
     input_file = "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
     output_file = "output/MACRO-VISA-transactions.xlsx"
+    df_macro = parse_visa_pdf(input_file, output_file)
+    print(f"First 3 Macro transactions:")
+    print(df_macro.head(3).to_string(index=False))
 
-    df = parse_visa_pdf(input_file, output_file)
-
-    # Display first few transactions for verification
-    print("\nFirst 5 transactions:")
-    print(df.head().to_string(index=False))
+    print("\n=== Processing BBVA VISA Statement ===")
+    # Process BBVA VISA statement
+    input_file = "input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"
+    output_file = "output/BBVA-VISA-transactions.xlsx"
+    df_bbva = parse_visa_pdf(input_file, output_file)
+    print(f"First 3 BBVA transactions:")
+    print(df_bbva.head(3).to_string(index=False))
