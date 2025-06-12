@@ -4,6 +4,27 @@ import re
 import os
 
 
+def detect_payment_method(full_text):
+    """
+    Detect payment method from PDF content
+    Returns the payment method string (e.g., "Macro VISA")
+    """
+    text_upper = full_text.upper()
+
+    # Check for Macro bank indicators
+    macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
+    macro_found = any(indicator in text_upper for indicator in macro_indicators)
+
+    # Check for VISA indicators
+    visa_found = "VISA" in text_upper
+
+    if macro_found and visa_found:
+        return "Macro VISA"
+
+    # Could add more bank/card combinations here in the future
+    return "Unknown Payment Method"
+
+
 def parse_visa_pdf(pdf_path, output_path):
     transactions = []
 
@@ -11,6 +32,9 @@ def parse_visa_pdf(pdf_path, output_path):
         full_text = ""
         for page in pdf.pages:
             full_text += page.extract_text() + "\n"
+
+    # Detect payment method from PDF content
+    payment_method = detect_payment_method(full_text)
 
     lines = full_text.split("\n")
 
@@ -60,7 +84,7 @@ def parse_visa_pdf(pdf_path, output_path):
                             )[0].strip(),
                             "Currency": "ARS",
                             "Amount": amount,
-                            "Payment Method": "Macro VISA",
+                            "Payment Method": payment_method,
                         }
                         transactions.append(transaction)
                     except ValueError:
@@ -85,7 +109,7 @@ def parse_visa_pdf(pdf_path, output_path):
                             "Description": "SU PAGO EN PESOS",
                             "Currency": "ARS",
                             "Amount": amount,
-                            "Payment Method": "Macro VISA",
+                            "Payment Method": payment_method,
                         }
                         transactions.append(transaction)
                     except ValueError:
@@ -110,7 +134,7 @@ def parse_visa_pdf(pdf_path, output_path):
                             "Description": "AJUSTE P/DESCNTO. EN COMERCIO",
                             "Currency": "ARS",
                             "Amount": amount,
-                            "Payment Method": "Macro VISA",
+                            "Payment Method": payment_method,
                         }
                         transactions.append(transaction)
                     except ValueError:
@@ -135,7 +159,7 @@ def parse_visa_pdf(pdf_path, output_path):
                         "Description": f"{ref_number} {desc_before_usd}".strip(),
                         "Currency": "USD",
                         "Amount": amount,
-                        "Payment Method": "Macro VISA",
+                        "Payment Method": payment_method,
                     }
                     transactions.append(transaction)
                     continue
@@ -176,7 +200,7 @@ def parse_visa_pdf(pdf_path, output_path):
                                 "Description": full_description,
                                 "Currency": "ARS",
                                 "Amount": amount,
-                                "Payment Method": "Macro VISA",
+                                "Payment Method": payment_method,
                             }
                             transactions.append(transaction)
                             amount_found = True
@@ -206,7 +230,7 @@ def parse_visa_pdf(pdf_path, output_path):
                                 "Description": full_description,
                                 "Currency": "ARS",
                                 "Amount": amount,
-                                "Payment Method": "Macro VISA",
+                                "Payment Method": payment_method,
                             }
                             transactions.append(transaction)
                             continue
@@ -239,7 +263,7 @@ def parse_visa_pdf(pdf_path, output_path):
                                         "Description": full_description,
                                         "Currency": "ARS",
                                         "Amount": amount,
-                                        "Payment Method": "Macro VISA",
+                                        "Payment Method": payment_method,
                                     }
                                     transactions.append(transaction)
                                     break

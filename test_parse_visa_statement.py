@@ -4,7 +4,7 @@ import os
 import tempfile
 import shutil
 from pathlib import Path
-from parse_visa_statement import parse_visa_pdf, convert_date
+from parse_visa_statement import parse_visa_pdf, convert_date, detect_payment_method
 
 
 class TestParseVisaStatement:
@@ -281,6 +281,88 @@ class TestParseVisaStatement:
             assert (
                 actual_count == expected_count
             ), f"Special transaction '{desc}' count mismatch: expected {expected_count}, got {actual_count}"
+
+
+class TestDetectPaymentMethod:
+    """Unit tests for the detect_payment_method function"""
+
+    def test_detect_macro_visa(self):
+        """Test detection of Macro VISA from typical content"""
+        # Test with typical Macro VISA content
+        content = """
+        VISA SIGNATURE
+        MACRO PREMIA
+        www.macro.com.ar
+        """
+        result = detect_payment_method(content)
+        assert result == "Macro VISA"
+
+    def test_detect_with_banco_macro(self):
+        """Test detection with BANCO MACRO text"""
+        content = """
+        BANCO MACRO S.A.
+        VISA SIGNATURE
+        """
+        result = detect_payment_method(content)
+        assert result == "Macro VISA"
+
+    def test_detect_with_macro_website(self):
+        """Test detection with macro website reference"""
+        content = """
+        VISA
+        Para consultas ingrese a www.macro.com.ar
+        """
+        result = detect_payment_method(content)
+        assert result == "Macro VISA"
+
+    def test_detect_case_insensitive(self):
+        """Test that detection is case insensitive"""
+        content = """
+        visa signature
+        macro premia
+        """
+        result = detect_payment_method(content)
+        assert result == "Macro VISA"
+
+    def test_detect_missing_bank_indicator(self):
+        """Test when bank indicator is missing"""
+        content = """
+        VISA SIGNATURE
+        Some other bank content
+        """
+        result = detect_payment_method(content)
+        assert result == "Unknown Payment Method"
+
+    def test_detect_missing_visa_indicator(self):
+        """Test when VISA indicator is missing"""
+        content = """
+        MACRO PREMIA
+        Some other card type
+        """
+        result = detect_payment_method(content)
+        assert result == "Unknown Payment Method"
+
+    def test_detect_empty_content(self):
+        """Test with empty content"""
+        result = detect_payment_method("")
+        assert result == "Unknown Payment Method"
+
+    def test_detect_with_actual_pdf_content(self, input_pdf_path):
+        """Test with actual PDF content to ensure it detects Macro VISA"""
+        import pdfplumber
+
+        with pdfplumber.open(input_pdf_path) as pdf:
+            full_text = ""
+            for page in pdf.pages:
+                full_text += page.extract_text() + "\n"
+
+        result = detect_payment_method(full_text)
+        assert result == "Macro VISA"
+
+    @pytest.fixture
+    def input_pdf_path(self):
+        """Path to the test PDF file"""
+        return "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
 
 
 class TestConvertDate:
