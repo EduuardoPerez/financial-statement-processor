@@ -208,8 +208,58 @@ tests/
 ├── test_data/                          # Isolated test data
 ├── unit/                               # Fast, isolated tests
 │   ├── test_convert_date.py           # Date function tests
-│   └── test_detect_payment_method.py  # Bank detection tests
+│   ├── test_detect_payment_method.py  # Bank detection tests
+│   ├── test_extract_balance_from_pdf.py  # Balance extraction tests
+│   ├── test_validate_balance.py       # Balance validation tests
+│   ├── test_print_processing_summary.py  # Summary output tests
+│   ├── test_error_handling_paths.py   # Error handling tests
+│   └── test_complete_coverage.py      # Specialized coverage tests
 └── integration/                        # End-to-end tests
     ├── test_macro_visa_processing.py  # MACRO workflow tests
     └── test_bbva_visa_processing.py   # BBVA workflow tests
 ```
+
+## Test Coverage Implementation Patterns
+
+### 1. pytest-cov Integration Pattern
+
+- **Tool**: pytest-cov plugin for comprehensive coverage measurement
+- **Configuration**: `.coveragerc` file with proper exclusions and settings
+- **Benefits**: Industry-standard coverage measurement with detailed reporting
+
+### 2. Coverage Enforcement Pattern
+
+- **Thresholds**: Configurable coverage requirements (80%, 90%, 100%)
+- **Automated Failure**: Tests fail if coverage drops below threshold
+- **Commands**:
+  - `uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=90 --cov-config=.coveragerc`
+- **CI Integration**: Ready for automated testing pipelines
+
+### 3. Coverage Exclusion Strategy
+
+- **Test Files**: Exclude all `tests/*` from coverage calculation
+- **Documentation**: Exclude `memory-bank/*`, README files
+- **Data Directories**: Exclude `input/*`, `output/*`, `expected_output/*`
+- **Configuration**: Exclude `pyproject.toml`, `.gitignore`, etc.
+- **Main Blocks**: Exclude `if __name__ == "__main__":` sections
+
+### 4. Specialized Coverage Tests Pattern
+
+- **Error Handling**: Targeted tests for ValueError exceptions and continue statements
+- **Edge Cases**: Tests for zero amounts, negative amounts, invalid formats
+- **Fallback Logic**: Tests for European number format fallbacks
+- **Line Coverage**: Strategic tests to hit specific uncovered code paths
+
+### 5. Coverage Quality Assessment
+
+- **Current Achievement**: 90.11% coverage (263 statements, 26 missing)
+- **Quality Focus**: Meaningful coverage of business logic, not artificial inflation
+- **Uncovered Code**: Complex error handling, edge cases, defensive programming
+- **Industry Standard**: Exceeds typical 70-80% industry benchmarks
+
+### 6. Coverage Documentation Pattern
+
+- **COVERAGE.md**: Comprehensive documentation with usage examples
+- **Current Metrics**: Real-time coverage statistics and achievement tracking
+- **Command Reference**: All coverage commands with explanations
+- **Best Practices**: Guidelines for maintaining and improving coverage

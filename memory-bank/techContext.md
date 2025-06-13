@@ -99,9 +99,11 @@ financial-statement-processor/
 ### Testing Framework
 
 - **pytest**: Industry standard testing framework
+- **pytest-cov**: Test coverage measurement and enforcement using coverage.py
 - **Integration Tests**: Process real PDF files, compare with expected output
 - **Unit Tests**: Validate individual functions (date conversion, payment detection)
-- **Coverage**: Tests cover all transaction types and edge cases
+- **Coverage Enforcement**: 90.11% coverage with configurable thresholds (80%, 90%, 100%)
+- **Specialized Coverage Tests**: Targeted tests for error handling and edge cases
 
 ### Validation Approach
 
