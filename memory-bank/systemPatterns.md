@@ -217,16 +217,27 @@ elif "," in amount_str:
 ### 7. Test Suite Organization Pattern
 
 - **Directory Structure**: Clear separation by test type and purpose
-- **Documentation**: Comprehensive README with usage examples
+- **Documentation**: Comprehensive test coverage with usage examples
 - **Command Examples**: Bank-specific, type-specific, and full test runs
 - **Scalability**: Easy to add new banks with consistent patterns
 
 ```
 tests/
 ├── __init__.py
-├── README.md
 ├── test_data/                          # Isolated test data
-├── unit/                               # Fast, isolated tests
+│   ├── input/                          # Test PDF files (copied from ../input/)
+│   │   ├── MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf
+│   │   ├── BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf
+│   │   ├── BBVA-VISA-resumen_cuenta_visa_May_2025.pdf
+│   │   └── BBVA-Mastercard-2025-04.pdf
+│   └── expected_output/                # Expected test results (copied from ../expected_output/)
+│       ├── MACRO-VISA-transactions.csv
+│       ├── MACRO-VISA-transactions.xlsx
+│       ├── BBVA-VISA-transactions.csv
+│       ├── BBVA-VISA-transactions.xlsx
+│       ├── BBVA-Mastercard-transactions.csv
+│       └── BBVA-Mastercard-transactions.xlsx
+├── unit/                               # Fast, isolated tests (16 tests)
 │   ├── test_convert_date.py           # Date function tests
 │   ├── test_detect_payment_method.py  # Bank detection tests
 │   ├── test_extract_balance_from_pdf.py  # Balance extraction tests
@@ -234,10 +245,105 @@ tests/
 │   ├── test_print_processing_summary.py  # Summary output tests
 │   ├── test_error_handling_paths.py   # Error handling tests
 │   └── test_complete_coverage.py      # Specialized coverage tests
-└── integration/                        # End-to-end tests
+└── integration/                        # End-to-end tests (67 tests)
     ├── test_macro_visa_processing.py  # MACRO workflow tests
-    └── test_bbva_visa_processing.py   # BBVA workflow tests
+    ├── test_bbva_visa_processing.py   # BBVA workflow tests
+    └── test_bbva_mastercard_processing.py  # BBVA Mastercard workflow tests
 ```
+
+### 8. Comprehensive Test Coverage Pattern
+
+#### Test Categories and Execution
+
+**Unit Tests (Fast, Isolated)**
+
+- **Date Conversion**: Tests the `convert_date()` function with various date formats
+- **Payment Method Detection**: Tests bank detection logic for MACRO, BBVA VISA, and BBVA Mastercard
+- **Balance Extraction**: Tests PDF balance extraction patterns
+- **Balance Validation**: Tests computed vs reported balance comparison
+- **Processing Summary**: Tests output formatting and summary generation
+- **Error Handling**: Tests graceful degradation and error recovery
+- **Complete Coverage**: Targeted tests for specific uncovered code paths
+
+**Integration Tests (End-to-End)**
+
+- **MACRO VISA Processing**: Complete workflow tests using real MACRO PDF files
+- **BBVA VISA Processing**: Complete workflow tests using real BBVA VISA PDF files
+- **BBVA Mastercard Processing**: Complete workflow tests using real BBVA Mastercard PDF files
+
+#### Test Data Management Pattern
+
+**Isolated Test Data Structure**
+
+- Test data is copied from main project directories to ensure test isolation
+- Input PDFs are copied from `../input/` to `tests/test_data/input/`
+- Expected outputs are copied from `../expected_output/` to `tests/test_data/expected_output/`
+- This structure allows tests to run independently without affecting main project files
+
+#### Comprehensive Validation Pattern
+
+Each integration test validates:
+
+- **Transaction Count Accuracy**: Ensures all transactions are captured
+- **Currency Handling**: Validates ARS/USD parsing and distribution
+- **Amount Totals**: Validates arithmetic accuracy of parsed amounts
+- **Date Range and Format**: Ensures proper date conversion (DD.MM.YY → YYYY-MM-DD, DD-MMM-YY → YYYY-MM-DD)
+- **Payment Method Detection**: Validates bank and card type identification
+- **Transaction Type Parsing**: Validates payments, taxes, adjustments, bonifications
+- **Negative Amount Validation**: Ensures proper sign handling for payments/adjustments
+
+#### Real Data Integration Test Examples
+
+**MACRO VISA Test Validation**
+
+- **File**: `MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf`
+- **Transactions**: 91 total (90 ARS, 1 USD)
+- **Date Range**: May 2022 - December 2022
+- **Transaction Types**: Purchases, payments, adjustments, taxes
+- **Amount Totals**: ARS -122,087.04, USD 11.30
+
+**BBVA VISA Test Validation**
+
+- **File**: `BBVA-VISA-resumen_cuenta_visa_May_2025.pdf`
+- **Transactions**: 45 total (44 ARS, 1 USD)
+- **Date Range**: March 2025 - May 2025
+- **Transaction Types**: Purchases, payments, bonifications, taxes
+- **Amount Totals**: ARS -29,584.17, USD 100.00
+
+**BBVA Mastercard Test Validation**
+
+- **File**: `BBVA-Mastercard-2025-04.pdf`
+- **Transactions**: 7 total (all ARS)
+- **Date Format**: DD-MMM-YY with Spanish abbreviations ("Abr" = April)
+- **Transaction Types**: Purchases, payments
+- **Amount Totals**: ARS -3,456.67
+
+#### Test Execution Commands
+
+```bash
+# All tests (83 total)
+uv run pytest tests/ -v
+
+# Unit tests only (16 tests - fast)
+uv run pytest tests/unit/ -v
+
+# Integration tests only (67 tests)
+uv run pytest tests/integration/ -v
+
+# Bank-specific tests
+uv run pytest tests/integration/test_macro_visa_processing.py -v
+uv run pytest tests/integration/test_bbva_visa_processing.py -v
+uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
+```
+
+#### Test Quality Metrics
+
+- **Total Tests**: 83 (all passing) ✅
+- **Unit Tests**: 16 tests covering core functions
+- **Integration Tests**: 67 tests covering end-to-end workflows
+- **Bank Coverage**: MACRO VISA, BBVA VISA, BBVA Mastercard with comprehensive patterns
+- **Test Isolation**: Independent test data ensures reproducible results
+- **Real Data Validation**: Uses actual bank statements for testing confidence
 
 ## Test Coverage Implementation Patterns
 

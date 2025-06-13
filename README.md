@@ -1,22 +1,30 @@
 # Financial Statement Processor
 
-A Python tool for processing financial statements from various banks into structured Excel format. Currently supports Macro VISA credit card statements with plans to expand to other financial institutions.
+A Python tool for processing financial statements from various Argentine banks into structured Excel format. Automatically detects bank and card type, supporting multiple payment methods with intelligent parsing.
 
 ## Features
 
 - **PDF to Excel Conversion**: Extracts transaction data from PDF statements and converts to structured Excel format
+- **Multi-Bank Support**: Automatically detects and processes different bank formats
 - **Multi-Currency Support**: Handles both ARS (Argentine Peso) and USD transactions
+- **Dual Date Format Support**: Handles both DD.MM.YY (VISA) and DD-MMM-YY (Mastercard) formats
 - **Smart Parsing**: Recognizes various transaction types including:
-  - Regular purchases
-  - Tax entries (IMPUESTO, IIBB, IVA, etc.)
-  - Payments (SU PAGO EN PESOS)
-  - Adjustments and discounts
+  - Regular purchases with reference numbers
+  - Tax entries (IMPUESTO, IIBB, IVA, DB.RG, DB.IMPUESTO)
+  - Payments (SU PAGO EN PESOS, SU PAGO EN USD)
+  - Adjustments and discounts (AJUSTE)
+  - Bonifications (BONIF.)
+  - Promotions (OFF Promo)
 - **European Number Format**: Properly handles European-style number formatting (1.234,56)
-- **Date Conversion**: Converts DD.MM.YY format to standard YYYY-MM-DD
+- **Date Conversion**: Converts various date formats to standard YYYY-MM-DD
+- **Balance Validation**: Validates transaction totals against PDF balance information
 
 ## Currently Supported
 
-- **Macro VISA**: Credit card statements in PDF format
+- **MACRO VISA**: Credit card statements in PDF format
+- **BBVA VISA**: Credit card statements in PDF format
+- **BBVA Mastercard**: Credit card statements in PDF format
+- **Automatic Detection**: Intelligently identifies bank and card type from PDF content
 
 ## Requirements
 
@@ -111,15 +119,35 @@ The processed data is saved as an Excel file with the following columns:
 - **Description**: Transaction description including reference numbers
 - **Currency**: ARS or USD
 - **Amount**: Transaction amount (positive for charges, negative for payments)
-- **Payment Method**: Always "Macro VISA" for current implementation
+- **Payment Method**: Automatically detected (MACRO VISA, BBVA VISA, or BBVA Mastercard)
 
 ## Example Output
 
+### MACRO VISA Example
+
 ```
 Date        Description                           Currency  Amount    Payment Method
-2022-12-01  ABC123 COMPRA EN SUPERMERCADO        ARS       1250.00   Macro VISA
-2022-12-02  DEF456 RESTAURANT XYZ                USD       45.00     Macro VISA
-2022-12-05  SU PAGO EN PESOS                     ARS       -2000.00  Macro VISA
+2022-12-01  ABC123 COMPRA EN SUPERMERCADO        ARS       1250.00   MACRO VISA
+2022-12-02  DEF456 RESTAURANT XYZ                USD       45.00     MACRO VISA
+2022-12-05  SU PAGO EN PESOS                     ARS       -2000.00  MACRO VISA
+```
+
+### BBVA VISA Example
+
+```
+Date        Description                           Currency  Amount    Payment Method
+2025-03-15  XYZ456 COMPRA ONLINE                 ARS       2500.00   BBVA VISA
+2025-03-20  ABC789 RESTAURANT                    USD       75.00     BBVA VISA
+2025-03-25  SU PAGO EN PESOS                     ARS       -5000.00  BBVA VISA
+```
+
+### BBVA Mastercard Example
+
+```
+Date        Description                           Currency  Amount    Payment Method
+2025-04-10  DEF123 SUPERMERCADO                  ARS       3200.00   BBVA Mastercard
+2025-04-15  GHI456 COMBUSTIBLE                   ARS       8500.00   BBVA Mastercard
+2025-04-20  SU PAGO EN PESOS                     ARS       -10000.00 BBVA Mastercard
 ```
 
 ## Development
