@@ -66,9 +66,10 @@ elif "," in amount_str:
 
 ### 2. Payment Transaction Pattern
 
-- **Identifier**: "SU PAGO EN PESOS"
+- **Identifiers**: "SU PAGO EN PESOS", "SU PAGO EN USD"
 - **Amount**: Always negative (credits)
-- **Format**: Special handling for trailing dash `701.084,93-`
+- **Format**: Special handling for trailing dash `701.084,93-`, `3,00-`
+- **Currency Support**: Both ARS and USD payment detection
 
 ### 3. Adjustment Transaction Pattern
 
@@ -162,3 +163,12 @@ elif "," in amount_str:
 - **Amount Totals**: Verify sum of ARS and USD transactions
 - **Transaction Types**: Confirm all special transaction types detected
 - **Date Ranges**: Validate date parsing covers full statement period
+
+### 3. Balance Validation Pattern
+
+- **PDF Balance Extraction**: Extract reported balance from "SALDO ACTUAL $ X U$S Y" pattern
+- **Computed Balance**: Sum all transactions excluding payments for validation
+- **Validation Logic**: Compare reported vs computed, log detailed results
+- **Payment Exclusion**: Remove "SU PAGO EN PESOS" and "SU PAGO EN USD" from totals
+- **Error Reporting**: Log warnings for mismatches, don't halt processing
+- **Organized Output**: Professional summary with validation indicators

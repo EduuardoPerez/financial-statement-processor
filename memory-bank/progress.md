@@ -154,6 +154,7 @@
 - ✅ **v0.1.4**: Error handling and edge cases
 - ✅ **v0.1.5**: Documentation and examples
 - ✅ **v0.2.0**: BBVA VISA support and dual-bank architecture
+- ✅ **v0.2.1**: Balance validation and USD payment detection
 
 ### Upcoming Milestones
 

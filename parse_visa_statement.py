@@ -199,6 +199,29 @@ def parse_visa_pdf(pdf_path, output_path):
                         continue
                 continue
 
+            # Handle USD payment lines (SU PAGO EN USD)
+            if "SU PAGO EN USD" in remaining_line:
+                # Handle format like "SU PAGO EN USD 3,00-"
+                amount_match = re.search(r"([\d,.]+)-?\s*_?$", remaining_line)
+                if amount_match:
+                    amount_str = amount_match.group(1)
+                    # Convert European format for USD amounts
+                    if "," in amount_str:
+                        amount_str = amount_str.replace(",", ".")
+                    try:
+                        amount = -float(amount_str)  # Always negative for payments
+                        transaction = {
+                            "Date": convert_date(date_str),
+                            "Description": "SU PAGO EN USD",
+                            "Currency": "USD",
+                            "Amount": amount,
+                            "Payment Method": payment_method,
+                        }
+                        transactions.append(transaction)
+                    except ValueError:
+                        continue
+                continue
+
             # Handle adjustment lines
             if "AJUSTE" in remaining_line:
                 # Handle format like "AJUSTE P/DESCNTO. EN COMERCIO 1.200,00-"
@@ -430,9 +453,12 @@ def parse_visa_pdf(pdf_path, output_path):
     ]
     computed_ars_total = ars_non_payments["Amount"].sum()
 
-    # USD: sum all USD transactions (no USD payments in current data)
+    # USD: sum all USD transactions except "SU PAGO EN USD"
     usd_transactions = df[df["Currency"] == "USD"]
-    computed_usd_total = usd_transactions["Amount"].sum()
+    usd_non_payments = usd_transactions[
+        usd_transactions["Description"] != "SU PAGO EN USD"
+    ]
+    computed_usd_total = usd_non_payments["Amount"].sum()
 
     computed_balance = {"ars": computed_ars_total, "usd": computed_usd_total}
 
@@ -445,11 +471,6 @@ def parse_visa_pdf(pdf_path, output_path):
 
     # Save to Excel
     df.to_excel(output_path, index=False, sheet_name="Sheet1")
-
-    print(f"Processed {len(transactions)} transactions")
-    print(f"Total ARS amount: {df[df['Currency'] == 'ARS']['Amount'].sum():.2f}")
-    print(f"Total USD amount: {df[df['Currency'] == 'USD']['Amount'].sum():.2f}")
-    print(f"Saved to: {output_path}")
 
     return df
 
@@ -466,21 +487,118 @@ def convert_date(date_str):
     return f"{full_year}-{month.zfill(2)}-{day.zfill(2)}"
 
 
+def print_processing_summary(
+    filename, df, reported_balance, computed_balance, output_path
+):
+    """Print organized summary of processing results"""
+    print(f"\n{'='*60}")
+    print(f"PROCESSING SUMMARY: {filename}")
+    print(f"{'='*60}")
+    print(f"Transactions Processed: {len(df)}")
+    print(f"Output File: {output_path}")
+
+    # Calculate totals including payments
+    total_ars = df[df["Currency"] == "ARS"]["Amount"].sum()
+    total_usd = df[df["Currency"] == "USD"]["Amount"].sum()
+
+    print(f"\nACTUAL TOTALS (including payments):")
+    print(f"  ARS: {total_ars:,.2f}")
+    print(f"  USD: {total_usd:.2f}")
+
+    print(f"\nBALANCE VALIDATION:")
+    print(f"  Reported ARS: {reported_balance['ars']:,.2f}")
+    print(f"  Computed ARS: {computed_balance['ars']:,.2f}")
+    print(
+        f"  ARS Match: {'✅ YES' if abs(reported_balance['ars'] - computed_balance['ars']) < 0.01 else '❌ NO'}"
+    )
+
+    print(f"  Reported USD: {reported_balance['usd']:,.2f}")
+    print(f"  Computed USD: {computed_balance['usd']:,.2f}")
+    print(
+        f"  USD Match: {'✅ YES' if abs(reported_balance['usd'] - computed_balance['usd']) < 0.01 else '❌ NO'}"
+    )
+
+
 if __name__ == "__main__":
-    # Example usage - processes both bank types automatically based on PDF content
+    results = []
 
     # Process Macro VISA statement
-    print("=== Processing Macro VISA Statement ===")
+    print("Processing Macro VISA statement...")
     input_file = "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
     output_file = "output/MACRO-VISA-transactions.xlsx"
     df_macro = parse_visa_pdf(input_file, output_file)
-    print(f"First 3 Macro transactions:")
-    print(df_macro.head(3).to_string(index=False))
 
-    print("\n=== Processing BBVA VISA Statement ===")
+    # Get validation data for summary
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+
+    payment_method = detect_payment_method(full_text)
+    reported_macro = extract_balance_from_pdf(full_text, payment_method)
+
+    ars_non_payments = df_macro[
+        (df_macro["Currency"] == "ARS")
+        & (df_macro["Description"] != "SU PAGO EN PESOS")
+    ]
+    usd_non_payments = df_macro[
+        (df_macro["Currency"] == "USD") & (df_macro["Description"] != "SU PAGO EN USD")
+    ]
+    computed_macro = {
+        "ars": ars_non_payments["Amount"].sum(),
+        "usd": usd_non_payments["Amount"].sum(),
+    }
+
+    results.append(
+        (
+            "MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf",
+            df_macro,
+            reported_macro,
+            computed_macro,
+            output_file,
+        )
+    )
+
     # Process BBVA VISA statement
+    print("Processing BBVA VISA statement...")
     input_file = "input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"
     output_file = "output/BBVA-VISA-transactions.xlsx"
     df_bbva = parse_visa_pdf(input_file, output_file)
-    print(f"First 3 BBVA transactions:")
-    print(df_bbva.head(3).to_string(index=False))
+
+    # Get validation data for summary
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+
+    payment_method = detect_payment_method(full_text)
+    reported_bbva = extract_balance_from_pdf(full_text, payment_method)
+
+    ars_non_payments = df_bbva[
+        (df_bbva["Currency"] == "ARS") & (df_bbva["Description"] != "SU PAGO EN PESOS")
+    ]
+    usd_non_payments = df_bbva[
+        (df_bbva["Currency"] == "USD") & (df_bbva["Description"] != "SU PAGO EN USD")
+    ]
+    computed_bbva = {
+        "ars": ars_non_payments["Amount"].sum(),
+        "usd": usd_non_payments["Amount"].sum(),
+    }
+
+    results.append(
+        (
+            "BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf",
+            df_bbva,
+            reported_bbva,
+            computed_bbva,
+            output_file,
+        )
+    )
+
+    # Print organized summary for all files
+    for filename, df, reported, computed, output_path in results:
+        print_processing_summary(filename, df, reported, computed, output_path)
+
+    print(f"\n{'='*60}")
+    print("ALL PROCESSING COMPLETE")
+    print(f"{'='*60}")
