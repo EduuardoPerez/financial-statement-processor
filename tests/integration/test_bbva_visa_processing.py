@@ -3,20 +3,19 @@ import pandas as pd
 import os
 import tempfile
 import shutil
-from pathlib import Path
-from parse_visa_statement import parse_visa_pdf, convert_date, detect_payment_method
+from parse_visa_statement import parse_visa_pdf
 
 
-class TestParseVisaStatement:
+class TestBBVAVisaProcessing:
     @pytest.fixture
     def input_pdf_path(self):
         """Path to the test PDF file"""
-        return "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
+        return "tests/test_data/input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"
 
     @pytest.fixture
     def expected_csv_path(self):
         """Path to the expected output CSV file"""
-        return "expected_output/MACRO-VISA-transactions.csv"
+        return "tests/test_data/expected_output/BBVA-VISA-transactions.csv"
 
     @pytest.fixture
     def temp_output_dir(self):
@@ -34,28 +33,20 @@ class TestParseVisaStatement:
         self, input_pdf_path, expected_df, temp_output_dir
     ):
         """Integration test that processes the real PDF and compares with expected output"""
-        # Ensure input file exists
         assert os.path.exists(
             input_pdf_path
         ), f"Input PDF file not found: {input_pdf_path}"
 
-        # Create output path in temp directory
         output_path = os.path.join(temp_output_dir, "test_output.xlsx")
-
-        # Process the PDF
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Verify output file was created
         assert os.path.exists(output_path), "Output Excel file was not created"
-
-        # Basic structure validation
         assert len(result_df) > 0, "No transactions were parsed"
         assert all(
             col in result_df.columns
             for col in ["Date", "Description", "Currency", "Amount", "Payment Method"]
         ), "Required columns missing from output"
 
-        # High-level data integrity validation
         self._validate_data_integrity(result_df, expected_df)
 
     def test_transaction_count(self, input_pdf_path, expected_df, temp_output_dir):
@@ -75,7 +66,6 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_currency.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Check currency distribution
         expected_ars_count = len(expected_df[expected_df["Currency"] == "ARS"])
         expected_usd_count = len(expected_df[expected_df["Currency"] == "USD"])
 
@@ -89,7 +79,6 @@ class TestParseVisaStatement:
             actual_usd_count == expected_usd_count
         ), f"Expected {expected_usd_count} USD transactions, got {actual_usd_count}"
 
-        # Verify all currencies are valid
         valid_currencies = {"ARS", "USD"}
         actual_currencies = set(result_df["Currency"].unique())
         assert actual_currencies.issubset(
@@ -101,7 +90,6 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_amounts.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Calculate totals for each currency
         expected_ars_total = expected_df[expected_df["Currency"] == "ARS"][
             "Amount"
         ].sum()
@@ -112,7 +100,6 @@ class TestParseVisaStatement:
         actual_ars_total = result_df[result_df["Currency"] == "ARS"]["Amount"].sum()
         actual_usd_total = result_df[result_df["Currency"] == "USD"]["Amount"].sum()
 
-        # Allow small floating point differences
         assert (
             abs(actual_ars_total - expected_ars_total) < 0.01
         ), f"ARS total mismatch: expected {expected_ars_total:.2f}, got {actual_ars_total:.2f}"
@@ -125,11 +112,9 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_dates.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Convert dates to datetime for comparison
         result_dates = pd.to_datetime(result_df["Date"])
         expected_dates = pd.to_datetime(expected_df["Date"])
 
-        # Check date range
         expected_min_date = expected_dates.min()
         expected_max_date = expected_dates.max()
         actual_min_date = result_dates.min()
@@ -142,7 +127,6 @@ class TestParseVisaStatement:
             actual_max_date == expected_max_date
         ), f"Maximum date mismatch: expected {expected_max_date}, got {actual_max_date}"
 
-        # Verify date format (YYYY-MM-DD)
         date_pattern = r"^\d{4}-\d{2}-\d{2}$"
         for date_str in result_df["Date"]:
             assert (
@@ -154,7 +138,7 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_payment_method.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        expected_payment_method = "Macro VISA"
+        expected_payment_method = "BBVA VISA"
         unique_payment_methods = result_df["Payment Method"].unique()
 
         assert (
@@ -171,7 +155,6 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_transaction_types.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Test payment transaction
         payment_transactions = result_df[result_df["Description"] == "SU PAGO EN PESOS"]
         expected_payments = expected_df[
             expected_df["Description"] == "SU PAGO EN PESOS"
@@ -180,7 +163,6 @@ class TestParseVisaStatement:
             expected_payments
         ), f"Expected {len(expected_payments)} payment transactions, got {len(payment_transactions)}"
 
-        # Test adjustment transaction
         adjustment_transactions = result_df[
             result_df["Description"] == "AJUSTE P/DESCNTO. EN COMERCIO"
         ]
@@ -191,7 +173,6 @@ class TestParseVisaStatement:
             expected_adjustments
         ), f"Expected {len(expected_adjustments)} adjustment transactions, got {len(adjustment_transactions)}"
 
-        # Test tax transactions
         tax_keywords = ["IMPUESTO", "IIBB", "IVA", "DB.RG", "DB.IMPUESTO"]
         for keyword in tax_keywords:
             result_tax = result_df[
@@ -209,14 +190,12 @@ class TestParseVisaStatement:
         output_path = os.path.join(temp_output_dir, "test_negative_amounts.xlsx")
         result_df = parse_visa_pdf(input_pdf_path, output_path)
 
-        # Check payment amounts are negative
         payments = result_df[result_df["Description"] == "SU PAGO EN PESOS"]
         for _, payment in payments.iterrows():
             assert (
                 payment["Amount"] < 0
             ), f"Payment transaction should have negative amount, got {payment['Amount']}"
 
-        # Check adjustment amounts are negative
         adjustments = result_df[
             result_df["Description"] == "AJUSTE P/DESCNTO. EN COMERCIO"
         ]
@@ -227,12 +206,10 @@ class TestParseVisaStatement:
 
     def _validate_data_integrity(self, result_df, expected_df):
         """Validate overall data integrity without strict row-by-row comparison"""
-        # Check transaction count
         assert len(result_df) == len(
             expected_df
         ), f"Transaction count mismatch: expected {len(expected_df)}, got {len(result_df)}"
 
-        # Check currency distribution
         expected_ars_count = len(expected_df[expected_df["Currency"] == "ARS"])
         expected_usd_count = len(expected_df[expected_df["Currency"] == "USD"])
         actual_ars_count = len(result_df[result_df["Currency"] == "ARS"])
@@ -245,7 +222,6 @@ class TestParseVisaStatement:
             actual_usd_count == expected_usd_count
         ), f"USD transaction count mismatch: expected {expected_usd_count}, got {actual_usd_count}"
 
-        # Check amount totals
         expected_ars_total = expected_df[expected_df["Currency"] == "ARS"][
             "Amount"
         ].sum()
@@ -262,7 +238,6 @@ class TestParseVisaStatement:
             abs(actual_usd_total - expected_usd_total) < 0.01
         ), f"USD total mismatch: expected {expected_usd_total:.2f}, got {actual_usd_total:.2f}"
 
-        # Check date range
         result_dates = pd.to_datetime(result_df["Date"])
         expected_dates = pd.to_datetime(expected_df["Date"])
 
@@ -273,7 +248,6 @@ class TestParseVisaStatement:
             result_dates.max() == expected_dates.max()
         ), f"Max date mismatch: expected {expected_dates.max()}, got {result_dates.max()}"
 
-        # Check specific transaction types exist
         special_descriptions = ["SU PAGO EN PESOS", "AJUSTE P/DESCNTO. EN COMERCIO"]
         for desc in special_descriptions:
             expected_count = len(expected_df[expected_df["Description"] == desc])
@@ -281,106 +255,3 @@ class TestParseVisaStatement:
             assert (
                 actual_count == expected_count
             ), f"Special transaction '{desc}' count mismatch: expected {expected_count}, got {actual_count}"
-
-
-class TestDetectPaymentMethod:
-    """Unit tests for the detect_payment_method function"""
-
-    def test_detect_macro_visa(self):
-        """Test detection of Macro VISA from typical content"""
-        # Test with typical Macro VISA content
-        content = """
-        VISA SIGNATURE
-        MACRO PREMIA
-        www.macro.com.ar
-        """
-        result = detect_payment_method(content)
-        assert result == "Macro VISA"
-
-    def test_detect_with_banco_macro(self):
-        """Test detection with BANCO MACRO text"""
-        content = """
-        BANCO MACRO S.A.
-        VISA SIGNATURE
-        """
-        result = detect_payment_method(content)
-        assert result == "Macro VISA"
-
-    def test_detect_with_macro_website(self):
-        """Test detection with macro website reference"""
-        content = """
-        VISA
-        Para consultas ingrese a www.macro.com.ar
-        """
-        result = detect_payment_method(content)
-        assert result == "Macro VISA"
-
-    def test_detect_case_insensitive(self):
-        """Test that detection is case insensitive"""
-        content = """
-        visa signature
-        macro premia
-        """
-        result = detect_payment_method(content)
-        assert result == "Macro VISA"
-
-    def test_detect_missing_bank_indicator(self):
-        """Test when bank indicator is missing"""
-        content = """
-        VISA SIGNATURE
-        Some other bank content
-        """
-        result = detect_payment_method(content)
-        assert result == "Unknown Payment Method"
-
-    def test_detect_missing_visa_indicator(self):
-        """Test when VISA indicator is missing"""
-        content = """
-        MACRO PREMIA
-        Some other card type
-        """
-        result = detect_payment_method(content)
-        assert result == "Unknown Payment Method"
-
-    def test_detect_empty_content(self):
-        """Test with empty content"""
-        result = detect_payment_method("")
-        assert result == "Unknown Payment Method"
-
-    def test_detect_with_actual_pdf_content(self, input_pdf_path):
-        """Test with actual PDF content to ensure it detects Macro VISA"""
-        import pdfplumber
-
-        with pdfplumber.open(input_pdf_path) as pdf:
-            full_text = ""
-            for page in pdf.pages:
-                full_text += page.extract_text() + "\n"
-
-        result = detect_payment_method(full_text)
-        assert result == "Macro VISA"
-
-    @pytest.fixture
-    def input_pdf_path(self):
-        """Path to the test PDF file"""
-        return "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
-
-
-class TestConvertDate:
-    """Unit tests for the convert_date function"""
-
-    def test_convert_date_2000s(self):
-        """Test date conversion for 2000s years"""
-        assert convert_date("01.12.22") == "2022-12-01"
-        assert convert_date("15.06.23") == "2023-06-15"
-        assert convert_date("31.01.00") == "2000-01-31"
-
-    def test_convert_date_1900s(self):
-        """Test date conversion for 1900s years"""
-        assert convert_date("01.12.99") == "1999-12-01"
-        assert convert_date("15.06.80") == "1980-06-15"
-        assert convert_date("31.01.50") == "1950-01-31"
-
-    def test_convert_date_padding(self):
-        """Test that single digit days and months are padded"""
-        assert convert_date("1.1.22") == "2022-01-01"
-        assert convert_date("5.9.23") == "2023-09-05"

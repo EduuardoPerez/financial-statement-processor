@@ -152,19 +152,40 @@ elif "," in amount_str:
 
 ## Quality Assurance Patterns
 
-### 1. Expected Output Validation
+### 1. Test Architecture Pattern
+
+- **Structure**: Separated unit tests (fast) from integration tests (thorough)
+- **Unit Tests**: `tests/unit/` - Individual function validation
+- **Integration Tests**: `tests/integration/` - End-to-end PDF processing
+- **Benefits**: Fast feedback loop for development, comprehensive validation for releases
+
+### 2. Bank-Specific Testing Pattern
+
+- **Organization**: Dedicated test files for each bank
+- **MACRO Tests**: `test_macro_visa_processing.py` - Complete MACRO validation
+- **BBVA Tests**: `test_bbva_visa_processing.py` - Complete BBVA validation
+- **Benefits**: Isolated testing, easy debugging, parallel development
+
+### 3. Test Data Isolation Pattern
+
+- **Structure**: Independent test data copies in `tests/test_data/`
+- **Input Files**: `tests/test_data/input/` - PDF files for testing
+- **Expected Output**: `tests/test_data/expected_output/` - Reference results
+- **Benefits**: Tests don't affect main project files, reproducible results
+
+### 4. Expected Output Validation
 
 - **Pattern**: Compare generated output with known-good reference files
 - **Files**: `expected_output/` directory contains reference data
 - **Validation**: Transaction count, amounts, dates, currency distribution
 
-### 2. Data Integrity Checks
+### 5. Data Integrity Checks
 
 - **Amount Totals**: Verify sum of ARS and USD transactions
 - **Transaction Types**: Confirm all special transaction types detected
 - **Date Ranges**: Validate date parsing covers full statement period
 
-### 3. Balance Validation Pattern
+### 6. Balance Validation Pattern
 
 - **PDF Balance Extraction**: Extract reported balance from "SALDO ACTUAL $ X U$S Y" pattern
 - **Computed Balance**: Sum all transactions excluding payments for validation
@@ -172,3 +193,23 @@ elif "," in amount_str:
 - **Payment Exclusion**: Remove "SU PAGO EN PESOS" and "SU PAGO EN USD" from totals
 - **Error Reporting**: Log warnings for mismatches, don't halt processing
 - **Organized Output**: Professional summary with validation indicators
+
+### 7. Test Suite Organization Pattern
+
+- **Directory Structure**: Clear separation by test type and purpose
+- **Documentation**: Comprehensive README with usage examples
+- **Command Examples**: Bank-specific, type-specific, and full test runs
+- **Scalability**: Easy to add new banks with consistent patterns
+
+```
+tests/
+├── __init__.py
+├── README.md
+├── test_data/                          # Isolated test data
+├── unit/                               # Fast, isolated tests
+│   ├── test_convert_date.py           # Date function tests
+│   └── test_detect_payment_method.py  # Bank detection tests
+└── integration/                        # End-to-end tests
+    ├── test_macro_visa_processing.py  # MACRO workflow tests
+    └── test_bbva_visa_processing.py   # BBVA workflow tests
+```
