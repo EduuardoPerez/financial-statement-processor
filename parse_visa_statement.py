@@ -557,28 +557,34 @@ def parse_visa_pdf(pdf_path, output_path):
     # Convert to DataFrame and save
     df = pd.DataFrame(transactions)
 
-    # Sort by date to match expected output
-    df["Date"] = pd.to_datetime(df["Date"])
-    df = df.sort_values("Date")
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+    # Handle empty DataFrame case
+    if len(df) > 0:
+        # Sort by date to match expected output
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date")
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
 
     # Extract balance from PDF and validate
     reported_balance = extract_balance_from_pdf(full_text, payment_method)
 
     # Calculate computed balance (excluding payments)
-    # ARS: sum all ARS transactions except "SU PAGO EN PESOS"
-    ars_transactions = df[df["Currency"] == "ARS"]
-    ars_non_payments = ars_transactions[
-        ars_transactions["Description"] != "SU PAGO EN PESOS"
-    ]
-    computed_ars_total = ars_non_payments["Amount"].sum()
+    if len(df) > 0:
+        # ARS: sum all ARS transactions except "SU PAGO EN PESOS"
+        ars_transactions = df[df["Currency"] == "ARS"]
+        ars_non_payments = ars_transactions[
+            ars_transactions["Description"] != "SU PAGO EN PESOS"
+        ]
+        computed_ars_total = ars_non_payments["Amount"].sum()
 
-    # USD: sum all USD transactions except "SU PAGO EN USD"
-    usd_transactions = df[df["Currency"] == "USD"]
-    usd_non_payments = usd_transactions[
-        usd_transactions["Description"] != "SU PAGO EN USD"
-    ]
-    computed_usd_total = usd_non_payments["Amount"].sum()
+        # USD: sum all USD transactions except "SU PAGO EN USD"
+        usd_transactions = df[df["Currency"] == "USD"]
+        usd_non_payments = usd_transactions[
+            usd_transactions["Description"] != "SU PAGO EN USD"
+        ]
+        computed_usd_total = usd_non_payments["Amount"].sum()
+    else:
+        computed_ars_total = 0.0
+        computed_usd_total = 0.0
 
     computed_balance = {"ars": computed_ars_total, "usd": computed_usd_total}
 
