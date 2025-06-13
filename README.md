@@ -97,14 +97,27 @@ df = parse_visa_pdf(
 ```
 financial-statement-processor/
 ├── parse_visa_statement.py    # Main processing script
-├── hello.py                   # Simple test script
 ├── input/                     # Place PDF statements here
-│   └── MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf
+│   ├── MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf
+│   ├── BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf
+│   ├── BBVA-VISA-resumen_cuenta_visa_May_2025.pdf
+│   └── BBVA-Mastercard-2025-04.pdf
 ├── output/                    # Generated Excel files
-│   └── MACRO-VISA-transactions.xlsx
+│   ├── MACRO-VISA-transactions.xlsx
+│   ├── BBVA-VISA-transactions.xlsx
+│   └── BBVA-Mastercard-transactions.xlsx
 ├── expected_output/           # Reference output for testing
 │   ├── MACRO-VISA-transactions.csv
-│   └── MACRO-VISA-transactions.xlsx
+│   ├── MACRO-VISA-transactions.xlsx
+│   ├── BBVA-VISA-transactions.csv
+│   ├── BBVA-VISA-transactions.xlsx
+│   ├── BBVA-Mastercard-transactions.csv
+│   └── BBVA-Mastercard-transactions.xlsx
+├── tests/                     # Test suite
+│   ├── integration/          # End-to-end tests
+│   ├── unit/                 # Unit tests
+│   └── test_data/           # Test data (isolated copies)
+├── memory-bank/              # Project documentation
 ├── pyproject.toml            # Project configuration
 ├── uv.lock                   # Dependency lock file
 ├── .gitignore               # Git ignore rules

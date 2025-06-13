@@ -237,7 +237,7 @@ tests/
 │       ├── BBVA-VISA-transactions.xlsx
 │       ├── BBVA-Mastercard-transactions.csv
 │       └── BBVA-Mastercard-transactions.xlsx
-├── unit/                               # Fast, isolated tests (16 tests)
+├── unit/                               # Fast, isolated tests (18 tests)
 │   ├── test_convert_date.py           # Date function tests
 │   ├── test_detect_payment_method.py  # Bank detection tests
 │   ├── test_extract_balance_from_pdf.py  # Balance extraction tests
@@ -321,10 +321,10 @@ Each integration test validates:
 #### Test Execution Commands
 
 ```bash
-# All tests (83 total)
+# All tests (85 total)
 uv run pytest tests/ -v
 
-# Unit tests only (16 tests - fast)
+# Unit tests only (18 tests - fast)
 uv run pytest tests/unit/ -v
 
 # Integration tests only (67 tests)
@@ -338,8 +338,8 @@ uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 
 #### Test Quality Metrics
 
-- **Total Tests**: 83 (all passing) ✅
-- **Unit Tests**: 16 tests covering core functions
+- **Total Tests**: 85 (all passing) ✅
+- **Unit Tests**: 18 tests covering core functions
 - **Integration Tests**: 67 tests covering end-to-end workflows
 - **Bank Coverage**: MACRO VISA, BBVA VISA, BBVA Mastercard with comprehensive patterns
 - **Test Isolation**: Independent test data ensures reproducible results
@@ -378,7 +378,7 @@ uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 
 ### 5. Coverage Quality Assessment
 
-- **Current Achievement**: 90.11% coverage (263 statements, 26 missing)
+- **Current Achievement**: 88% coverage (333 statements, 41 missing)
 - **Quality Focus**: Meaningful coverage of business logic, not artificial inflation
 - **Uncovered Code**: Complex error handling, edge cases, defensive programming
 - **Industry Standard**: Exceeds typical 70-80% industry benchmarks
