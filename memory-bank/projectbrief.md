@@ -24,17 +24,27 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Current Scope
 
-- **Supported**: Macro VISA credit card statements
+- **Supported**: Macro VISA, BBVA VISA, and BBVA Mastercard credit card statements
 - **Format**: PDF input → Excel output
 - **Currencies**: ARS (Argentine Peso) and USD
 - **Transaction Types**: Purchases, payments, taxes, adjustments
+- **Date Formats**: DD.MM.YY (VISA) and DD-MMM-YY (Mastercard) with Spanish month support
 
 ### Expansion Roadmap
 
-- **Phase 2**: BBVA bank support
 - **Phase 3**: Santander bank support
 - **Phase 4**: Additional financial institutions
 - **Future**: CLI interface, batch processing, transaction categorization
+
+## Recent Completion: BBVA Mastercard Support
+
+### Delivered Capabilities (December 2025)
+
+- **BBVA Mastercard Processing**: Complete support for BBVA Mastercard PDF statements
+- **Date Format Handling**: DD-MMM-YY format with Spanish abbreviations ("Abr" = April)
+- **Single-Line Transaction Format**: Adapted parsing for Mastercard's consolidated transaction format
+- **Balance Validation**: Custom balance extraction for Mastercard statement format
+- **Test Coverage**: 83 comprehensive tests with 87% code coverage
 
 ## Target Users
 

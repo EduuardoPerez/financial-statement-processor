@@ -59,3 +59,17 @@ class TestExtractBalanceFromPdf:
         result = extract_balance_from_pdf(text, "Test Bank")
         assert result["ars"] == 10000000.99
         assert result["usd"] == 50000.25
+
+    def test_extract_balance_bbva_mastercard_format(self):
+        """Test balance extraction for BBVA Mastercard specific format"""
+        text = "30-Abr-25 09-May-25 185.170,00 0,00 30.853,00"
+        result = extract_balance_from_pdf(text, "BBVA Mastercard")
+        assert result["ars"] == 185170.00
+        assert result["usd"] == 0.00
+
+    def test_extract_balance_bbva_mastercard_fallback_pattern(self):
+        """Test BBVA Mastercard balance extraction when primary pattern fails"""
+        text = "Some other text without direct balance"
+        result = extract_balance_from_pdf(text, "BBVA Mastercard")
+        assert result["ars"] == 0.0
+        assert result["usd"] == 0.0

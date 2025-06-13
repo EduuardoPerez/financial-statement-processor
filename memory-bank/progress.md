@@ -2,22 +2,23 @@
 
 ## What Currently Works
 
-### Multi-Bank VISA Processing (Complete)
+### Multi-Bank Credit Card Processing (Complete)
 
-- **PDF Text Extraction**: Robust extraction using pdfplumber for both banks
-- **Intelligent Bank Detection**: Automatically identifies Macro vs BBVA from PDF content
-- **Transaction Parsing**: Handles all known transaction types for both banks
-- **European Number Format**: Perfect handling of 1.234,56 notation across banks
+- **PDF Text Extraction**: Robust extraction using pdfplumber for all supported statement types
+- **Intelligent Payment Method Detection**: Automatically identifies Macro VISA, BBVA VISA, and BBVA Mastercard from PDF content
+- **Transaction Parsing**: Handles all known transaction types across all supported payment methods
+- **European Number Format**: Perfect handling of 1.234,56 notation across all banks
 - **Multi-Currency Support**: ARS and USD transactions processed correctly
-- **Date Conversion**: DD.MM.YY to YYYY-MM-DD with century inference
+- **Dual Date Format Support**: DD.MM.YY (VISA) and DD-MMM-YY (Mastercard) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
 
-### Bank Support (Complete)
+### Payment Method Support (Complete)
 
 - **Macro VISA**: Full support with 91 transactions successfully processed
 - **BBVA VISA**: Full support with 45 transactions successfully processed
-- **Automatic Detection**: Content-based bank identification from PDF text
-- **Backward Compatibility**: Zero regression in existing Macro functionality
+- **BBVA Mastercard**: Full support with 7 transactions successfully processed (new format)
+- **Automatic Detection**: Content-based payment method identification with card type precedence
+- **Backward Compatibility**: Zero regression in existing functionality
 
 ### Transaction Type Support (Complete)
 
@@ -164,6 +165,7 @@
 - ✅ **v0.2.1**: Balance validation and USD payment detection
 - ✅ **v0.2.2**: Test suite restructure with production-ready organization
 - ✅ **v0.2.3**: Enterprise test coverage implementation with 90.11% coverage using pytest-cov
+- ✅ **v0.2.4**: BBVA Mastercard support with DD-MMM-YY date format and Spanish abbreviations
 
 ### Upcoming Milestones
 

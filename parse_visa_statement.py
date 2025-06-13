@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def detect_payment_method(full_text):
     """
     Detect payment method from PDF content
-    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA")
+    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA", "BBVA Mastercard")
     """
     text_upper = full_text.upper()
 
@@ -24,11 +24,14 @@ def detect_payment_method(full_text):
     bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
     bbva_found = any(indicator in text_upper for indicator in bbva_indicators)
 
-    # Check for VISA indicators
+    # Check for card type indicators
     visa_found = "VISA" in text_upper
+    mastercard_found = "MASTERCARD" in text_upper
 
     if macro_found and visa_found:
         return "Macro VISA"
+    elif bbva_found and mastercard_found:
+        return "BBVA Mastercard"
     elif bbva_found and visa_found:
         return "BBVA VISA"
 
@@ -43,28 +46,54 @@ def extract_balance_from_pdf(full_text, payment_method):
     """
     balance = {"ars": 0.0, "usd": 0.0}
 
-    # Both banks use the same format: SALDO ACTUAL $ 1.095.461,57 U$S 3,00
-    pattern = r"SALDO ACTUAL \$ ([\d,.]+) U\$S ([\d,.]+)"
-    match = re.search(pattern, full_text)
-    if match:
-        try:
+    if payment_method == "BBVA Mastercard":
+        # BBVA Mastercard format: "SALDO ACTUAL $ 185.170,00 SALDO ACTUAL U$S 0,00"
+        # or on same line: "30-Abr-25 09-May-25 185.170,00 0,00 30.853,00"
+        pattern1 = r"SALDO ACTUAL \$ ([\d,.]+).*?SALDO ACTUAL U\$S ([\d,.]+)"
+        match1 = re.search(pattern1, full_text)
+        if match1:
+            try:
+                ars_str = match1.group(1)
+                usd_str = match1.group(2)
+            except:
+                ars_str = "0"
+                usd_str = "0"
+        else:
+            # Alternative pattern for BBVA Mastercard: find balance in the summary line
+            pattern2 = r"\d{2}-\w{3}-\d{2}\s+\d{2}-\w{3}-\d{2}\s+([\d,.]+)\s+([\d,.]+)\s+[\d,.]+"
+            match2 = re.search(pattern2, full_text)
+            if match2:
+                ars_str = match2.group(1)
+                usd_str = match2.group(2)
+            else:
+                ars_str = "0"
+                usd_str = "0"
+    else:
+        # Standard format for MACRO VISA and BBVA VISA: SALDO ACTUAL $ 1.095.461,57 U$S 3,00
+        pattern = r"SALDO ACTUAL \$ ([\d,.]+) U\$S ([\d,.]+)"
+        match = re.search(pattern, full_text)
+        if match:
             ars_str = match.group(1)
             usd_str = match.group(2)
+        else:
+            ars_str = "0"
+            usd_str = "0"
 
-            # Handle European format for ARS: 1.095.461,57 -> 1095461.57
-            if "." in ars_str and "," in ars_str:
-                ars_str = ars_str.replace(".", "").replace(",", ".")
-            elif "," in ars_str:
-                ars_str = ars_str.replace(",", ".")
+    try:
+        # Handle European format for ARS: 1.095.461,57 -> 1095461.57
+        if "." in ars_str and "," in ars_str:
+            ars_str = ars_str.replace(".", "").replace(",", ".")
+        elif "," in ars_str:
+            ars_str = ars_str.replace(",", ".")
 
-            # Handle European format for USD: 3,00 -> 3.00
-            if "," in usd_str:
-                usd_str = usd_str.replace(",", ".")
+        # Handle European format for USD: 3,00 -> 3.00
+        if "," in usd_str:
+            usd_str = usd_str.replace(",", ".")
 
-            balance["ars"] = float(ars_str)
-            balance["usd"] = float(usd_str)
-        except ValueError:
-            pass
+        balance["ars"] = float(ars_str)
+        balance["usd"] = float(usd_str)
+    except ValueError:
+        pass
 
     return balance
 
@@ -119,6 +148,8 @@ def parse_visa_pdf(pdf_path, output_path):
     # Detect payment method from PDF content
     payment_method = detect_payment_method(full_text)
 
+    # Debug output removed - BBVA Mastercard processing is working correctly
+
     lines = full_text.split("\n")
 
     for i, line in enumerate(lines):
@@ -128,14 +159,103 @@ def parse_visa_pdf(pdf_path, output_path):
 
         # Pattern for transaction lines with date
         date_pattern = r"(\d{2}\.\d{2}\.\d{2})\s+"
+        date_pattern_mmm = (
+            r"(\d{2}-\w{3}-\d{2})\s+"  # BBVA Mastercard format: 15-Mar-25
+        )
+
         match = re.match(date_pattern, line)
+        match_mmm = re.match(date_pattern_mmm, line)
 
         if match:
             date_str = match.group(1)
             remaining_line = line[match.end() :].strip()
+        elif match_mmm:
+            date_str = match_mmm.group(1)
+            remaining_line = line[
+                match_mmm.end() :
+            ].strip()  # BBVA Mastercard single-line format
+        else:
+            continue
+
+        if match or match_mmm:
 
             # Skip certain lines but handle specific cases
             if "SALDO ANTERIOR" in remaining_line or "Total Consumos" in remaining_line:
+                continue
+
+            # Handle BBVA Mastercard single-line format
+            if payment_method == "BBVA Mastercard" and match_mmm:
+                # Skip lines that don't look like transactions
+                if (
+                    len(remaining_line.split()) < 2
+                    or "SALDO ACTUAL" in remaining_line
+                    or "VENCIMIENTO" in remaining_line
+                    or remaining_line.count("-") > 2
+                    or "PAGO MÍNIMO" in remaining_line
+                    or re.match(
+                        r"\d{2}-\w{3}-\d{2}\s+[\d,.]+\s+[\d,.]+\s+[\d,.]+",
+                        remaining_line,
+                    )  # Skip balance lines like "09-May-25 185.170,00 0,00 30.853,00"
+                ):  # Skip date range lines like "04-Abr-25 29-May-25 06-Jun-"
+                    continue
+
+                # For BBVA Mastercard, format is: DD-MMM-YY DESCRIPTION REFERENCE AMOUNT
+                if "SU PAGO EN PESOS" in remaining_line:
+                    # Extract amount from payment line (could be negative already)
+                    amount_match = re.search(r"(-?[\d,.]+)$", remaining_line)
+                    if amount_match:
+                        amount_str = amount_match.group(1)
+                        # Handle negative sign
+                        is_negative = amount_str.startswith("-")
+                        if is_negative:
+                            amount_str = amount_str[1:]  # Remove the negative sign
+
+                        # Convert European format
+                        if "." in amount_str and "," in amount_str:
+                            amount_str = amount_str.replace(".", "").replace(",", ".")
+                        elif "," in amount_str:
+                            amount_str = amount_str.replace(",", ".")
+                        try:
+                            amount = -float(amount_str)  # Always negative for payments
+                            transaction = {
+                                "Date": convert_date(date_str),
+                                "Description": "SU PAGO EN PESOS",
+                                "Currency": "ARS",
+                                "Amount": amount,
+                                "Payment Method": payment_method,
+                            }
+                            transactions.append(transaction)
+                        except ValueError:
+                            pass
+                else:
+                    # Regular transaction: extract amount from end and description from middle
+                    amount_match = re.search(r"([\d,.]+)$", remaining_line)
+                    if amount_match:
+                        amount_str = amount_match.group(1)
+                        # Convert European format
+                        if "." in amount_str and "," in amount_str:
+                            amount_str = amount_str.replace(".", "").replace(",", ".")
+                        elif "," in amount_str:
+                            amount_str = amount_str.replace(",", ".")
+                        try:
+                            amount = float(amount_str)
+                            # Extract description (everything except the amount)
+                            description = remaining_line.rsplit(
+                                amount_match.group(1), 1
+                            )[0].strip()
+                            # Skip if description looks like balance info
+                            if len(description.split()) < 2:
+                                continue
+                            transaction = {
+                                "Date": convert_date(date_str),
+                                "Description": description,
+                                "Currency": "ARS",
+                                "Amount": amount,
+                                "Payment Method": payment_method,
+                            }
+                            transactions.append(transaction)
+                        except ValueError:
+                            pass
                 continue
 
             # Handle tax entries (IMPUESTO, IIBB, IVA, DB.RG, DB.IMPUESTO)
@@ -476,9 +596,31 @@ def parse_visa_pdf(pdf_path, output_path):
 
 
 def convert_date(date_str):
-    """Convert DD.MM.YY to YYYY-MM-DD format"""
-    day, month, year = date_str.split(".")
-    # Assuming 22 means 2022
+    """Convert DD.MM.YY or DD-MMM-YY to YYYY-MM-DD format"""
+    if "-" in date_str:
+        # Handle DD-MMM-YY format (BBVA Mastercard)
+        day, month_name, year = date_str.split("-")
+        month_map = {
+            "Jan": "01",
+            "Feb": "02",
+            "Mar": "03",
+            "Apr": "04",
+            "Abr": "04",  # Spanish abbreviation for April
+            "May": "05",
+            "Jun": "06",
+            "Jul": "07",
+            "Aug": "08",
+            "Sep": "09",
+            "Oct": "10",
+            "Nov": "11",
+            "Dec": "12",
+        }
+        month = month_map.get(month_name, "01")
+    else:
+        # Handle DD.MM.YY format (MACRO VISA, BBVA VISA)
+        day, month, year = date_str.split(".")
+
+    # Assuming years < 50 = 20XX, years >= 50 = 19XX
     if int(year) < 50:
         full_year = 2000 + int(year)
     else:
@@ -591,6 +733,44 @@ if __name__ == "__main__":
             df_bbva,
             reported_bbva,
             computed_bbva,
+            output_file,
+        )
+    )
+
+    # Process BBVA Mastercard statement
+    print("Processing BBVA Mastercard statement...")
+    input_file = "input/BBVA-Mastercard-2025-04.pdf"
+    output_file = "output/BBVA-Mastercard-transactions.xlsx"
+    df_bbva_mc = parse_visa_pdf(input_file, output_file)
+
+    # Get validation data for summary
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+
+    payment_method = detect_payment_method(full_text)
+    reported_bbva_mc = extract_balance_from_pdf(full_text, payment_method)
+
+    ars_non_payments = df_bbva_mc[
+        (df_bbva_mc["Currency"] == "ARS")
+        & (df_bbva_mc["Description"] != "SU PAGO EN PESOS")
+    ]
+    usd_non_payments = df_bbva_mc[
+        (df_bbva_mc["Currency"] == "USD")
+        & (df_bbva_mc["Description"] != "SU PAGO EN USD")
+    ]
+    computed_bbva_mc = {
+        "ars": ars_non_payments["Amount"].sum(),
+        "usd": usd_non_payments["Amount"].sum(),
+    }
+
+    results.append(
+        (
+            "BBVA-Mastercard-2025-04.pdf",
+            df_bbva_mc,
+            reported_bbva_mc,
+            computed_bbva_mc,
             output_file,
         )
     )

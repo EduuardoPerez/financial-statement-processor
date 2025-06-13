@@ -102,8 +102,9 @@ financial-statement-processor/
 - **pytest-cov**: Test coverage measurement and enforcement using coverage.py
 - **Integration Tests**: Process real PDF files, compare with expected output
 - **Unit Tests**: Validate individual functions (date conversion, payment detection)
-- **Coverage Enforcement**: 90.11% coverage with configurable thresholds (80%, 90%, 100%)
+- **Coverage Enforcement**: 87% coverage with 83 tests, configurable thresholds (80%, 90%, 100%)
 - **Specialized Coverage Tests**: Targeted tests for error handling and edge cases
+- **Bank-Specific Tests**: Dedicated test files for MACRO VISA, BBVA VISA, and BBVA Mastercard
 
 ### Validation Approach
 

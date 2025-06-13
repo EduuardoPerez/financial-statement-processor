@@ -19,14 +19,25 @@ PDF Input → Text Extraction → Pattern Matching → Data Transformation → E
 ### 1. Strategy Pattern for Bank Detection
 
 - **Pattern**: `detect_payment_method()` function analyzes PDF content
-- **Implementation**: String matching against known bank indicators
+- **Implementation**: String matching against known bank and card type indicators
 - **Extensibility**: New banks add their indicator patterns
+- **Card Type Priority**: Mastercard detection takes precedence over VISA when both present
 
 ```python
 def detect_payment_method(full_text):
-    # Macro bank indicators
+    # Bank indicators
     macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
-    # Future: add BBVA, Santander indicators
+    bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
+
+    # Card type indicators
+    visa_found = "VISA" in text_upper
+    mastercard_found = "MASTERCARD" in text_upper
+
+    # Detection logic with card type precedence
+    if bbva_found and mastercard_found:
+        return "BBVA Mastercard"
+    elif bbva_found and visa_found:
+        return "BBVA VISA"
 ```
 
 ### 2. Line-by-Line Processing Pattern
@@ -87,9 +98,18 @@ elif "," in amount_str:
 
 ### 1. Date Standardization
 
-- **Input**: DD.MM.YY format
+- **Input Formats**:
+  - DD.MM.YY format (VISA statements)
+  - DD-MMM-YY format (Mastercard statements)
 - **Output**: YYYY-MM-DD format
 - **Logic**: Years < 50 = 20XX, years >= 50 = 19XX
+- **Spanish Support**: "Abr" = April for Spanish month abbreviations
+
+```python
+# VISA format: 15.03.25 -> 2025-03-15
+# Mastercard format: 15-Mar-25 -> 2025-03-15
+# Spanish: 04-Abr-25 -> 2025-04-04
+```
 
 ### 2. Amount Normalization
 
