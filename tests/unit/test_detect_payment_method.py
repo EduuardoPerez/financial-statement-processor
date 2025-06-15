@@ -195,3 +195,98 @@ class TestDetectPaymentMethod:
         """
         result = detect_payment_method(content)
         assert result == "BBVA VISA"
+
+    def test_detect_bbva_account_xls_filename(self):
+        """Test detection of BBVA Account from XLS filename"""
+        test_filenames = [
+            "tests/test_data/input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls",
+            "BBVA-DETALLE-movimientos.xls",
+            "bbva-account-statement.xls",
+            "BBVA-ACCOUNT-detalle.xls",
+            "account-bbva-detalle.xls",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "BBVA Account"
+            ), f"Should detect BBVA Account from {filename}"
+
+    def test_detect_macro_account_xls_filename(self):
+        """Test detection of Macro Account from XLS filename"""
+        test_filenames = [
+            "tests/test_data/input/MACRO-movimientos-de-cuenta.xls",
+            "MACRO-MOVIMIENTOS-statement.xls",
+            "macro-movimientos-detalle.xls",
+            "MACRO-MOVIMIENTOS-de-cuenta.xls",
+            "movimientos-macro-cuenta.xls",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "Macro Account"
+            ), f"Should detect Macro Account from {filename}"
+
+    def test_detect_macro_account_case_insensitive(self):
+        """Test that Macro Account detection is case insensitive"""
+        test_filenames = [
+            "macro-movimientos-de-cuenta.xls",
+            "MACRO-MOVIMIENTOS-DE-CUENTA.XLS",
+            "Macro-Movimientos-De-Cuenta.xls",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "Macro Account"
+            ), f"Should detect Macro Account from {filename}"
+
+    def test_detect_xls_vs_pdf_precedence(self):
+        """Test that XLS filename detection takes precedence over content detection"""
+        # Test with BBVA Account XLS file but Macro content (shouldn't happen in practice)
+        bbva_filename = "BBVA-DETALLE-account.xls"
+        macro_content = "MACRO PREMIA VISA"
+
+        result = detect_payment_method(
+            content_or_path=bbva_filename, full_text=macro_content
+        )
+        assert result == "BBVA Account", "XLS filename detection should take precedence"
+
+    def test_detect_non_xls_files_use_content(self):
+        """Test that non-XLS files fall back to content detection"""
+        pdf_filename = "MACRO-statement.pdf"
+        macro_content = "MACRO PREMIA VISA"
+
+        result = detect_payment_method(file_path=pdf_filename, full_text=macro_content)
+        assert result == "Macro VISA", "Should use content detection for non-XLS files"
+
+    def test_detect_unknown_xls_filename(self):
+        """Test that unknown XLS filenames return Unknown Payment Method"""
+        unknown_filenames = [
+            "santander-account.xls",
+            "unknown-bank-statement.xls",
+            "other-financial-data.xls",
+        ]
+
+        for filename in unknown_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "Unknown Payment Method"
+            ), f"Should return Unknown for {filename}"
+
+    def test_detect_with_actual_macro_account_xls_file(self):
+        """Test with actual Macro Account XLS file to ensure correct detection"""
+        xls_path = "tests/test_data/input/MACRO-movimientos-de-cuenta.xls"
+
+        result = detect_payment_method(file_path=xls_path)
+        assert result == "Macro Account"
+
+    def test_detect_with_actual_bbva_account_xls_file(self):
+        """Test with actual BBVA Account XLS file to ensure correct detection"""
+        xls_path = (
+            "tests/test_data/input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"
+        )
+
+        result = detect_payment_method(file_path=xls_path)
+        assert result == "BBVA Account"

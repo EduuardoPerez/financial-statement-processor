@@ -24,11 +24,11 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Current Scope
 
-- **Supported**: Macro VISA, BBVA VISA, BBVA Mastercard (PDF), and BBVA Account (XLS)
+- **Supported**: Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), and Macro Account (XLS)
 - **Formats**: PDF input → Excel output, XLS input → Excel output
 - **Currencies**: ARS (Argentine Peso) and USD
-- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest
-- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account) with Spanish month support
+- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions
+- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account), YYYY-MM-DD (datetime objects in Macro Account)
 
 ### Expansion Roadmap
 
@@ -37,6 +37,16 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Future**: CLI interface, batch processing, transaction categorization
 
 ## Recent Completions
+
+### Macro Account XLS Support (June 2025)
+
+- **Macro Account Processing**: Complete support for Macro Account XLS statements
+- **Enhanced Detection Logic**: Case-insensitive filename-based detection using "MACRO" and "MOVIMIENTOS" keywords
+- **Native XLS Processing**: Direct parsing of datetime objects and numeric data from XLS structure
+- **Source Balance Validation**: Validation against first row Saldo column value (34,122.00)
+- **Transaction Variety**: Support for compensations, transfers, credit card payments, commissions, capitalizations
+- **Comprehensive Testing**: 13 new integration tests covering complete end-to-end workflow
+- **Unit Test Expansion**: 8 additional detection tests for XLS filename patterns
 
 ### BBVA Account XLS Support (June 2025)
 
@@ -57,10 +67,11 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Quality Assurance (Current)
 
-- **Test Coverage**: 109 comprehensive tests with 90% meaningful code coverage
-- **Integration Tests**: 4 end-to-end test suites covering all statement types
+- **Test Coverage**: 130 comprehensive tests with 91% meaningful code coverage
+- **Integration Tests**: 5 end-to-end test suites covering all statement types
 - **Professional Test Organization**: Behavior-focused test architecture with logical grouping
 - **Test Quality**: Descriptive names, clear validation, excellent maintainability
+- **Coverage Improvement**: Added 21 new tests for Macro Account functionality (+6% coverage increase)
 
 ## Target Users
 

@@ -29,6 +29,8 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
             keyword in filename_upper for keyword in ["BBVA", "ACCOUNT"]
         ):
             return "BBVA Account"
+        elif all(keyword in filename_upper for keyword in ["MACRO", "MOVIMIENTOS"]):
+            return "Macro Account"
 
     # For PDF files, detect based on content
     if full_text:
@@ -682,6 +684,59 @@ def parse_account_xls(xls_path, output_path):
     return df
 
 
+def parse_macro_account_xls(xls_path, output_path):
+    """
+    Parse Macro Account XLS file and generate Excel output
+    """
+    transactions = []
+
+    # Read the XLS file
+    df = pd.read_excel(xls_path, header=None)
+
+    # Skip header rows (row 0 is title, row 1 is account number, row 2 is column headers)
+    data_rows = df.iloc[3:]  # Start from row 3 (fourth row)
+
+    # Filter valid transaction rows
+    for _, row in data_rows.iterrows():
+        if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):  # Date and Amount not null
+            fecha = row.iloc[0]  # Already a datetime object
+            descripcion = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
+            importe = row.iloc[3]  # Already a number
+
+            if fecha and pd.notna(importe):
+                # Convert datetime to YYYY-MM-DD format
+                formatted_date = fecha.strftime("%Y-%m-%d")
+
+                # Amount is already in proper numeric format
+                amount = float(importe)
+
+                transaction = {
+                    "Date": formatted_date,
+                    "Description": descripcion,
+                    "Currency": "ARS",  # Macro Account transactions are in ARS
+                    "Amount": amount,
+                    "Payment Method": "Macro Account",
+                }
+                transactions.append(transaction)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(transactions)
+
+    # Sort by date to match expected output (descending - newest first)
+    if len(df) > 0:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date", ascending=False)
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Save to Excel
+    df.to_excel(output_path, index=False, sheet_name="Sheet1")
+
+    return df
+
+
 def convert_date(date_str):
     """Convert DD.MM.YY or DD-MMM-YY to YYYY-MM-DD format"""
     if "-" in date_str:
@@ -898,6 +953,35 @@ if __name__ == "__main__":
             df_bbva_account,
             reported_bbva_account,
             computed_bbva_account,
+            output_file,
+        )
+    )
+
+    # Process Macro Account statement
+    print("Processing Macro Account statement...")
+    input_file = "input/MACRO-movimientos-de-cuenta.xls"
+    output_file = "output/Macro-Account-transactions.xlsx"
+    df_macro_account = parse_macro_account_xls(input_file, output_file)
+
+    # For Macro XLS validation, extract balance from first row of Saldo column
+    input_df = pd.read_excel(input_file, header=None)
+    first_saldo_value = input_df.iloc[3, 4]  # First data row, Saldo column
+
+    # Parse "$ 34.122,00" format to 34122.00
+    expected_total = float(first_saldo_value)
+
+    computed_total = df_macro_account["Amount"].sum()
+
+    # Create balance objects for compatibility with existing summary function
+    reported_macro_account = {"ars": expected_total, "usd": 0.0}
+    computed_macro_account = {"ars": computed_total, "usd": 0.0}
+
+    results.append(
+        (
+            "MACRO-movimientos-de-cuenta.xls",
+            df_macro_account,
+            reported_macro_account,
+            computed_macro_account,
             output_file,
         )
     )

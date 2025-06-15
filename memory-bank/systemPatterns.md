@@ -31,6 +31,8 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
         filename_upper = os.path.basename(file_path).upper()
         if all(keyword in filename_upper for keyword in ["BBVA", "DETALLE"]):
             return "BBVA Account"
+        elif all(keyword in filename_upper for keyword in ["MACRO", "MOVIMIENTOS"]):
+            return "Macro Account"
 
     # PDF content-based detection
     if full_text:
@@ -109,6 +111,7 @@ elif "," in amount_str:
   - DD.MM.YY format (VISA statements)
   - DD-MMM-YY format (Mastercard statements)
   - DD/MM/YYYY format (XLS Account statements)
+  - Datetime objects (Macro Account XLS statements)
 - **Output**: YYYY-MM-DD format
 - **Logic**: Years < 50 = 20XX, years >= 50 = 19XX (for 2-digit years)
 - **Spanish Support**: "Abr" = April for Spanish month abbreviations
@@ -118,6 +121,7 @@ elif "," in amount_str:
 # Mastercard format: 15-Mar-25 -> 2025-03-15
 # Spanish: 04-Abr-25 -> 2025-04-04
 # XLS format: 09/06/2025 -> 2025-06-09
+# Macro Account XLS: datetime.datetime(2025, 6, 6) -> 2025-06-06
 ```
 
 ### 2. Amount Normalization
@@ -239,7 +243,8 @@ tests/
 │   │   ├── BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf
 │   │   ├── BBVA-VISA-resumen_cuenta_visa_May_2025.pdf
 │   │   ├── BBVA-Mastercard-2025-04.pdf
-│   │   └── BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls  # NEW: XLS test data
+│   │   ├── BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls
+│   │   └── MACRO-movimientos-de-cuenta.xls     # NEW: Macro Account XLS test data
 │   └── expected_output/                # Expected test results (copied from ../expected_output/)
 │       ├── MACRO-VISA-transactions.csv
 │       ├── MACRO-VISA-transactions.xlsx
@@ -247,8 +252,10 @@ tests/
 │       ├── BBVA-VISA-transactions.xlsx
 │       ├── BBVA-Mastercard-transactions.csv
 │       ├── BBVA-Mastercard-transactions.xlsx
-│       ├── BBVA-Account-transactions.csv      # NEW: XLS expected output
-│       └── BBVA-Account-transactions.xlsx     # NEW: XLS expected output
+│       ├── BBVA-Account-transactions.csv
+│       ├── BBVA-Account-transactions.xlsx
+│       ├── Macro-Account-transactions.csv     # NEW: Macro Account expected output
+│       └── Macro-Account-transactions.xlsx    # NEW: Macro Account expected output
 ├── unit/                               # Professional unit tests (8 files)
 │   ├── test_convert_date.py           # Date conversion functionality
 │   ├── test_detect_payment_method.py  # Bank and card type detection (includes XLS filename detection)
@@ -258,11 +265,12 @@ tests/
 │   ├── test_print_processing_summary.py # Output formatting
 │   ├── test_transaction_types.py      # Transaction type parsing
 │   └── test_validate_balance.py       # Balance validation logic
-└── integration/                        # End-to-end tests (4 files)
-    ├── test_macro_visa_processing.py  # MACRO workflow tests
+└── integration/                        # End-to-end tests (5 files)
+    ├── test_macro_visa_processing.py  # MACRO VISA workflow tests
     ├── test_bbva_visa_processing.py   # BBVA VISA workflow tests
     ├── test_bbva_mastercard_processing.py # BBVA Mastercard workflow tests
-    └── test_bbva_account_processing.py # NEW: BBVA Account XLS workflow tests (12 tests)
+    ├── test_bbva_account_processing.py # BBVA Account XLS workflow tests (12 tests)
+    └── test_macro_account_processing.py # NEW: Macro Account XLS workflow tests (13 tests)
 ```
 
 ### 8. Comprehensive Test Coverage Pattern
@@ -352,16 +360,17 @@ uv run pytest tests/integration/test_bbva_visa_processing.py -v
 uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 ```
 
-#### Test Quality Metrics (Current State - December 2025)
+#### Test Quality Metrics (Current State - June 2025)
 
-- **Total Tests**: 97 (all passing) ✅
+- **Total Tests**: 130 (all passing) ✅
 - **Unit Tests**: 8 professional test files covering core functions
-- **Integration Tests**: 3 test files covering end-to-end workflows
-- **Bank Coverage**: MACRO VISA, BBVA VISA, BBVA Mastercard with comprehensive patterns
+- **Integration Tests**: 5 test files covering end-to-end workflows
+- **Bank Coverage**: MACRO VISA, BBVA VISA, BBVA Mastercard, BBVA Account, Macro Account with comprehensive patterns
 - **Test Organization**: Professional structure with logical grouping by functionality
 - **Test Quality**: Descriptive names, clear behavior validation, excellent maintainability
-- **Coverage**: 90% meaningful coverage focused on behavior validation
+- **Coverage**: 91% meaningful coverage focused on behavior validation
 - **Real Data Validation**: Uses actual bank statements for testing confidence
+- **Recent Addition**: 21 new tests for Macro Account XLS functionality
 
 ## Test Coverage Implementation Patterns
 

@@ -13,12 +13,13 @@
 - **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
 
-### Payment Method Support (Complete - 4 Types)
+### Payment Method Support (Complete - 5 Types)
 
 - **Macro VISA**: Full support with 91 transactions successfully processed (PDF)
 - **BBVA VISA**: Full support with 45 transactions successfully processed (PDF)
 - **BBVA Mastercard**: Full support with 7 transactions successfully processed (PDF - new format)
 - **BBVA Account**: Full support with 60 transactions successfully processed (XLS - new format)
+- **Macro Account**: Full support with 37 transactions successfully processed (XLS - new format)
 - **Automatic Detection**: Content-based (PDF) and filename-based (XLS) payment method identification
 - **Backward Compatibility**: Zero regression in existing functionality
 
@@ -35,16 +36,16 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 90% meaningful coverage with 109 well-organized tests
-- **Test Suite Expansion**: Added comprehensive BBVA Account XLS integration tests (12 new tests)
-- **Coverage Quality**: Maintained 90% meaningful coverage with new functionality fully tested
+- **Professional Test Coverage**: 91% meaningful coverage with 130 well-organized tests
+- **Test Suite Expansion**: Added comprehensive Macro Account XLS integration tests (13 new tests + 8 unit tests)
+- **Coverage Quality**: Improved to 91% meaningful coverage with new functionality fully tested
 - **Test Architecture**: Professional organization with logical grouping by functionality
 - **Error Handling Suite**: Dedicated test suite for edge cases and error handling
 - **European Format Testing**: Specialized tests for 1.234,56 number format parsing across all formats
 - **Transaction Type Testing**: Comprehensive tests for all transaction types (tax, payment, adjustment, etc.)
-- **Integration Testing**: Real statement processing with expected output validation for all four statement types
+- **Integration Testing**: Real statement processing with expected output validation for all five statement types
 - **Unit Testing**: Individual function validation with descriptive, meaningful test names
-- **Test Organization**: 8 focused unit test files + 4 integration test files
+- **Test Organization**: 8 focused unit test files + 5 integration test files
 - **Quality Standards**: Descriptive test names, clear behavior validation, professional structure
 - **Maintainability**: Dramatically improved test readability and maintainability
 - **Coverage Enforcement**: Configurable thresholds with pytest-cov integration
@@ -64,11 +65,12 @@
 - `test_transaction_types.py` - Transaction type parsing
 - `test_validate_balance.py` - Balance validation logic
 
-#### Integration Tests (4 files, end-to-end testing)
+#### Integration Tests (5 files, end-to-end testing)
 
-- `test_bbva_account_processing.py` - BBVA Account XLS complete workflow (NEW - 12 tests)
+- `test_bbva_account_processing.py` - BBVA Account XLS complete workflow (12 tests)
 - `test_bbva_mastercard_processing.py` - BBVA Mastercard complete workflow
 - `test_bbva_visa_processing.py` - BBVA VISA complete workflow
+- `test_macro_account_processing.py` - Macro Account XLS complete workflow (NEW - 13 tests)
 - `test_macro_visa_processing.py` - MACRO VISA complete workflow
 
 ### Development Infrastructure (Complete)
@@ -197,6 +199,7 @@
 - ✅ **v0.2.4**: BBVA Mastercard support with DD-MMM-YY date format and Spanish abbreviations
 - ✅ **v0.2.5**: Professional test suite refactoring - 97 meaningful tests with 90% coverage
 - ✅ **v0.2.6**: BBVA Account XLS support - 109 tests with comprehensive XLS integration testing
+- ✅ **v0.2.7**: Macro Account XLS support - 130 tests with 91% coverage and comprehensive functionality
 
 ### Upcoming Milestones
 
