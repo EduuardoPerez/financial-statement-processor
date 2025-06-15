@@ -9,31 +9,49 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-def detect_payment_method(full_text):
+def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
     """
-    Detect payment method from PDF content
-    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA", "BBVA Mastercard")
+    Detect payment method from PDF content or filename
+    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA", "BBVA Mastercard", "BBVA Account")
+
+    For backwards compatibility, accepts content as first positional argument
     """
-    text_upper = full_text.upper()
+    # Handle backwards compatibility - if first argument is provided, treat as full_text
+    if content_or_path is not None and full_text is None and file_path is None:
+        full_text = content_or_path
+    elif content_or_path is not None and file_path is None:
+        file_path = content_or_path
 
-    # Check for Macro bank indicators first (more specific)
-    macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
-    macro_found = any(indicator in text_upper for indicator in macro_indicators)
+    # For XLS files, detect based on filename
+    if file_path and file_path.lower().endswith(".xls"):
+        filename_upper = os.path.basename(file_path).upper()
+        if all(keyword in filename_upper for keyword in ["BBVA", "DETALLE"]) or all(
+            keyword in filename_upper for keyword in ["BBVA", "ACCOUNT"]
+        ):
+            return "BBVA Account"
 
-    # Check for BBVA bank indicators (more specific than just VISA SIGNATURE)
-    bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
-    bbva_found = any(indicator in text_upper for indicator in bbva_indicators)
+    # For PDF files, detect based on content
+    if full_text:
+        text_upper = full_text.upper()
 
-    # Check for card type indicators
-    visa_found = "VISA" in text_upper
-    mastercard_found = "MASTERCARD" in text_upper
+        # Check for Macro bank indicators first (more specific)
+        macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
+        macro_found = any(indicator in text_upper for indicator in macro_indicators)
 
-    if macro_found and visa_found:
-        return "Macro VISA"
-    elif bbva_found and mastercard_found:
-        return "BBVA Mastercard"
-    elif bbva_found and visa_found:
-        return "BBVA VISA"
+        # Check for BBVA bank indicators (more specific than just VISA SIGNATURE)
+        bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
+        bbva_found = any(indicator in text_upper for indicator in bbva_indicators)
+
+        # Check for card type indicators
+        visa_found = "VISA" in text_upper
+        mastercard_found = "MASTERCARD" in text_upper
+
+        if macro_found and visa_found:
+            return "Macro VISA"
+        elif bbva_found and mastercard_found:
+            return "BBVA Mastercard"
+        elif bbva_found and visa_found:
+            return "BBVA VISA"
 
     # Could add more bank/card combinations here in the future
     return "Unknown Payment Method"
@@ -146,7 +164,7 @@ def parse_visa_pdf(pdf_path, output_path):
             full_text += page.extract_text() + "\n"
 
     # Detect payment method from PDF content
-    payment_method = detect_payment_method(full_text)
+    payment_method = detect_payment_method(full_text=full_text)
 
     # Debug output removed - BBVA Mastercard processing is working correctly
 
@@ -601,6 +619,69 @@ def parse_visa_pdf(pdf_path, output_path):
     return df
 
 
+def parse_account_xls(xls_path, output_path):
+    """
+    Parse BBVA Account XLS file and generate Excel output
+    """
+    transactions = []
+
+    # Read the XLS file
+    df = pd.read_excel(xls_path)
+
+    # Skip header rows (row 0 is title, row 1 is column headers) and get actual data
+    data_rows = df.iloc[2:]  # Start from row 2 (third row)
+
+    # Filter valid transaction rows
+    for _, row in data_rows.iterrows():
+        if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):  # Date and Amount not null
+            fecha_str = str(row.iloc[0]).strip()
+            concepto_str = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+            importe_str = str(row.iloc[3]).strip()
+
+            if fecha_str and importe_str and importe_str != "nan":
+                # Convert date from DD/MM/YYYY to YYYY-MM-DD
+                try:
+                    # Handle dates like "09/06/2025"
+                    day, month, year = fecha_str.split("/")
+                    formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+                except ValueError:
+                    continue  # Skip invalid dates
+
+                # Convert amount from European format to float
+                try:
+                    # Handle European format: -28.820,00 -> -28820.00
+                    amount_str = importe_str.replace(".", "").replace(",", ".")
+                    amount = float(amount_str)
+                except ValueError:
+                    continue  # Skip invalid amounts
+
+                transaction = {
+                    "Date": formatted_date,
+                    "Description": concepto_str,
+                    "Currency": "ARS",  # BBVA Account transactions are in ARS
+                    "Amount": amount,
+                    "Payment Method": "BBVA Account",
+                }
+                transactions.append(transaction)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(transactions)
+
+    # Sort by date to match expected output (descending - newest first)
+    if len(df) > 0:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date", ascending=False)
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Save to Excel
+    df.to_excel(output_path, index=False, sheet_name="Sheet1")
+
+    return df
+
+
 def convert_date(date_str):
     """Convert DD.MM.YY or DD-MMM-YY to YYYY-MM-DD format"""
     if "-" in date_str:
@@ -608,18 +689,21 @@ def convert_date(date_str):
         day, month_name, year = date_str.split("-")
         month_map = {
             "Jan": "01",
+            "Ene": "01",
             "Feb": "02",
             "Mar": "03",
             "Apr": "04",
-            "Abr": "04",  # Spanish abbreviation for April
+            "Abr": "04",
             "May": "05",
             "Jun": "06",
             "Jul": "07",
             "Aug": "08",
+            "Ago": "08",
             "Sep": "09",
             "Oct": "10",
             "Nov": "11",
             "Dec": "12",
+            "Dic": "12",
         }
         month = month_map.get(month_name, "01")
     else:
@@ -777,6 +861,43 @@ if __name__ == "__main__":
             df_bbva_mc,
             reported_bbva_mc,
             computed_bbva_mc,
+            output_file,
+        )
+    )
+
+    # Process BBVA Account statement
+    print("Processing BBVA Account statement...")
+    input_file = "input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"
+    output_file = "output/BBVA-Account-transactions.xlsx"
+    df_bbva_account = parse_account_xls(input_file, output_file)
+
+    # For XLS validation, compare against input file totals
+    input_df = pd.read_excel(input_file)
+    input_data_rows = input_df.iloc[2:]  # Skip header rows
+    input_total = 0
+    for _, row in input_data_rows.iterrows():
+        if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
+            importe_str = str(row.iloc[3]).strip()
+            if importe_str and importe_str != "nan":
+                try:
+                    amount_str = importe_str.replace(".", "").replace(",", ".")
+                    amount = float(amount_str)
+                    input_total += amount
+                except ValueError:
+                    continue
+
+    computed_total = df_bbva_account["Amount"].sum()
+
+    # Create balance objects for compatibility with existing summary function
+    reported_bbva_account = {"ars": input_total, "usd": 0.0}
+    computed_bbva_account = {"ars": computed_total, "usd": 0.0}
+
+    results.append(
+        (
+            "BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls",
+            df_bbva_account,
+            reported_bbva_account,
+            computed_bbva_account,
             output_file,
         )
     )

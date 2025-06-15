@@ -12,32 +12,39 @@
 
 ```
 PDF Input → Text Extraction → Pattern Matching → Data Transformation → Excel Output
+XLS Input → Data Reading → Structure Parsing → Data Transformation → Excel Output
 ```
 
 ## Core Design Patterns
 
 ### 1. Strategy Pattern for Bank Detection
 
-- **Pattern**: `detect_payment_method()` function analyzes PDF content
-- **Implementation**: String matching against known bank and card type indicators
+- **Pattern**: `detect_payment_method()` function analyzes content and filename
+- **Implementation**: Content-based detection for PDFs, filename-based for XLS files
 - **Extensibility**: New banks add their indicator patterns
 - **Card Type Priority**: Mastercard detection takes precedence over VISA when both present
 
 ```python
-def detect_payment_method(full_text):
-    # Bank indicators
-    macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
-    bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
+def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
+    # XLS filename-based detection
+    if file_path and file_path.lower().endswith(".xls"):
+        filename_upper = os.path.basename(file_path).upper()
+        if all(keyword in filename_upper for keyword in ["BBVA", "DETALLE"]):
+            return "BBVA Account"
 
-    # Card type indicators
-    visa_found = "VISA" in text_upper
-    mastercard_found = "MASTERCARD" in text_upper
+    # PDF content-based detection
+    if full_text:
+        text_upper = full_text.upper()
+        macro_indicators = ["MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR"]
+        bbva_indicators = ["BBVA", "WWW.BBVA.COM.AR"]
 
-    # Detection logic with card type precedence
-    if bbva_found and mastercard_found:
-        return "BBVA Mastercard"
-    elif bbva_found and visa_found:
-        return "BBVA VISA"
+        visa_found = "VISA" in text_upper
+        mastercard_found = "MASTERCARD" in text_upper
+
+        if bbva_found and mastercard_found:
+            return "BBVA Mastercard"
+        elif bbva_found and visa_found:
+            return "BBVA VISA"
 ```
 
 ### 2. Line-by-Line Processing Pattern
@@ -101,14 +108,16 @@ elif "," in amount_str:
 - **Input Formats**:
   - DD.MM.YY format (VISA statements)
   - DD-MMM-YY format (Mastercard statements)
+  - DD/MM/YYYY format (XLS Account statements)
 - **Output**: YYYY-MM-DD format
-- **Logic**: Years < 50 = 20XX, years >= 50 = 19XX
+- **Logic**: Years < 50 = 20XX, years >= 50 = 19XX (for 2-digit years)
 - **Spanish Support**: "Abr" = April for Spanish month abbreviations
 
 ```python
 # VISA format: 15.03.25 -> 2025-03-15
 # Mastercard format: 15-Mar-25 -> 2025-03-15
 # Spanish: 04-Abr-25 -> 2025-04-04
+# XLS format: 09/06/2025 -> 2025-06-09
 ```
 
 ### 2. Amount Normalization
@@ -225,31 +234,35 @@ elif "," in amount_str:
 tests/
 ├── __init__.py
 ├── test_data/                          # Isolated test data
-│   ├── input/                          # Test PDF files (copied from ../input/)
+│   ├── input/                          # Test files (copied from ../input/)
 │   │   ├── MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf
 │   │   ├── BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf
 │   │   ├── BBVA-VISA-resumen_cuenta_visa_May_2025.pdf
-│   │   └── BBVA-Mastercard-2025-04.pdf
+│   │   ├── BBVA-Mastercard-2025-04.pdf
+│   │   └── BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls  # NEW: XLS test data
 │   └── expected_output/                # Expected test results (copied from ../expected_output/)
 │       ├── MACRO-VISA-transactions.csv
 │       ├── MACRO-VISA-transactions.xlsx
 │       ├── BBVA-VISA-transactions.csv
 │       ├── BBVA-VISA-transactions.xlsx
 │       ├── BBVA-Mastercard-transactions.csv
-│       └── BBVA-Mastercard-transactions.xlsx
+│       ├── BBVA-Mastercard-transactions.xlsx
+│       ├── BBVA-Account-transactions.csv      # NEW: XLS expected output
+│       └── BBVA-Account-transactions.xlsx     # NEW: XLS expected output
 ├── unit/                               # Professional unit tests (8 files)
 │   ├── test_convert_date.py           # Date conversion functionality
-│   ├── test_detect_payment_method.py  # Bank and card type detection
+│   ├── test_detect_payment_method.py  # Bank and card type detection (includes XLS filename detection)
 │   ├── test_error_handling.py         # Error handling and edge cases
 │   ├── test_european_number_format.py # European number format parsing
 │   ├── test_extract_balance_from_pdf.py # Balance extraction from PDFs
 │   ├── test_print_processing_summary.py # Output formatting
 │   ├── test_transaction_types.py      # Transaction type parsing
 │   └── test_validate_balance.py       # Balance validation logic
-└── integration/                        # End-to-end tests (3 files)
+└── integration/                        # End-to-end tests (4 files)
     ├── test_macro_visa_processing.py  # MACRO workflow tests
     ├── test_bbva_visa_processing.py   # BBVA VISA workflow tests
-    └── test_bbva_mastercard_processing.py # BBVA Mastercard workflow tests
+    ├── test_bbva_mastercard_processing.py # BBVA Mastercard workflow tests
+    └── test_bbva_account_processing.py # NEW: BBVA Account XLS workflow tests (12 tests)
 ```
 
 ### 8. Comprehensive Test Coverage Pattern
@@ -272,6 +285,7 @@ tests/
 - **MACRO VISA Processing**: Complete workflow tests using real MACRO PDF files
 - **BBVA VISA Processing**: Complete workflow tests using real BBVA VISA PDF files
 - **BBVA Mastercard Processing**: Complete workflow tests using real BBVA Mastercard PDF files
+- **BBVA Account Processing**: Complete workflow tests using real BBVA Account XLS files
 
 #### Test Data Management Pattern
 

@@ -15,14 +15,15 @@
 - **European Number Format**: Banks use 1.234,56 format (periods for thousands, commas for decimals)
 - **Multi-Currency Statements**: ARS and USD transactions on same statement
 - **Complex Transaction Types**: Various tax entries, adjustments, and payment types
-- **Date Format Variations**: DD.MM.YY and DD-MMM-YY formats require careful parsing
+- **Date Format Variations**: DD.MM.YY, DD-MMM-YY, and DD/MM/YYYY formats require careful parsing
+- **Multiple File Formats**: PDF statements (text extraction) and XLS files (structured data)
 - **Card Type Differences**: VISA vs Mastercard statements have different layouts and date formats
 
 ## Solution Overview
 
 ### What We're Building
 
-An intelligent PDF processor that transforms messy bank statements into clean, structured Excel data ready for financial analysis. Currently supports Macro VISA, BBVA VISA, and BBVA Mastercard statements with automatic payment method detection.
+An intelligent multi-format processor that transforms both messy PDF bank statements and structured XLS account files into clean, standardized Excel data ready for financial analysis. Currently supports Macro VISA, BBVA VISA, BBVA Mastercard (PDF), and BBVA Account (XLS) with automatic payment method detection.
 
 ### Core Value Propositions
 
@@ -36,8 +37,8 @@ An intelligent PDF processor that transforms messy bank statements into clean, s
 
 ### Primary User Journey
 
-1. **Input**: User places PDF file in input directory
-2. **Processing**: Run simple Python script (automatic payment method detection)
+1. **Input**: User places PDF or XLS file in input directory
+2. **Processing**: Run simple Python script (automatic payment method and format detection)
 3. **Output**: Clean Excel file with standardized transaction data
 4. **Analysis**: Use Excel file in existing financial workflows
 
@@ -76,42 +77,51 @@ An intelligent PDF processor that transforms messy bank statements into clean, s
 
 ### Functional Success
 
-- 100% transaction capture rate from all supported statements (Macro VISA, BBVA VISA, BBVA Mastercard)
-- Zero data corruption or formatting errors
-- Complete currency and amount accuracy across all payment methods
-- Perfect balance validation for all statement types
+- 100% transaction capture rate from all four supported statement types (Macro VISA, BBVA VISA, BBVA Mastercard, BBVA Account)
+- Zero data corruption or formatting errors across PDF and XLS formats
+- Complete currency and amount accuracy across all payment methods and file types
+- Perfect balance validation for all statement types including XLS-specific validation
 
 ### User Success
 
 - Reduces processing time from hours to minutes
-- Eliminates manual transcription errors
+- Eliminates manual transcription errors across multiple file formats
 - Enables immediate use in financial analysis tools
-- Seamless handling of different payment methods without user intervention
+- Seamless handling of different payment methods and file formats without user intervention
 
 ### Technical Success
 
-- Handles all known transaction types correctly across all supported payment methods
-- Processes complex European number formats accurately
-- Maintains data integrity throughout transformation
-- Supports multiple date formats (DD.MM.YY for VISA, DD-MMM-YY for Mastercard)
-- Comprehensive test coverage ensures reliability
+- Handles all known transaction types correctly across all supported payment methods and formats
+- Processes complex European number formats accurately in both PDF and XLS sources
+- Maintains data integrity throughout transformation regardless of input format
+- Supports multiple date formats (DD.MM.YY for VISA, DD-MMM-YY for Mastercard, DD/MM/YYYY for XLS)
+- Comprehensive test coverage ensures reliability across all formats
 
-## Recent Enhancements (December 2025)
+## Recent Enhancements
 
-### BBVA Mastercard Support
+### BBVA Account XLS Support (June 2025)
+
+- **Multi-Format Processing**: Extended system to handle structured XLS data alongside PDF text extraction
+- **Filename-Based Detection**: Intelligent identification of BBVA Account statements from file patterns
+- **XLS-Specific Validation**: Input file total validation against generated output for data integrity
+- **Date Format Support**: DD/MM/YYYY format conversion with proper standardization
+- **European Number Handling**: Seamless 1.234,56 format processing in structured Excel data
+- **Comprehensive Testing**: 12 new integration tests for complete XLS workflow validation
+
+### BBVA Mastercard Support (December 2025)
 
 - **New Format Support**: DD-MMM-YY date format with Spanish month abbreviations
 - **Single-Line Transactions**: Adapted parsing for Mastercard's consolidated transaction format
 - **Custom Balance Extraction**: Specialized balance validation for Mastercard statements
 - **Enhanced Detection**: Card type precedence (Mastercard over VISA when both present)
-- **Comprehensive Testing**: 22 new tests specifically for BBVA Mastercard functionality
 
-### Quality Improvements
+### Quality Improvements (Current)
 
-- **Expanded Test Suite**: Now 83 tests (up from 63) with 87% code coverage
-- **Real PDF Validation**: All tests use actual bank PDF files with expected output comparison
+- **Expanded Test Suite**: Now 109 tests with 90% meaningful code coverage
+- **Real Data Validation**: All tests use actual bank statement files with expected output comparison
+- **Professional Test Organization**: Behavior-focused test architecture with logical grouping
 - **Regression Protection**: Ensures all existing functionality continues to work perfectly
-- **Edge Case Coverage**: Comprehensive testing of date formats, amount parsing, and error handling
+- **Multi-Format Coverage**: Comprehensive testing of PDF text extraction and XLS structured data processing
 
 ## Future Vision
 

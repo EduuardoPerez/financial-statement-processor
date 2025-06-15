@@ -8,27 +8,27 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Primary Goals
 
-- **PDF Processing**: Extract transaction data from bank statement PDFs
-- **Multi-Bank Support**: Handle different bank formats and layouts
+- **Multi-Format Processing**: Extract transaction data from both PDF statements and XLS account files
+- **Multi-Bank Support**: Handle different bank formats and layouts across multiple file types
 - **Data Standardization**: Convert to consistent Excel format with standardized columns
 - **Currency Handling**: Support both ARS and USD transactions with proper decimal formatting
 - **Transaction Categorization**: Automatically identify payment types, taxes, adjustments
 
 ### Success Criteria
 
-- Process Macro VISA statements with 100% accuracy
-- Handle European number format (1.234,56) correctly
-- Maintain data integrity across all transaction types
+- Process all supported statement types with 100% accuracy
+- Handle European number format (1.234,56) correctly across all formats
+- Maintain data integrity across all transaction types and file formats
 - Generate Excel output compatible with financial analysis tools
 - Provide clear error handling and validation
 
 ### Current Scope
 
-- **Supported**: Macro VISA, BBVA VISA, and BBVA Mastercard credit card statements
-- **Format**: PDF input → Excel output
+- **Supported**: Macro VISA, BBVA VISA, BBVA Mastercard (PDF), and BBVA Account (XLS)
+- **Formats**: PDF input → Excel output, XLS input → Excel output
 - **Currencies**: ARS (Argentine Peso) and USD
-- **Transaction Types**: Purchases, payments, taxes, adjustments
-- **Date Formats**: DD.MM.YY (VISA) and DD-MMM-YY (Mastercard) with Spanish month support
+- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest
+- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account) with Spanish month support
 
 ### Expansion Roadmap
 
@@ -36,15 +36,31 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Phase 4**: Additional financial institutions
 - **Future**: CLI interface, batch processing, transaction categorization
 
-## Recent Completion: BBVA Mastercard Support
+## Recent Completions
 
-### Delivered Capabilities (December 2025)
+### BBVA Account XLS Support (June 2025)
+
+- **BBVA Account Processing**: Complete support for BBVA Account XLS statements
+- **XLS Data Processing**: Native Excel file processing for structured account data
+- **Filename-Based Detection**: Intelligent payment method detection using file patterns
+- **European Number Format**: Seamless handling of 1.234,56 notation in XLS format
+- **Date Format Handling**: DD/MM/YYYY format conversion to standardized output
+- **XLS-Specific Validation**: Input total validation against generated output totals
+- **Comprehensive Testing**: 12 new integration tests for complete XLS workflow validation
+
+### BBVA Mastercard Support (December 2025)
 
 - **BBVA Mastercard Processing**: Complete support for BBVA Mastercard PDF statements
 - **Date Format Handling**: DD-MMM-YY format with Spanish abbreviations ("Abr" = April)
 - **Single-Line Transaction Format**: Adapted parsing for Mastercard's consolidated transaction format
 - **Balance Validation**: Custom balance extraction for Mastercard statement format
-- **Test Coverage**: 83 comprehensive tests with 87% code coverage
+
+### Quality Assurance (Current)
+
+- **Test Coverage**: 109 comprehensive tests with 90% meaningful code coverage
+- **Integration Tests**: 4 end-to-end test suites covering all statement types
+- **Professional Test Organization**: Behavior-focused test architecture with logical grouping
+- **Test Quality**: Descriptive names, clear validation, excellent maintainability
 
 ## Target Users
 

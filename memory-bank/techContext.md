@@ -6,7 +6,7 @@
 
 - **Python 3.11+**: Modern Python with latest features and performance improvements
 - **pdfplumber**: PDF text extraction library, chosen for robust text extraction capabilities
-- **pandas**: Data manipulation and analysis, essential for transaction data processing
+- **pandas**: Data manipulation and analysis, essential for transaction data processing and XLS reading
 - **openpyxl**: Excel file generation, provides compatibility with Microsoft Excel
 
 ### Dependency Management
@@ -62,20 +62,30 @@ financial-statement-processor/
 
 ## Technical Constraints
 
-### PDF Processing Limitations
+### Format-Specific Limitations
+
+**PDF Processing Limitations**
 
 - **Text-Based Only**: Cannot process scanned/image-based PDFs
 - **Layout Dependency**: Relies on consistent bank statement formatting
 - **Language Specific**: Designed for Spanish/Argentine banking terminology
 
+**XLS Processing Advantages**
+
+- **Structured Data**: Handles structured Excel data more reliably than PDF text extraction
+- **Format Flexibility**: Less dependent on layout variations
+- **Data Integrity**: Built-in data type validation
+
 ### Number Format Complexity
 
-- **European Format**: Must handle 1.234,56 notation correctly
+- **European Format**: Must handle 1.234,56 notation correctly across both PDF and XLS formats
 - **Multiple Separators**: Distinguish between thousands and decimal separators
 - **Currency Mixing**: ARS and USD on same statement with different formats
+- **Cross-Format Consistency**: Ensure consistent number handling between PDF text and XLS data
 
 ### Date Format Challenges
 
+- **Multiple Input Formats**: DD.MM.YY (PDF VISA), DD-MMM-YY (PDF Mastercard), DD/MM/YYYY (XLS Account)
 - **Two-Digit Years**: DD.MM.YY format requires century inference
 - **Cutoff Logic**: Years < 50 = 20XX, years >= 50 = 19XX
 - **Future Proofing**: Will need adjustment in 2050
@@ -100,11 +110,11 @@ financial-statement-processor/
 
 - **pytest**: Industry standard testing framework
 - **pytest-cov**: Test coverage measurement and enforcement using coverage.py
-- **Integration Tests**: Process real PDF files, compare with expected output
-- **Unit Tests**: Validate individual functions (date conversion, payment detection)
-- **Coverage Enforcement**: 88% coverage with 85 tests, configurable thresholds (80%, 90%, 100%)
+- **Integration Tests**: Process real PDF and XLS files, compare with expected output
+- **Unit Tests**: Validate individual functions (date conversion, payment detection, XLS filename detection)
+- **Coverage Enforcement**: 90% coverage with 109 tests, configurable thresholds (80%, 90%, 100%)
 - **Specialized Coverage Tests**: Targeted tests for error handling and edge cases
-- **Bank-Specific Tests**: Dedicated test files for MACRO VISA, BBVA VISA, and BBVA Mastercard
+- **Multi-Format Tests**: Dedicated test files for MACRO VISA, BBVA VISA, BBVA Mastercard, and BBVA Account XLS
 
 ### Test Coverage Implementation
 
@@ -166,12 +176,12 @@ uv run pytest
 
 #### Coverage Metrics
 
-- **Target Coverage**: 88% achieved
-- **Current Coverage**: 88%
-- **Core File**: `parse_visa_statement.py` (88% coverage)
-- **Total Tests**: 85 (all passing)
-- **Total Statements**: 333 code statements
-- **Missing Statements**: 41 (complex error handling paths)
+- **Target Coverage**: 90% achieved
+- **Current Coverage**: 90%
+- **Core File**: `parse_visa_statement.py` (90% coverage)
+- **Total Tests**: 109 (all passing)
+- **Total Statements**: 376 code statements
+- **Missing Statements**: 38 (complex error handling paths)
 
 #### Coverage Exclusions
 
