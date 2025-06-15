@@ -179,9 +179,9 @@ uv run pytest
 - **Target Coverage**: 90% achieved
 - **Current Coverage**: 90%
 - **Core File**: `parse_visa_statement.py` (90% coverage)
-- **Total Tests**: 109 (all passing)
-- **Total Statements**: 376 code statements
-- **Missing Statements**: 38 (complex error handling paths)
+- **Total Tests**: 160 (all passing)
+- **Total Statements**: 491 code statements
+- **Missing Statements**: 48 (complex error handling paths)
 
 #### Coverage Exclusions
 

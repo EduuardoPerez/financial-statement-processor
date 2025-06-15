@@ -24,11 +24,11 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Current Scope
 
-- **Supported**: Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), and Macro Account (XLS)
-- **Formats**: PDF input → Excel output, XLS input → Excel output
+- **Supported**: 9 statement types - Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), Macro Account (XLS), BBVA VISA Autorizaciones (CSV), BBVA VISA Movimientos (CSV), Macro VISA Autorizaciones (CSV), and Macro VISA Movimientos (CSV)
+- **Formats**: PDF input → Excel output, XLS input → Excel output, CSV input → Excel output
 - **Currencies**: ARS (Argentine Peso) and USD
 - **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions
-- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account), YYYY-MM-DD (datetime objects in Macro Account)
+- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), YYYY-MM-DD (datetime objects in Macro Account)
 
 ### Expansion Roadmap
 
@@ -37,6 +37,18 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Future**: CLI interface, batch processing, transaction categorization
 
 ## Recent Completions
+
+### CSV Processing Support (June 2025)
+
+- **CSV Statement Processing**: Complete support for 4 CSV statement types (BBVA VISA Auth/Movs, Macro VISA Auth/Movs)
+- **Multi-Format Architecture**: Extended system to support 9 total statement types (3 PDF + 2 XLS + 4 CSV)
+- **CSV-Specific Parsing**: Native pandas-based CSV processing with column mapping and European number format handling
+- **Date Conversion**: DD/MM/YYYY to YYYY-MM-DD conversion for CSV date columns
+- **Currency Mapping**: Automatic Pesos→ARS, Dolares→USD conversion from CSV data
+- **CSV Validation**: Input CSV total validation against output Excel totals for data integrity
+- **Detection Enhancement**: Extended filename-based detection for CSV files using case-insensitive keyword matching
+- **Comprehensive Testing**: 30 new tests (24 integration + 6 unit) bringing total to 160 tests with 90% coverage
+- **Test Architecture**: Professional CSV test organization following established patterns
 
 ### Macro Account XLS Support (June 2025)
 
@@ -67,11 +79,11 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Quality Assurance (Current)
 
-- **Test Coverage**: 130 comprehensive tests with 91% meaningful code coverage
-- **Integration Tests**: 5 end-to-end test suites covering all statement types
+- **Test Coverage**: 160 comprehensive tests with 90% meaningful code coverage
+- **Integration Tests**: 7 end-to-end test suites covering all 9 statement types
 - **Professional Test Organization**: Behavior-focused test architecture with logical grouping
 - **Test Quality**: Descriptive names, clear validation, excellent maintainability
-- **Coverage Improvement**: Added 21 new tests for Macro Account functionality (+6% coverage increase)
+- **Coverage Maintenance**: Added 30 new tests for CSV functionality maintaining high-quality coverage standards
 
 ## Target Users
 

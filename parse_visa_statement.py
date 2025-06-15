@@ -32,6 +32,14 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
         elif all(keyword in filename_upper for keyword in ["MACRO", "MOVIMIENTOS"]):
             return "Macro Account"
 
+    # For CSV files, detect based on filename
+    if file_path and file_path.lower().endswith(".csv"):
+        filename_upper = os.path.basename(file_path).upper()
+        if all(keyword in filename_upper for keyword in ["BBVA", "VISA"]):
+            return "BBVA VISA"
+        elif all(keyword in filename_upper for keyword in ["MACRO", "VISA"]):
+            return "Macro VISA"
+
     # For PDF files, detect based on content
     if full_text:
         text_upper = full_text.upper()
@@ -737,6 +745,205 @@ def parse_macro_account_xls(xls_path, output_path):
     return df
 
 
+def parse_bbva_visa_csv(csv_path, output_path, file_type):
+    """
+    Parse BBVA VISA CSV file (Autorizaciones or Movimientos) and generate Excel output
+    """
+    transactions = []
+
+    # Read the CSV file with semicolon separator
+    df = pd.read_csv(csv_path, sep=";")
+
+    # Process each row
+    for _, row in df.iterrows():
+        # Handle different date column names between file types
+        if file_type == "movs":
+            fecha_str = (
+                str(row["Fecha Origen"]).strip()
+                if pd.notna(row["Fecha Origen"])
+                else ""
+            )
+        else:
+            fecha_str = str(row["Fecha"]).strip() if pd.notna(row["Fecha"]) else ""
+
+        establecimiento = (
+            str(row["Establecimiento"]).strip()
+            if pd.notna(row["Establecimiento"])
+            else ""
+        )
+        moneda = str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
+        importe_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
+
+        if fecha_str and importe_str and importe_str != "nan":
+            # Convert date from DD/MM/YYYY to YYYY-MM-DD
+            try:
+                day, month, year = fecha_str.split("/")
+                formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            except ValueError:
+                continue  # Skip invalid dates
+
+            # Convert amount from European format to float
+            try:
+                # Handle European format: 4,940.00 -> 4940.00
+                amount_str = importe_str.replace(",", "")
+                amount = float(amount_str)
+            except ValueError:
+                continue  # Skip invalid amounts
+
+            # Map currency
+            currency = (
+                "ARS" if moneda == "Pesos" else "USD" if moneda == "Dolares" else "ARS"
+            )
+
+            transaction = {
+                "Date": formatted_date,
+                "Description": establecimiento,
+                "Currency": currency,
+                "Amount": amount,
+                "Payment Method": "BBVA VISA",
+            }
+            transactions.append(transaction)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(transactions)
+
+    # Sort by date to match expected output
+    if len(df) > 0:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date")
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Save to Excel
+    df.to_excel(output_path, index=False, sheet_name="Sheet1")
+
+    return df
+
+
+def parse_macro_visa_csv(csv_path, output_path, file_type):
+    """
+    Parse Macro VISA CSV file (Autorizaciones or Movimientos) and generate Excel output
+    """
+    transactions = []
+
+    # Read the CSV file with semicolon separator
+    df = pd.read_csv(csv_path, sep=";")
+
+    # Process each row
+    for _, row in df.iterrows():
+        # Handle different date column names between file types
+        if file_type == "movs":
+            fecha_str = (
+                str(row["Fecha Origen"]).strip()
+                if pd.notna(row["Fecha Origen"])
+                else ""
+            )
+        else:
+            fecha_str = str(row["Fecha"]).strip() if pd.notna(row["Fecha"]) else ""
+
+        establecimiento = (
+            str(row["Establecimiento"]).strip()
+            if pd.notna(row["Establecimiento"])
+            else ""
+        )
+        moneda = str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
+        importe_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
+
+        if fecha_str and importe_str and importe_str != "nan":
+            # Convert date from DD/MM/YYYY to YYYY-MM-DD
+            try:
+                day, month, year = fecha_str.split("/")
+                formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            except ValueError:
+                continue  # Skip invalid dates
+
+            # Convert amount from European format to float
+            try:
+                # Handle European format: 10,500.00 -> 10500.00
+                amount_str = importe_str.replace(",", "")
+                amount = float(amount_str)
+            except ValueError:
+                continue  # Skip invalid amounts
+
+            # Map currency
+            currency = (
+                "ARS" if moneda == "Pesos" else "USD" if moneda == "Dolares" else "ARS"
+            )
+
+            transaction = {
+                "Date": formatted_date,
+                "Description": establecimiento,
+                "Currency": currency,
+                "Amount": amount,
+                "Payment Method": "Macro VISA",
+            }
+            transactions.append(transaction)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(transactions)
+
+    # Sort by date to match expected output
+    if len(df) > 0:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date")
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Save to Excel
+    df.to_excel(output_path, index=False, sheet_name="Sheet1")
+
+    return df
+
+
+def validate_csv_balance(input_csv_path, output_df, filename):
+    """
+    Validate CSV input totals against output Excel totals and log results
+    """
+    logger.info(f"[INFO] Validating CSV balance for: {filename}")
+
+    # Read input CSV and calculate total
+    input_df = pd.read_csv(input_csv_path, sep=";")
+    input_total = 0
+    for _, row in input_df.iterrows():
+        importe_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
+        if importe_str and importe_str != "nan":
+            try:
+                # Handle European format: remove commas
+                amount_str = importe_str.replace(",", "")
+                amount = float(amount_str)
+                input_total += amount
+            except ValueError:
+                continue
+
+    # Calculate output total
+    output_total = output_df["Amount"].sum()
+
+    # Calculate difference
+    difference = input_total - output_total
+
+    # Format numbers with thousand separators for logging
+    input_formatted = f"{input_total:,.2f}"
+    output_formatted = f"{output_total:,.2f}"
+
+    logger.info(
+        f"        Input CSV Total: {input_formatted} | "
+        f"Output Excel Total: {output_formatted} | Δ: {difference:.2f}"
+    )
+
+    # Log warnings for mismatches (don't raise errors)
+    if abs(difference) > 0.01:  # Allow for small rounding differences
+        logger.warning(
+            f"[WARNING] Total mismatch in {filename}: "
+            f"difference of {difference:.2f}"
+        )
+
+    return {"input": input_total, "output": output_total}
+
+
 def convert_date(date_str):
     """Convert DD.MM.YY or DD-MMM-YY to YYYY-MM-DD format"""
     if "-" in date_str:
@@ -982,6 +1189,106 @@ if __name__ == "__main__":
             df_macro_account,
             reported_macro_account,
             computed_macro_account,
+            output_file,
+        )
+    )
+
+    # Process BBVA VISA Autorizaciones CSV
+    print("Processing BBVA VISA Autorizaciones CSV...")
+    input_file = "input/BBVA-Visa-Autorizaciones.csv"
+    output_file = "output/BBVA-Visa-auth-transactions.xlsx"
+    df_bbva_auth = parse_bbva_visa_csv(input_file, output_file, "auth")
+
+    # Validate CSV input vs output totals
+    validation_result = validate_csv_balance(
+        input_file, df_bbva_auth, "BBVA-Visa-Autorizaciones.csv"
+    )
+
+    # Create balance objects for compatibility with existing summary function
+    reported_bbva_auth = {"ars": validation_result["input"], "usd": 0.0}
+    computed_bbva_auth = {"ars": validation_result["output"], "usd": 0.0}
+
+    results.append(
+        (
+            "BBVA-Visa-Autorizaciones.csv",
+            df_bbva_auth,
+            reported_bbva_auth,
+            computed_bbva_auth,
+            output_file,
+        )
+    )
+
+    # Process BBVA VISA Movimientos CSV
+    print("Processing BBVA VISA Movimientos CSV...")
+    input_file = "input/BBVA-Visa-Movimientos.csv"
+    output_file = "output/BBVA-Visa-movs-transactions.xlsx"
+    df_bbva_movs = parse_bbva_visa_csv(input_file, output_file, "movs")
+
+    # Validate CSV input vs output totals
+    validation_result = validate_csv_balance(
+        input_file, df_bbva_movs, "BBVA-Visa-Movimientos.csv"
+    )
+
+    # Create balance objects for compatibility with existing summary function
+    reported_bbva_movs = {"ars": validation_result["input"], "usd": 0.0}
+    computed_bbva_movs = {"ars": validation_result["output"], "usd": 0.0}
+
+    results.append(
+        (
+            "BBVA-Visa-Movimientos.csv",
+            df_bbva_movs,
+            reported_bbva_movs,
+            computed_bbva_movs,
+            output_file,
+        )
+    )
+
+    # Process MACRO VISA Autorizaciones CSV
+    print("Processing MACRO VISA Autorizaciones CSV...")
+    input_file = "input/MACRO-Visa-Autorizaciones.csv"
+    output_file = "output/MACRO-Visa-auth-transactions.xlsx"
+    df_macro_auth = parse_macro_visa_csv(input_file, output_file, "auth")
+
+    # Validate CSV input vs output totals
+    validation_result = validate_csv_balance(
+        input_file, df_macro_auth, "MACRO-Visa-Autorizaciones.csv"
+    )
+
+    # Create balance objects for compatibility with existing summary function
+    reported_macro_auth = {"ars": validation_result["input"], "usd": 0.0}
+    computed_macro_auth = {"ars": validation_result["output"], "usd": 0.0}
+
+    results.append(
+        (
+            "MACRO-Visa-Autorizaciones.csv",
+            df_macro_auth,
+            reported_macro_auth,
+            computed_macro_auth,
+            output_file,
+        )
+    )
+
+    # Process MACRO VISA Movimientos CSV
+    print("Processing MACRO VISA Movimientos CSV...")
+    input_file = "input/MACRO-VISA-ult-Movimientos.csv"
+    output_file = "output/MACRO-Visa-movs-transactions.xlsx"
+    df_macro_movs = parse_macro_visa_csv(input_file, output_file, "movs")
+
+    # Validate CSV input vs output totals
+    validation_result = validate_csv_balance(
+        input_file, df_macro_movs, "MACRO-VISA-ult-Movimientos.csv"
+    )
+
+    # Create balance objects for compatibility with existing summary function
+    reported_macro_movs = {"ars": validation_result["input"], "usd": 0.0}
+    computed_macro_movs = {"ars": validation_result["output"], "usd": 0.0}
+
+    results.append(
+        (
+            "MACRO-VISA-ult-Movimientos.csv",
+            df_macro_movs,
+            reported_macro_movs,
+            computed_macro_movs,
             output_file,
         )
     )

@@ -6,21 +6,26 @@
 
 - **PDF Text Extraction**: Robust extraction using pdfplumber for all supported PDF statement types
 - **XLS Data Processing**: Native Excel file processing for structured account statements
-- **Intelligent Payment Method Detection**: Automatically identifies Macro VISA, BBVA VISA, BBVA Mastercard, and BBVA Account from content/filename
+- **CSV Data Processing**: Native CSV file processing for transaction and authorization data
+- **Intelligent Payment Method Detection**: Automatically identifies all 9 statement types from content/filename
 - **Transaction Parsing**: Handles all known transaction types across all supported payment methods and formats
 - **European Number Format**: Perfect handling of 1.234,56 notation across all banks and formats
 - **Multi-Currency Support**: ARS and USD transactions processed correctly
-- **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS Account) with Spanish month support
+- **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
 
-### Payment Method Support (Complete - 5 Types)
+### Payment Method Support (Complete - 9 Types)
 
 - **Macro VISA**: Full support with 91 transactions successfully processed (PDF)
 - **BBVA VISA**: Full support with 45 transactions successfully processed (PDF)
-- **BBVA Mastercard**: Full support with 7 transactions successfully processed (PDF - new format)
-- **BBVA Account**: Full support with 60 transactions successfully processed (XLS - new format)
-- **Macro Account**: Full support with 37 transactions successfully processed (XLS - new format)
-- **Automatic Detection**: Content-based (PDF) and filename-based (XLS) payment method identification
+- **BBVA Mastercard**: Full support with 7 transactions successfully processed (PDF)
+- **BBVA Account**: Full support with 60 transactions successfully processed (XLS)
+- **Macro Account**: Full support with 37 transactions successfully processed (XLS)
+- **BBVA VISA Autorizaciones**: Full support with 2 transactions successfully processed (CSV)
+- **BBVA VISA Movimientos**: Full support with 15 transactions successfully processed (CSV)
+- **Macro VISA Autorizaciones**: Full support with 6 transactions successfully processed (CSV)
+- **Macro VISA Movimientos**: Full support with 2 transactions successfully processed (CSV)
+- **Automatic Detection**: Content-based (PDF), filename-based (XLS/CSV) payment method identification
 - **Backward Compatibility**: Zero regression in existing functionality
 
 ### Transaction Type Support (Complete)
@@ -36,28 +41,28 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 91% meaningful coverage with 130 well-organized tests
-- **Test Suite Expansion**: Added comprehensive Macro Account XLS integration tests (13 new tests + 8 unit tests)
-- **Coverage Quality**: Improved to 91% meaningful coverage with new functionality fully tested
+- **Professional Test Coverage**: 90% meaningful coverage with 160 well-organized tests
+- **Test Suite Expansion**: Added comprehensive CSV processing integration tests (24 new integration tests + 6 new unit tests)
+- **Coverage Quality**: Maintained 90% meaningful coverage with all new CSV functionality fully tested
 - **Test Architecture**: Professional organization with logical grouping by functionality
 - **Error Handling Suite**: Dedicated test suite for edge cases and error handling
-- **European Format Testing**: Specialized tests for 1.234,56 number format parsing across all formats
+- **European Format Testing**: Specialized tests for 1.234,56 number format parsing across all formats (PDF, XLS, CSV)
 - **Transaction Type Testing**: Comprehensive tests for all transaction types (tax, payment, adjustment, etc.)
-- **Integration Testing**: Real statement processing with expected output validation for all five statement types
+- **Integration Testing**: Real statement processing with expected output validation for all nine statement types
 - **Unit Testing**: Individual function validation with descriptive, meaningful test names
-- **Test Organization**: 8 focused unit test files + 5 integration test files
+- **Test Organization**: 8 focused unit test files + 7 integration test files
 - **Quality Standards**: Descriptive test names, clear behavior validation, professional structure
 - **Maintainability**: Dramatically improved test readability and maintainability
 - **Coverage Enforcement**: Configurable thresholds with pytest-cov integration
 - **Test Data Isolation**: Independent test data copies for reliable testing
-- **Reference Output**: Known-good results for regression testing across all formats
+- **Reference Output**: Known-good results for regression testing across all formats (PDF, XLS, CSV)
 
 ### Test Suite Organization (Current State)
 
 #### Unit Tests (8 files, focused testing)
 
 - `test_convert_date.py` - Date conversion functionality
-- `test_detect_payment_method.py` - Bank and card type detection (includes XLS filename detection)
+- `test_detect_payment_method.py` - Bank and card type detection (includes XLS and CSV filename detection)
 - `test_error_handling.py` - Error handling and edge cases
 - `test_european_number_format.py` - European number format parsing
 - `test_extract_balance_from_pdf.py` - Balance extraction from PDFs
@@ -65,13 +70,15 @@
 - `test_transaction_types.py` - Transaction type parsing
 - `test_validate_balance.py` - Balance validation logic
 
-#### Integration Tests (5 files, end-to-end testing)
+#### Integration Tests (7 files, end-to-end testing)
 
 - `test_bbva_account_processing.py` - BBVA Account XLS complete workflow (12 tests)
-- `test_bbva_mastercard_processing.py` - BBVA Mastercard complete workflow
-- `test_bbva_visa_processing.py` - BBVA VISA complete workflow
-- `test_macro_account_processing.py` - Macro Account XLS complete workflow (NEW - 13 tests)
-- `test_macro_visa_processing.py` - MACRO VISA complete workflow
+- `test_bbva_mastercard_processing.py` - BBVA Mastercard PDF complete workflow
+- `test_bbva_visa_processing.py` - BBVA VISA PDF complete workflow
+- `test_bbva_visa_csv_processing.py` - BBVA VISA CSV complete workflow (NEW - 12 tests)
+- `test_macro_account_processing.py` - Macro Account XLS complete workflow (13 tests)
+- `test_macro_visa_processing.py` - MACRO VISA PDF complete workflow
+- `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (NEW - 12 tests)
 
 ### Development Infrastructure (Complete)
 

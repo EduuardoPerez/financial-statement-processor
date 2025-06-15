@@ -13,6 +13,7 @@
 ```
 PDF Input → Text Extraction → Pattern Matching → Data Transformation → Excel Output
 XLS Input → Data Reading → Structure Parsing → Data Transformation → Excel Output
+CSV Input → Data Reading → Column Mapping → Data Transformation → Excel Output
 ```
 
 ## Core Design Patterns
@@ -20,12 +21,20 @@ XLS Input → Data Reading → Structure Parsing → Data Transformation → Exc
 ### 1. Strategy Pattern for Bank Detection
 
 - **Pattern**: `detect_payment_method()` function analyzes content and filename
-- **Implementation**: Content-based detection for PDFs, filename-based for XLS files
+- **Implementation**: Content-based detection for PDFs, filename-based for XLS and CSV files
 - **Extensibility**: New banks add their indicator patterns
 - **Card Type Priority**: Mastercard detection takes precedence over VISA when both present
 
 ```python
 def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
+    # CSV filename-based detection
+    if file_path and file_path.lower().endswith(".csv"):
+        filename_upper = os.path.basename(file_path).upper()
+        if all(keyword in filename_upper for keyword in ["BBVA", "VISA"]):
+            return "BBVA VISA"
+        elif all(keyword in filename_upper for keyword in ["MACRO", "VISA"]):
+            return "Macro VISA"
+
     # XLS filename-based detection
     if file_path and file_path.lower().endswith(".xls"):
         filename_upper = os.path.basename(file_path).upper()
@@ -74,6 +83,36 @@ if "." in amount_str and "," in amount_str:
     amount_str = amount_str.replace(".", "").replace(",", ".")
 elif "," in amount_str:
     amount_str = amount_str.replace(",", ".")
+```
+
+### 5. CSV Processing Pattern
+
+- **Approach**: Pandas-based CSV reading with column mapping
+- **Benefits**: Handles CSV headers, flexible column detection
+- **Key Features**: Date column flexibility ("Fecha" vs "Fecha Origen"), currency mapping, European number format conversion
+- **Validation**: CSV-specific balance validation comparing input totals vs output totals
+
+```python
+def parse_bbva_visa_csv(csv_path, output_path, file_type):
+    df = pd.read_csv(csv_path)
+
+    # Handle flexible date column names
+    date_col = "Fecha" if "Fecha" in df.columns else "Fecha Origen"
+
+    # Process each row
+    for _, row in df.iterrows():
+        date = convert_date(row[date_col])  # DD/MM/YYYY -> YYYY-MM-DD
+        description = row["Descripcion"]
+        currency = "USD" if row["Moneda"] == "Dolares" else "ARS"
+        amount = parse_european_number(row["Importe"])
+
+        transactions.append({
+            "Date": date,
+            "Description": description,
+            "Currency": currency,
+            "Amount": amount,
+            "Payment Method": "BBVA VISA"
+        })
 ```
 
 ## Transaction Type Detection Patterns

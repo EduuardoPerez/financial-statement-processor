@@ -290,3 +290,88 @@ class TestDetectPaymentMethod:
 
         result = detect_payment_method(file_path=xls_path)
         assert result == "BBVA Account"
+
+    def test_detect_bbva_visa_csv_filename(self):
+        """Test detection of BBVA VISA from CSV filename"""
+        test_filenames = [
+            "tests/test_data/input/BBVA-Visa-Autorizaciones.csv",
+            "tests/test_data/input/BBVA-Visa-Movimientos.csv",
+            "BBVA-VISA-statements.csv",
+            "bbva-visa-transactions.csv",
+            "BBVA-VISA-auth.csv",
+            "visa-bbva-movimientos.csv",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert result == "BBVA VISA", f"Should detect BBVA VISA from {filename}"
+
+    def test_detect_macro_visa_csv_filename(self):
+        """Test detection of Macro VISA from CSV filename"""
+        test_filenames = [
+            "tests/test_data/input/MACRO-Visa-Autorizaciones.csv",
+            "tests/test_data/input/MACRO-VISA-ult-Movimientos.csv",
+            "MACRO-VISA-statements.csv",
+            "macro-visa-transactions.csv",
+            "MACRO-VISA-auth.csv",
+            "visa-macro-movimientos.csv",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert result == "Macro VISA", f"Should detect Macro VISA from {filename}"
+
+    def test_detect_csv_case_insensitive(self):
+        """Test that CSV detection is case insensitive"""
+        test_cases = [
+            ("bbva-visa-autorizaciones.csv", "BBVA VISA"),
+            ("BBVA-VISA-MOVIMIENTOS.CSV", "BBVA VISA"),
+            ("Bbva-Visa-Statement.csv", "BBVA VISA"),
+            ("macro-visa-autorizaciones.csv", "Macro VISA"),
+            ("MACRO-VISA-MOVIMIENTOS.CSV", "Macro VISA"),
+            ("Macro-Visa-Statement.csv", "Macro VISA"),
+        ]
+
+        for filename, expected in test_cases:
+            result = detect_payment_method(file_path=filename)
+            assert result == expected, f"Failed for {filename}, expected {expected}"
+
+    def test_detect_unknown_csv_filename(self):
+        """Test that unknown CSV filenames return Unknown Payment Method"""
+        unknown_filenames = [
+            "santander-visa.csv",
+            "unknown-bank-statement.csv",
+            "other-financial-data.csv",
+            "visa-only.csv",  # Missing bank identifier
+            "bbva-only.csv",  # Missing card type identifier
+        ]
+
+        for filename in unknown_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "Unknown Payment Method"
+            ), f"Should return Unknown for {filename}"
+
+    def test_detect_with_actual_bbva_visa_csv_files(self):
+        """Test with actual BBVA VISA CSV files to ensure correct detection"""
+        csv_files = [
+            "tests/test_data/input/BBVA-Visa-Autorizaciones.csv",
+            "tests/test_data/input/BBVA-Visa-Movimientos.csv",
+        ]
+
+        for csv_path in csv_files:
+            result = detect_payment_method(file_path=csv_path)
+            assert result == "BBVA VISA", f"Failed to detect BBVA VISA from {csv_path}"
+
+    def test_detect_with_actual_macro_visa_csv_files(self):
+        """Test with actual Macro VISA CSV files to ensure correct detection"""
+        csv_files = [
+            "tests/test_data/input/MACRO-Visa-Autorizaciones.csv",
+            "tests/test_data/input/MACRO-VISA-ult-Movimientos.csv",
+        ]
+
+        for csv_path in csv_files:
+            result = detect_payment_method(file_path=csv_path)
+            assert (
+                result == "Macro VISA"
+            ), f"Failed to detect Macro VISA from {csv_path}"
