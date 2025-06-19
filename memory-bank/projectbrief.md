@@ -33,7 +33,7 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Currencies**: ARS (Argentine Peso) and USD with automatic detection
 - **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions, investment returns, money transfers, bonifications, promotions
 - **Date Formats**: DD.MM.YY (PDF VISA), DD-MMM-YY (PDF Mastercard), DD/MM/YYYY (XLS/CSV), ISO 8601 timestamps (XLSX)
-- **Quality Assurance**: 178 tests with 90% coverage, pre-commit hooks, type safety
+- **Quality Assurance**: 201 tests with 90% coverage, pre-commit hooks, type safety
 
 ### Expansion Roadmap
 
@@ -42,6 +42,17 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Future**: CLI interface, batch processing, transaction categorization
 
 ## Recent Completions
+
+### File Naming Normalization (June 2025)
+
+- **Centralized Filename Generation**: Implemented `generate_output_filename()` function for consistent output naming
+- **Standardized Naming Convention**: `{BANK}-{PRODUCT}-{TYPE}-transactions.xlsx` format across all statement types
+- **Professional Consistency**: BANK and PRODUCT always uppercase, TYPE lowercase for clean, professional output
+- **Mapping Strategy**: Payment method mapping with fallback for unknown methods, extensible for new banks
+- **File Type Support**: Support for main, auth, and movs file types with optional date inclusion
+- **Comprehensive Testing**: 23 unit tests covering all functionality, edge cases, and error conditions
+- **Coverage Maintenance**: Maintained 90% coverage despite adding new functionality (178→201 tests)
+- **Zero Regressions**: All existing tests continue to pass with new standardized naming
 
 ### CSV Processing Support (June 2025)
 

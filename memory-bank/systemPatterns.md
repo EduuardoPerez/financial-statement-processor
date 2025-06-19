@@ -239,6 +239,54 @@ per-file-ignores =
 - **Benefits**: Clean test output, professional development experience, maintained code quality
 - **Quality Standards**: Zero warnings while preserving all functionality and test coverage
 
+### 9. Centralized File Naming Pattern
+
+- **Challenge**: Inconsistent output filename formats across different statement types
+- **Solution**: Centralized `generate_output_filename()` function with standardized naming convention
+- **Implementation**: Single function controls all output filename generation with mapping strategy
+
+```python
+def generate_output_filename(
+    payment_method: str,
+    file_type: str = "main",
+    include_date: bool = False,
+    date_str: str = "",
+) -> str:
+    """Generate standardized output filename based on payment method and type"""
+
+    # Normalize payment method to consistent format
+    method_mapping = {
+        "BBVA VISA": "BBVA-VISA",
+        "BBVA Mastercard": "BBVA-MASTERCARD",
+        "BBVA Account": "BBVA-ACCOUNT",
+        "Macro VISA": "MACRO-VISA",
+        "Macro Account": "MACRO-ACCOUNT",
+        "Mercadopago": "MERCADOPAGO",
+    }
+
+    normalized_method = method_mapping.get(
+        payment_method, payment_method.upper().replace(" ", "-")
+    )
+
+    # Build filename components: {BANK}-{PRODUCT}-{TYPE}-transactions.xlsx
+    filename_parts = [normalized_method]
+
+    if include_date and date_str:
+        filename_parts.append(date_str)
+
+    if file_type != "main" and file_type:
+        filename_parts.append(file_type)
+
+    filename_parts.append("transactions")
+
+    return "-".join(filename_parts) + ".xlsx"
+```
+
+- **Benefits**: Professional consistency, easy maintenance, extensible for new banks
+- **Naming Convention**: `{BANK}-{PRODUCT}-{TYPE}-transactions.xlsx` format
+- **Examples**: `BBVA-VISA-transactions.xlsx`, `MACRO-ACCOUNT-transactions.xlsx`, `BBVA-VISA-auth-transactions.xlsx`
+- **Quality**: 23 comprehensive unit tests covering all functionality and edge cases
+
 ## Transaction Type Detection Patterns
 
 ### 1. Tax Transaction Pattern

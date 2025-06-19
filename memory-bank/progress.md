@@ -14,6 +14,7 @@
 - **Multi-Currency Support**: ARS and USD transactions processed correctly
 - **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), ISO 8601 timestamps (XLSX) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
+- **Standardized File Naming**: Consistent output filename normalization across all statement types
 
 ### Payment Method Support (Complete - 10 Types)
 
@@ -43,7 +44,7 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 90% meaningful coverage with 178 well-organized tests
+- **Professional Test Coverage**: 90% meaningful coverage with 201 well-organized tests
 - **Pre-commit Hook Integration**: Automated quality checks with ruff, mypy, and pytest before every commit
 - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive mypy validation
 - **Test Suite Expansion**: Added comprehensive Mercadopago XLSX and CSV processing integration tests (48 new tests total)
@@ -221,6 +222,7 @@
 - ✅ **v0.2.9**: Mercadopago XLSX support - 178 tests with warning-free development environment
 - ✅ **v0.2.10**: flake8 → Ruff migration - Modern code quality tooling with 10-100x performance improvement
 - ✅ **v0.2.11**: MyPy static type checking integration - Modern Python 3.11+ type annotations with comprehensive type safety
+- ✅ **v0.2.12**: File naming normalization - Centralized filename generation with 201 tests and maintained 90% coverage
 
 ### Upcoming Milestones
 

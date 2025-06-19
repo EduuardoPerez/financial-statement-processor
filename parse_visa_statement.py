@@ -21,6 +21,55 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
+def generate_output_filename(
+    payment_method: str,
+    file_type: str = "main",
+    include_date: bool = False,
+    date_str: str = "",
+) -> str:
+    """
+    Generate standardized output filename based on payment method and type
+
+    Args:
+        payment_method: Detected payment method (e.g., "BBVA VISA", "Macro Account")
+        file_type: Type of file ("main", "auth", "movs")
+        include_date: Whether to include date in filename
+        date_str: Date string to include if include_date is True
+
+    Returns:
+        Standardized filename like "BBVA-VISA-transactions.xlsx"
+    """
+    # Normalize payment method to consistent format
+    method_mapping = {
+        "BBVA VISA": "BBVA-VISA",
+        "BBVA Mastercard": "BBVA-MASTERCARD",
+        "BBVA Account": "BBVA-ACCOUNT",
+        "Macro VISA": "MACRO-VISA",
+        "Macro Account": "MACRO-ACCOUNT",
+        "Mercadopago": "MERCADOPAGO",
+    }
+
+    normalized_method = method_mapping.get(
+        payment_method, payment_method.upper().replace(" ", "-")
+    )
+
+    # Build filename components
+    filename_parts = [normalized_method]
+
+    # Add date if specified
+    if include_date and date_str:
+        filename_parts.append(date_str)
+
+    # Add file type if not main and not empty
+    if file_type != "main" and file_type:
+        filename_parts.append(file_type)
+
+    # Add transactions suffix
+    filename_parts.append("transactions")
+
+    return "-".join(filename_parts) + ".xlsx"
+
+
 def detect_payment_method(
     content_or_path: str | None = None,
     file_path: str | None = None,
@@ -1142,7 +1191,16 @@ if __name__ == "__main__":
     # Process Macro VISA statement
     print("Processing Macro VISA statement...")
     input_file = "input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"
-    output_file = "output/MACRO-VISA-transactions.xlsx"
+
+    # Detect payment method and generate standardized filename
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+    payment_method = detect_payment_method(full_text=full_text)
+    output_filename = generate_output_filename(payment_method)
+    output_file = f"output/{output_filename}"
+
     df_macro = parse_visa_pdf(input_file, output_file)
 
     # Get validation data for summary
@@ -1179,7 +1237,16 @@ if __name__ == "__main__":
     # Process BBVA VISA statement
     print("Processing BBVA VISA statement...")
     input_file = "input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"
-    output_file = "output/BBVA-VISA-transactions.xlsx"
+
+    # Detect payment method and generate standardized filename
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+    payment_method = detect_payment_method(full_text=full_text)
+    output_filename = generate_output_filename(payment_method)
+    output_file = f"output/{output_filename}"
+
     df_bbva = parse_visa_pdf(input_file, output_file)
 
     # Get validation data for summary
@@ -1215,7 +1282,16 @@ if __name__ == "__main__":
     # Process BBVA Mastercard statement
     print("Processing BBVA Mastercard statement...")
     input_file = "input/BBVA-Mastercard-2025-04.pdf"
-    output_file = "output/BBVA-Mastercard-transactions.xlsx"
+
+    # Detect payment method and generate standardized filename
+    with pdfplumber.open(input_file) as pdf:
+        full_text = ""
+        for page in pdf.pages:
+            full_text += page.extract_text() + "\n"
+    payment_method = detect_payment_method(full_text=full_text)
+    output_filename = generate_output_filename(payment_method)
+    output_file = f"output/{output_filename}"
+
     df_bbva_mc = parse_visa_pdf(input_file, output_file)
 
     # Get validation data for summary
@@ -1253,7 +1329,12 @@ if __name__ == "__main__":
     # Process BBVA Account statement
     print("Processing BBVA Account statement...")
     input_file = "input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"
-    output_file = "output/BBVA-Account-transactions.xlsx"
+
+    # Generate standardized filename
+    payment_method = detect_payment_method(file_path=input_file)
+    output_filename = generate_output_filename(payment_method)
+    output_file = f"output/{output_filename}"
+
     df_bbva_account = parse_account_xls(input_file, output_file)
 
     # For XLS validation, compare against input file totals
@@ -1290,7 +1371,12 @@ if __name__ == "__main__":
     # Process Macro Account statement
     print("Processing Macro Account statement...")
     input_file = "input/MACRO-movimientos-de-cuenta.xls"
-    output_file = "output/Macro-Account-transactions.xlsx"
+
+    # Generate standardized filename
+    payment_method = detect_payment_method(file_path=input_file)
+    output_filename = generate_output_filename(payment_method)
+    output_file = f"output/{output_filename}"
+
     df_macro_account = parse_macro_account_xls(input_file, output_file)
 
     # For Macro XLS validation, extract balance from first row of Saldo column

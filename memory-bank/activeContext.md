@@ -13,8 +13,23 @@
   - **Intelligent Detection**: Automatic payment method identification from content and filenames
   - **European Number Format**: Perfect 1.234,56 handling across all formats
   - **Multiple Date Formats**: DD.MM.YY, DD-MMM-YY, DD/MM/YYYY, ISO 8601 timestamps
-- **Quality Metrics**: 178 tests with 90% coverage, zero warnings, professional development workflow
+  - **Standardized Output**: Consistent filename normalization across all statement types
+- **Quality Metrics**: 201 tests with 90% coverage, zero warnings, professional development workflow
 - **Development Infrastructure**: Pre-commit hooks (ruff, mypy, pytest), type safety, automated quality enforcement
+
+### File Naming Normalization Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Comprehensive file naming standardization implemented
+- **Achievement**: Professional, consistent output filename generation across all 10 statement types
+- **Key Features**:
+  - Centralized `generate_output_filename()` function for all naming logic
+  - Standardized naming convention: `{BANK}-{PRODUCT}-{TYPE}-transactions.xlsx`
+  - Consistent formatting: BANK and PRODUCT always uppercase, TYPE lowercase
+  - Support for file type variations (main, auth, movs) and optional date inclusion
+  - Mapping for all supported payment methods with fallback for unknown methods
+- **Quality**: 23 comprehensive unit tests covering all functionality and edge cases
+- **Coverage Maintenance**: Maintained 90% coverage despite adding new functionality (178→201 tests)
+- **Professional Output**: Clean, standardized filenames like `BBVA-VISA-transactions.xlsx`, `MACRO-ACCOUNT-transactions.xlsx`
 
 ### MyPy Static Type Checking Integration (COMPLETED - June 2025)
 
