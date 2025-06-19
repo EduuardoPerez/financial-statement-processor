@@ -230,6 +230,12 @@ These paths represent edge cases that are handled gracefully by the application 
 - **Type Stubs**: Includes `pandas-stubs` and `types-openpyxl` for better library support
 - **Integration**: Works seamlessly with existing Ruff and pytest workflow
 
+- **Pre-commit Hooks**: Automated quality enforcement before commits
+- **Hook Configuration**: `.pre-commit-config.yaml` with ruff, mypy, and pytest
+- **Quality Gates**: All hooks must pass before commits are allowed
+- **Development Workflow**: Clean, professional development with automated checks
+- **Type Safety**: Prevents type errors from entering the codebase
+
 #### Ruff Configuration
 
 ```toml

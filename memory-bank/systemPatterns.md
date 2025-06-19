@@ -148,7 +148,42 @@ def parse_mercadopago_xlsx(xlsx_path, output_path):
         })
 ```
 
-### 7. Warning Resolution Pattern
+### 7. Pre-commit Hook Integration Pattern
+
+- **Automated Quality Gates**: Pre-commit hooks enforce code quality before commits
+- **Hook Configuration**: `.pre-commit-config.yaml` with ruff, mypy, and pytest
+- **Type Safety**: MyPy prevents type errors from entering the codebase
+- **Code Quality**: Ruff ensures consistent formatting and linting standards
+- **Test Validation**: pytest runs full test suite to prevent regressions
+- **Development Workflow**: Clean, professional development with automated enforcement
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.0
+    hooks:
+      - id: ruff
+        args: [--fix, --ignore=E501]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [pandas-stubs>=2.1.0, types-openpyxl>=3.1.0]
+
+  - repo: local
+    hooks:
+      - id: pytest-coverage
+        name: pytest with coverage check
+        entry: uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=90 --cov-config=.coveragerc
+        language: system
+        pass_filenames: false
+        always_run: true
+```
+
+### 8. Warning Resolution Pattern
 
 - **Challenge**: Development environment cluttered with openpyxl and flake8 warnings
 - **Solution**: Comprehensive warning suppression and code quality configuration
