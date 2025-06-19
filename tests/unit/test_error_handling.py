@@ -46,7 +46,7 @@ class TestErrorHandling:
         with patch("parse_visa_statement.re.search") as mock_search:
             # Mock a match that will raise an exception when accessing groups
             mock_match = MagicMock()
-            mock_match.group.side_effect = Exception("Group access error")
+            mock_match.group.side_effect = AttributeError("Group access error")
             mock_search.return_value = mock_match
 
             result = extract_balance_from_pdf(

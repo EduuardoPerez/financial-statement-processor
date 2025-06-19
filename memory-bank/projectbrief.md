@@ -24,11 +24,11 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Current Scope
 
-- **Supported**: 9 statement types - Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), Macro Account (XLS), BBVA VISA Autorizaciones (CSV), BBVA VISA Movimientos (CSV), Macro VISA Autorizaciones (CSV), and Macro VISA Movimientos (CSV)
-- **Formats**: PDF input → Excel output, XLS input → Excel output, CSV input → Excel output
+- **Supported**: 10 statement types - Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), Macro Account (XLS), BBVA VISA Autorizaciones (CSV), BBVA VISA Movimientos (CSV), Macro VISA Autorizaciones (CSV), Macro VISA Movimientos (CSV), and Mercadopago (XLSX)
+- **Formats**: PDF input → Excel output, XLS input → Excel output, CSV input → Excel output, XLSX input → Excel output
 - **Currencies**: ARS (Argentine Peso) and USD
-- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions
-- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), YYYY-MM-DD (datetime objects in Macro Account)
+- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions, investment returns, money transfers
+- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), YYYY-MM-DD (datetime objects in Macro Account), ISO 8601 timestamps (Mercadopago XLSX)
 
 ### Expansion Roadmap
 
@@ -77,13 +77,32 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 - **Single-Line Transaction Format**: Adapted parsing for Mastercard's consolidated transaction format
 - **Balance Validation**: Custom balance extraction for Mastercard statement format
 
+### Mercadopago XLSX Support (June 2025)
+
+- **Mercadopago Processing**: Complete support for Mercadopago XLSX account summaries
+- **XLSX Format Support**: Native Excel file processing for Mercadopago transaction data
+- **ISO 8601 Date Handling**: Conversion from "2025-02-01T17:45:36Z" to "2025-02-01" format
+- **Filename-Based Detection**: Case-insensitive detection using "MERCADOPAGO" keyword in XLSX files
+- **Transaction Variety**: Support for payments, income, withdrawals, investment returns, money transfers
+- **Balance Validation**: Input XLSX total validation against output Excel totals (-64,841.11 ARS)
+- **Comprehensive Testing**: 18 new tests (14 integration + 4 unit) for complete XLSX workflow validation
+
+### Code Quality & Warning Resolution (June 2025)
+
+- **Warning-Free Environment**: Eliminated all 14 openpyxl warnings for clean test output
+- **Flake8 Integration**: Added comprehensive linting configuration with `.flake8` file
+- **Code Quality Standards**: Fixed bare except clauses, f-string issues, and line length violations
+- **Professional Configuration**: Updated `pyproject.toml` with warning filters and development tools
+- **Clean Development**: Zero warnings in test output, professional development experience
+
 ### Quality Assurance (Current)
 
-- **Test Coverage**: 160 comprehensive tests with 90% meaningful code coverage
-- **Integration Tests**: 7 end-to-end test suites covering all 9 statement types
+- **Test Coverage**: 178 comprehensive tests with 90% meaningful code coverage
+- **Integration Tests**: 8 end-to-end test suites covering all 10 statement types
 - **Professional Test Organization**: Behavior-focused test architecture with logical grouping
 - **Test Quality**: Descriptive names, clear validation, excellent maintainability
-- **Coverage Maintenance**: Added 30 new tests for CSV functionality maintaining high-quality coverage standards
+- **Coverage Maintenance**: Added 48 new tests for Mercadopago and CSV functionality maintaining high-quality coverage standards
+- **Warning-Free Testing**: Clean test execution with zero warnings or noise
 
 ## Target Users
 

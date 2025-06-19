@@ -7,14 +7,15 @@
 - **PDF Text Extraction**: Robust extraction using pdfplumber for all supported PDF statement types
 - **XLS Data Processing**: Native Excel file processing for structured account statements
 - **CSV Data Processing**: Native CSV file processing for transaction and authorization data
-- **Intelligent Payment Method Detection**: Automatically identifies all 9 statement types from content/filename
+- **XLSX Data Processing**: Native Excel file processing for Mercadopago account summaries
+- **Intelligent Payment Method Detection**: Automatically identifies all 10 statement types from content/filename
 - **Transaction Parsing**: Handles all known transaction types across all supported payment methods and formats
 - **European Number Format**: Perfect handling of 1.234,56 notation across all banks and formats
 - **Multi-Currency Support**: ARS and USD transactions processed correctly
-- **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV) with Spanish month support
+- **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), ISO 8601 timestamps (XLSX) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
 
-### Payment Method Support (Complete - 9 Types)
+### Payment Method Support (Complete - 10 Types)
 
 - **Macro VISA**: Full support with 91 transactions successfully processed (PDF)
 - **BBVA VISA**: Full support with 45 transactions successfully processed (PDF)
@@ -25,7 +26,8 @@
 - **BBVA VISA Movimientos**: Full support with 15 transactions successfully processed (CSV)
 - **Macro VISA Autorizaciones**: Full support with 6 transactions successfully processed (CSV)
 - **Macro VISA Movimientos**: Full support with 2 transactions successfully processed (CSV)
-- **Automatic Detection**: Content-based (PDF), filename-based (XLS/CSV) payment method identification
+- **Mercadopago**: Full support with 394 transactions successfully processed (XLSX)
+- **Automatic Detection**: Content-based (PDF), filename-based (XLS/CSV/XLSX) payment method identification
 - **Backward Compatibility**: Zero regression in existing functionality
 
 ### Transaction Type Support (Complete)
@@ -41,21 +43,22 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 90% meaningful coverage with 160 well-organized tests
-- **Test Suite Expansion**: Added comprehensive CSV processing integration tests (24 new integration tests + 6 new unit tests)
-- **Coverage Quality**: Maintained 90% meaningful coverage with all new CSV functionality fully tested
+- **Professional Test Coverage**: 90% meaningful coverage with 178 well-organized tests
+- **Test Suite Expansion**: Added comprehensive Mercadopago XLSX and CSV processing integration tests (48 new tests total)
+- **Coverage Quality**: Maintained 90% meaningful coverage with all new functionality fully tested
 - **Test Architecture**: Professional organization with logical grouping by functionality
 - **Error Handling Suite**: Dedicated test suite for edge cases and error handling
-- **European Format Testing**: Specialized tests for 1.234,56 number format parsing across all formats (PDF, XLS, CSV)
+- **European Format Testing**: Specialized tests for 1.234,56 number format parsing across all formats (PDF, XLS, CSV, XLSX)
 - **Transaction Type Testing**: Comprehensive tests for all transaction types (tax, payment, adjustment, etc.)
-- **Integration Testing**: Real statement processing with expected output validation for all nine statement types
+- **Integration Testing**: Real statement processing with expected output validation for all ten statement types
 - **Unit Testing**: Individual function validation with descriptive, meaningful test names
-- **Test Organization**: 8 focused unit test files + 7 integration test files
+- **Test Organization**: 8 focused unit test files + 8 integration test files
 - **Quality Standards**: Descriptive test names, clear behavior validation, professional structure
 - **Maintainability**: Dramatically improved test readability and maintainability
 - **Coverage Enforcement**: Configurable thresholds with pytest-cov integration
 - **Test Data Isolation**: Independent test data copies for reliable testing
-- **Reference Output**: Known-good results for regression testing across all formats (PDF, XLS, CSV)
+- **Reference Output**: Known-good results for regression testing across all formats (PDF, XLS, CSV, XLSX)
+- **Warning-Free Environment**: Zero warnings in test output for clean development experience
 
 ### Test Suite Organization (Current State)
 
@@ -70,15 +73,16 @@
 - `test_transaction_types.py` - Transaction type parsing
 - `test_validate_balance.py` - Balance validation logic
 
-#### Integration Tests (7 files, end-to-end testing)
+#### Integration Tests (8 files, end-to-end testing)
 
 - `test_bbva_account_processing.py` - BBVA Account XLS complete workflow (12 tests)
 - `test_bbva_mastercard_processing.py` - BBVA Mastercard PDF complete workflow
 - `test_bbva_visa_processing.py` - BBVA VISA PDF complete workflow
-- `test_bbva_visa_csv_processing.py` - BBVA VISA CSV complete workflow (NEW - 12 tests)
+- `test_bbva_visa_csv_processing.py` - BBVA VISA CSV complete workflow (12 tests)
 - `test_macro_account_processing.py` - Macro Account XLS complete workflow (13 tests)
 - `test_macro_visa_processing.py` - MACRO VISA PDF complete workflow
-- `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (NEW - 12 tests)
+- `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (12 tests)
+- `test_mercadopago_processing.py` - Mercadopago XLSX complete workflow (14 tests)
 
 ### Development Infrastructure (Complete)
 
@@ -207,6 +211,8 @@
 - ✅ **v0.2.5**: Professional test suite refactoring - 97 meaningful tests with 90% coverage
 - ✅ **v0.2.6**: BBVA Account XLS support - 109 tests with comprehensive XLS integration testing
 - ✅ **v0.2.7**: Macro Account XLS support - 130 tests with 91% coverage and comprehensive functionality
+- ✅ **v0.2.8**: CSV processing support - 160 tests with comprehensive CSV workflow validation
+- ✅ **v0.2.9**: Mercadopago XLSX support - 178 tests with warning-free development environment
 
 ### Upcoming Milestones
 

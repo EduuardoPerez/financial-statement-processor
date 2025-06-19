@@ -14,6 +14,7 @@
 PDF Input → Text Extraction → Pattern Matching → Data Transformation → Excel Output
 XLS Input → Data Reading → Structure Parsing → Data Transformation → Excel Output
 CSV Input → Data Reading → Column Mapping → Data Transformation → Excel Output
+XLSX Input → Data Reading → Column Mapping → Data Transformation → Excel Output
 ```
 
 ## Core Design Patterns
@@ -114,6 +115,61 @@ def parse_bbva_visa_csv(csv_path, output_path, file_type):
             "Payment Method": "BBVA VISA"
         })
 ```
+
+### 6. XLSX Processing Pattern
+
+- **Approach**: Pandas-based XLSX reading with native Excel support
+- **Benefits**: Handles Excel files directly, preserves data types
+- **Key Features**: ISO 8601 timestamp conversion, direct numeric amount handling
+- **Validation**: XLSX-specific balance validation comparing input totals vs output totals
+
+```python
+def parse_mercadopago_xlsx(xlsx_path, output_path):
+    df = pd.read_excel(xlsx_path)
+
+    # Process each row
+    for _, row in df.iterrows():
+        fecha_str = str(row["Fecha de Pago"]).strip()
+        tipo_operacion = str(row["Tipo de Operación"]).strip()
+        importe = row["Importe"]
+
+        # Convert ISO 8601 timestamp to YYYY-MM-DD format
+        formatted_date = fecha_str.split("T")[0]  # "2025-02-01T17:45:36Z" -> "2025-02-01"
+
+        # Amount is already in proper numeric format
+        amount = float(importe)
+
+        transactions.append({
+            "Date": formatted_date,
+            "Description": tipo_operacion,
+            "Currency": "ARS",
+            "Amount": amount,
+            "Payment Method": "Mercadopago"
+        })
+```
+
+### 7. Warning Resolution Pattern
+
+- **Challenge**: Development environment cluttered with openpyxl and flake8 warnings
+- **Solution**: Comprehensive warning suppression and code quality configuration
+- **Implementation**: Multi-layered approach using pytest configuration and flake8 setup
+
+```python
+# pyproject.toml - Warning filters
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning:openpyxl.styles.stylesheet",
+]
+
+# .flake8 - Code quality configuration
+[flake8]
+max-line-length = 88
+per-file-ignores =
+    tests/*:E501
+```
+
+- **Benefits**: Clean test output, professional development experience, maintained code quality
+- **Quality Standards**: Zero warnings while preserving all functionality and test coverage
 
 ## Transaction Type Detection Patterns
 

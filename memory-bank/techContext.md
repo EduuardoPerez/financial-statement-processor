@@ -110,11 +110,12 @@ financial-statement-processor/
 
 - **pytest**: Industry standard testing framework
 - **pytest-cov**: Test coverage measurement and enforcement using coverage.py
-- **Integration Tests**: Process real PDF and XLS files, compare with expected output
-- **Unit Tests**: Validate individual functions (date conversion, payment detection, XLS filename detection)
-- **Coverage Enforcement**: 91% coverage with 130 tests, configurable thresholds (80%, 90%, 100%)
+- **Integration Tests**: Process real PDF, XLS, CSV, and XLSX files, compare with expected output
+- **Unit Tests**: Validate individual functions (date conversion, payment detection, filename detection)
+- **Coverage Enforcement**: 90% coverage with 178 tests, configurable thresholds (80%, 90%, 100%)
 - **Specialized Coverage Tests**: Targeted tests for error handling and edge cases
-- **Multi-Format Tests**: Dedicated test files for MACRO VISA, BBVA VISA, BBVA Mastercard, BBVA Account XLS, and Macro Account XLS
+- **Multi-Format Tests**: Dedicated test files for all 10 statement types (PDF, XLS, CSV, XLSX)
+- **Warning-Free Environment**: Clean test execution with zero warnings or noise
 
 ### Test Coverage Implementation
 
@@ -214,11 +215,45 @@ These paths represent edge cases that are handled gracefully by the application 
 - **CI Ready**: Commands configured for automated testing pipelines
 - **Maintenance Guidelines**: Clear documentation for maintaining coverage levels
 
+### Code Quality Tools
+
+- **flake8**: Python linting and code style enforcement
+- **Configuration**: `.flake8` file with project-specific settings
+- **Line Length**: 88 characters (Black standard) with test file exceptions
+- **Warning Suppression**: Comprehensive warning filters for clean development
+- **Integration**: Seamless integration with development workflow
+
+#### Flake8 Configuration
+
+```ini
+[flake8]
+max-line-length = 88
+per-file-ignores =
+    tests/*:E501
+```
+
+#### Warning Resolution Implementation
+
+```toml
+# pyproject.toml - Warning filters
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::UserWarning:openpyxl.styles.stylesheet",
+]
+
+[tool.flake8]
+max-line-length = 88
+per-file-ignores = [
+    "tests/*:E501",  # Ignore line length in test files
+]
+```
+
 ### Validation Approach
 
 - **Reference Files**: `expected_output/` contains known-good results
 - **Data Integrity**: Validates transaction counts, amounts, currency distribution
 - **Regression Testing**: Ensures changes don't break existing functionality
+- **Warning-Free Development**: Zero warnings in test output for professional experience
 
 ## Development Workflow
 

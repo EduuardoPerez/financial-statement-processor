@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
     """
     Detect payment method from PDF content or filename
-    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA", "BBVA Mastercard", "BBVA Account")
+    Returns the payment method string (e.g., "Macro VISA", "BBVA VISA",
+    "BBVA Mastercard", "BBVA Account")
 
     For backwards compatibility, accepts content as first positional argument
     """
@@ -22,8 +23,8 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
     elif content_or_path is not None and file_path is None:
         file_path = content_or_path
 
-    # For XLS files, detect based on filename
-    if file_path and file_path.lower().endswith(".xls"):
+    # For XLS/XLSX files, detect based on filename
+    if file_path and file_path.lower().endswith((".xls", ".xlsx")):
         filename_upper = os.path.basename(file_path).upper()
         if all(keyword in filename_upper for keyword in ["BBVA", "DETALLE"]) or all(
             keyword in filename_upper for keyword in ["BBVA", "ACCOUNT"]
@@ -31,6 +32,8 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
             return "BBVA Account"
         elif all(keyword in filename_upper for keyword in ["MACRO", "MOVIMIENTOS"]):
             return "Macro Account"
+        elif "MERCADOPAGO" in filename_upper:
+            return "Mercadopago"
 
     # For CSV files, detect based on filename
     if file_path and file_path.lower().endswith(".csv"):
@@ -83,7 +86,7 @@ def extract_balance_from_pdf(full_text, payment_method):
             try:
                 ars_str = match1.group(1)
                 usd_str = match1.group(2)
-            except:
+            except (AttributeError, IndexError):
                 ars_str = "0"
                 usd_str = "0"
         else:
@@ -899,6 +902,68 @@ def parse_macro_visa_csv(csv_path, output_path, file_type):
     return df
 
 
+def parse_mercadopago_xlsx(xlsx_path, output_path):
+    """
+    Parse Mercadopago XLSX file and generate Excel output
+    """
+    transactions = []
+
+    # Read the XLSX file
+    df = pd.read_excel(xlsx_path)
+
+    # Process each row
+    for _, row in df.iterrows():
+        fecha_str = (
+            str(row["Fecha de Pago"]).strip() if pd.notna(row["Fecha de Pago"]) else ""
+        )
+        tipo_operacion = (
+            str(row["Tipo de Operación"]).strip()
+            if pd.notna(row["Tipo de Operación"])
+            else ""
+        )
+        importe = row["Importe"] if pd.notna(row["Importe"]) else 0
+
+        if fecha_str and tipo_operacion:
+            # Convert ISO 8601 timestamp to YYYY-MM-DD format
+            try:
+                # Extract date part from "2025-02-01T17:45:36Z"
+                formatted_date = fecha_str.split("T")[0]
+            except (ValueError, IndexError):
+                continue  # Skip invalid dates
+
+            # Amount is already in proper numeric format
+            try:
+                amount = float(importe)
+            except (ValueError, TypeError):
+                continue  # Skip invalid amounts
+
+            transaction = {
+                "Date": formatted_date,
+                "Description": tipo_operacion,
+                "Currency": "ARS",  # All Mercadopago transactions are in ARS
+                "Amount": amount,
+                "Payment Method": "Mercadopago",
+            }
+            transactions.append(transaction)
+
+    # Convert to DataFrame
+    df = pd.DataFrame(transactions)
+
+    # Sort by date to match expected output (chronological order)
+    if len(df) > 0:
+        df["Date"] = pd.to_datetime(df["Date"])
+        df = df.sort_values("Date")
+        df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    # Save to Excel
+    df.to_excel(output_path, index=False, sheet_name="Sheet1")
+
+    return df
+
+
 def validate_csv_balance(input_csv_path, output_df, filename):
     """
     Validate CSV input totals against output Excel totals and log results
@@ -931,6 +996,48 @@ def validate_csv_balance(input_csv_path, output_df, filename):
 
     logger.info(
         f"        Input CSV Total: {input_formatted} | "
+        f"Output Excel Total: {output_formatted} | Δ: {difference:.2f}"
+    )
+
+    # Log warnings for mismatches (don't raise errors)
+    if abs(difference) > 0.01:  # Allow for small rounding differences
+        logger.warning(
+            f"[WARNING] Total mismatch in {filename}: "
+            f"difference of {difference:.2f}"
+        )
+
+    return {"input": input_total, "output": output_total}
+
+
+def validate_mercadopago_balance(input_xlsx_path, output_df, filename):
+    """
+    Validate Mercadopago XLSX input totals against output Excel totals and log results
+    """
+    logger.info(f"[INFO] Validating Mercadopago balance for: {filename}")
+
+    # Read input XLSX and calculate total
+    input_df = pd.read_excel(input_xlsx_path)
+    input_total = 0
+    for _, row in input_df.iterrows():
+        importe = row["Importe"] if pd.notna(row["Importe"]) else 0
+        try:
+            amount = float(importe)
+            input_total += amount
+        except (ValueError, TypeError):
+            continue
+
+    # Calculate output total
+    output_total = output_df["Amount"].sum()
+
+    # Calculate difference
+    difference = input_total - output_total
+
+    # Format numbers with thousand separators for logging
+    input_formatted = f"{input_total:,.2f}"
+    output_formatted = f"{output_total:,.2f}"
+
+    logger.info(
+        f"        Input XLSX Total: {input_formatted} | "
         f"Output Excel Total: {output_formatted} | Δ: {difference:.2f}"
     )
 
@@ -995,11 +1102,11 @@ def print_processing_summary(
     total_ars = df[df["Currency"] == "ARS"]["Amount"].sum()
     total_usd = df[df["Currency"] == "USD"]["Amount"].sum()
 
-    print(f"\nACTUAL TOTALS (including payments):")
+    print("\nACTUAL TOTALS (including payments):")
     print(f"  ARS: {total_ars:,.2f}")
     print(f"  USD: {total_usd:.2f}")
 
-    print(f"\nBALANCE VALIDATION:")
+    print("\nBALANCE VALIDATION:")
     print(f"  Reported ARS: {reported_balance['ars']:,.2f}")
     print(f"  Computed ARS: {computed_balance['ars']:,.2f}")
     print(
@@ -1289,6 +1396,31 @@ if __name__ == "__main__":
             df_macro_movs,
             reported_macro_movs,
             computed_macro_movs,
+            output_file,
+        )
+    )
+
+    # Process Mercadopago statement
+    print("Processing Mercadopago statement...")
+    input_file = "input/mercadopago.xlsx"
+    output_file = "output/mercadopago-transactions.xlsx"
+    df_mercadopago = parse_mercadopago_xlsx(input_file, output_file)
+
+    # Validate Mercadopago input vs output totals
+    validation_result = validate_mercadopago_balance(
+        input_file, df_mercadopago, "mercadopago.xlsx"
+    )
+
+    # Create balance objects for compatibility with existing summary function
+    reported_mercadopago = {"ars": validation_result["input"], "usd": 0.0}
+    computed_mercadopago = {"ars": validation_result["output"], "usd": 0.0}
+
+    results.append(
+        (
+            "mercadopago.xlsx",
+            df_mercadopago,
+            reported_mercadopago,
+            computed_mercadopago,
             output_file,
         )
     )

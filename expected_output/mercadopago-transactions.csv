@@ -1,0 +1,395 @@
+Date,Description,Currency,Amount,Payment Method
+2025-02-01,Movimiento General,ARS,-50000,Mercadopago
+2025-02-01,Retiro de dinero,ARS,-500,Mercadopago
+2025-02-01,Dinero recibido,ARS,4000,Mercadopago
+2025-02-01,Ingreso de dinero,ARS,15600,Mercadopago
+2025-02-01,Pago,ARS,-15600,Mercadopago
+2025-02-03,Rendimiento positivo de la inversión,ARS,42.56,Mercadopago
+2025-02-03,Pago,ARS,-2970,Mercadopago
+2025-02-04,Rendimiento positivo de la inversión,ARS,20.63,Mercadopago
+2025-02-04,Ingreso de dinero,ARS,2454,Mercadopago
+2025-02-04,Pago,ARS,-2454,Mercadopago
+2025-02-05,Rendimiento positivo de la inversión,ARS,18.06,Mercadopago
+2025-02-05,Ingreso de dinero,ARS,84290,Mercadopago
+2025-02-05,Pago,ARS,-77946.73,Mercadopago
+2025-02-06,Rendimiento positivo de la inversión,ARS,22.97,Mercadopago
+2025-02-06,Ingreso de dinero,ARS,5200,Mercadopago
+2025-02-06,Pago,ARS,-5200,Mercadopago
+2025-02-06,Ingreso de dinero,ARS,29201.5,Mercadopago
+2025-02-06,Pago,ARS,-29201.5,Mercadopago
+2025-02-06,Ingreso de dinero,ARS,6600,Mercadopago
+2025-02-06,Pago,ARS,-6600,Mercadopago
+2025-02-07,Rendimiento positivo de la inversión,ARS,22.95,Mercadopago
+2025-02-07,Ingreso de dinero,ARS,6400,Mercadopago
+2025-02-07,Pago,ARS,-6400,Mercadopago
+2025-02-08,Dinero recibido,ARS,5000,Mercadopago
+2025-02-09,Pago,ARS,-35000,Mercadopago
+2025-02-10,Rendimiento positivo de la inversión,ARS,68.85,Mercadopago
+2025-02-10,Dinero recibido,ARS,2053539.6,Mercadopago
+2025-02-10,Pago,ARS,-5000,Mercadopago
+2025-02-10,Retiro de dinero,ARS,-510000,Mercadopago
+2025-02-10,Retiro de dinero,ARS,-1292953.96,Mercadopago
+2025-02-11,Rendimiento positivo de la inversión,ARS,186.94,Mercadopago
+2025-02-12,Ingreso de dinero,ARS,37949.67,Mercadopago
+2025-02-12,Pago,ARS,-4000,Mercadopago
+2025-02-12,Rendimiento positivo de la inversión,ARS,189.21,Mercadopago
+2025-02-13,Rendimiento positivo de la inversión,ARS,216.94,Mercadopago
+2025-02-14,Rendimiento positivo de la inversión,ARS,216.01,Mercadopago
+2025-02-14,Retiro de dinero,ARS,-122845.27,Mercadopago
+2025-02-14,Pago,ARS,-70000,Mercadopago
+2025-02-14,Dinero recibido,ARS,40489,Mercadopago
+2025-02-15,Pago,ARS,-20000,Mercadopago
+2025-02-17,Rendimiento positivo de la inversión,ARS,200.17,Mercadopago
+2025-02-17,Ingreso de dinero,ARS,3578.02,Mercadopago
+2025-02-17,Pago,ARS,-3200,Mercadopago
+2025-02-18,Rendimiento positivo de la inversión,ARS,82.61,Mercadopago
+2025-02-19,Rendimiento positivo de la inversión,ARS,81.47,Mercadopago
+2025-02-19,Retiro de dinero,ARS,-80000,Mercadopago
+2025-02-19,Ingreso de dinero,ARS,4000,Mercadopago
+2025-02-19,Pago,ARS,-4000,Mercadopago
+2025-02-20,Rendimiento positivo de la inversión,ARS,21.89,Mercadopago
+2025-02-20,Ingreso de dinero,ARS,27200,Mercadopago
+2025-02-20,Pago,ARS,-27200,Mercadopago
+2025-02-21,Rendimiento positivo de la inversión,ARS,21.76,Mercadopago
+2025-02-21,Pago,ARS,-3587.5,Mercadopago
+2025-02-21,Ingreso de dinero,ARS,2400,Mercadopago
+2025-02-21,Pago,ARS,-2400,Mercadopago
+2025-02-22,Ingreso de dinero,ARS,9211.41,Mercadopago
+2025-02-22,Pago,ARS,-9211.41,Mercadopago
+2025-02-22,Ingreso de dinero,ARS,47500,Mercadopago
+2025-02-22,Pago,ARS,-47500,Mercadopago
+2025-02-22,Ingreso de dinero,ARS,16000,Mercadopago
+2025-02-22,Pago,ARS,-16000,Mercadopago
+2025-02-22,Ingreso de dinero,ARS,181586,Mercadopago
+2025-02-22,Pago,ARS,-181586,Mercadopago
+2025-02-23,Ingreso de dinero,ARS,12400,Mercadopago
+2025-02-23,Pago,ARS,-12400,Mercadopago
+2025-02-24,Rendimiento positivo de la inversión,ARS,56.79,Mercadopago
+2025-02-24,Retiro de dinero,ARS,-2860,Mercadopago
+2025-02-25,Rendimiento positivo de la inversión,ARS,16.83,Mercadopago
+2025-02-26,Rendimiento positivo de la inversión,ARS,16.85,Mercadopago
+2025-02-27,Rendimiento positivo de la inversión,ARS,16.82,Mercadopago
+2025-02-28,Rendimiento positivo de la inversión,ARS,16.84,Mercadopago
+2025-03-01,Ingreso de dinero,ARS,40000,Mercadopago
+2025-03-01,Pago,ARS,-40000,Mercadopago
+2025-03-01,Ingreso de dinero,ARS,48200,Mercadopago
+2025-03-01,Pago,ARS,-48200,Mercadopago
+2025-03-01,Ingreso de dinero,ARS,17600,Mercadopago
+2025-03-01,Pago,ARS,-17600,Mercadopago
+2025-03-02,Ingreso de dinero,ARS,249600,Mercadopago
+2025-03-02,Pago,ARS,-249600,Mercadopago
+2025-03-03,Ingreso de dinero,ARS,9500,Mercadopago
+2025-03-03,Pago,ARS,-9500,Mercadopago
+2025-03-05,Rendimiento positivo de la inversión,ARS,84.43,Mercadopago
+2025-03-05,Pago,ARS,-3237.5,Mercadopago
+2025-03-05,Dinero recibido,ARS,394706.31,Mercadopago
+2025-03-05,Pago,ARS,-115000,Mercadopago
+2025-03-05,Retiro de dinero,ARS,-202362.53,Mercadopago
+2025-03-05,Pago,ARS,-25000,Mercadopago
+2025-03-05,Pago,ARS,-35000,Mercadopago
+2025-03-05,Ingreso de dinero,ARS,35460,Mercadopago
+2025-03-05,Pago,ARS,-35460,Mercadopago
+2025-03-06,Rendimiento positivo de la inversión,ARS,299.08,Mercadopago
+2025-03-06,Pago,ARS,-4200,Mercadopago
+2025-03-06,Pago,ARS,-500,Mercadopago
+2025-03-06,Retiro de dinero,ARS,-5130,Mercadopago
+2025-03-07,Rendimiento positivo de la inversión,ARS,19.97,Mercadopago
+2025-03-08,Ingreso de dinero,ARS,4330,Mercadopago
+2025-03-08,Pago,ARS,-4330,Mercadopago
+2025-03-08,Ingreso de dinero,ARS,6200,Mercadopago
+2025-03-08,Pago,ARS,-6200,Mercadopago
+2025-03-09,Ingreso de dinero,ARS,123090.42,Mercadopago
+2025-03-09,Retiro de dinero,ARS,-120000,Mercadopago
+2025-03-09,Ingreso de dinero,ARS,120000.21,Mercadopago
+2025-03-09,Pago,ARS,-26000,Mercadopago
+2025-03-09,Ingreso de dinero,ARS,97000,Mercadopago
+2025-03-09,Pago,ARS,-97000,Mercadopago
+2025-03-09,Ingreso de dinero,ARS,7584.04,Mercadopago
+2025-03-09,Pago,ARS,-7584.04,Mercadopago
+2025-03-09,Dinero recibido,ARS,62200,Mercadopago
+2025-03-10,Rendimiento positivo de la inversión,ARS,60.06,Mercadopago
+2025-03-10,Pago,ARS,-2100,Mercadopago
+2025-03-10,Pago,ARS,-77946.73,Mercadopago
+2025-03-10,Movimiento General,ARS,-91380,Mercadopago
+2025-03-10,Dinero recibido,ARS,1714114.13,Mercadopago
+2025-03-10,Retiro de dinero,ARS,-1017785.25,Mercadopago
+2025-03-10,Retiro de dinero,ARS,-510000,Mercadopago
+2025-03-11,Ingreso de dinero,ARS,29644.23,Mercadopago
+2025-03-11,Rendimiento positivo de la inversión,ARS,144.13,Mercadopago
+2025-03-11,Movimiento General,ARS,-4500,Mercadopago
+2025-03-12,Rendimiento positivo de la inversión,ARS,161.73,Mercadopago
+2025-03-12,Ingreso de dinero,ARS,180000,Mercadopago
+2025-03-12,Pago,ARS,-180000,Mercadopago
+2025-03-12,Movimiento General,ARS,-3000,Mercadopago
+2025-03-13,Rendimiento positivo de la inversión,ARS,161.46,Mercadopago
+2025-03-14,Rendimiento positivo de la inversión,ARS,162.87,Mercadopago
+2025-03-14,Ingreso de dinero,ARS,3700,Mercadopago
+2025-03-14,Pago,ARS,-3700,Mercadopago
+2025-03-14,Pago,ARS,-70000,Mercadopago
+2025-03-14,Movimiento General,ARS,-70029.7,Mercadopago
+2025-03-15,Ingreso de dinero,ARS,5655.61,Mercadopago
+2025-03-15,Ingreso de dinero,ARS,129564,Mercadopago
+2025-03-15,Pago,ARS,-22000,Mercadopago
+2025-03-17,Rendimiento positivo de la inversión,ARS,183.9,Mercadopago
+2025-03-17,Pago,ARS,-1975,Mercadopago
+2025-03-17,Pago,ARS,-20000,Mercadopago
+2025-03-18,Rendimiento positivo de la inversión,ARS,140.35,Mercadopago
+2025-03-19,Rendimiento positivo de la inversión,ARS,126.57,Mercadopago
+2025-03-19,Dinero recibido,ARS,327384.51,Mercadopago
+2025-03-19,Retiro de dinero,ARS,-400000,Mercadopago
+2025-03-19,Ingreso de dinero,ARS,11400,Mercadopago
+2025-03-19,Pago,ARS,-11400,Mercadopago
+2025-03-20,Rendimiento positivo de la inversión,ARS,74.58,Mercadopago
+2025-03-20,Ingreso de dinero,ARS,27399.06,Mercadopago
+2025-03-20,Pago,ARS,-27399.06,Mercadopago
+2025-03-21,Ingreso de dinero,ARS,2000,Mercadopago
+2025-03-21,Pago,ARS,-2000,Mercadopago
+2025-03-21,Rendimiento positivo de la inversión,ARS,74.92,Mercadopago
+2025-03-21,Ingreso de dinero,ARS,26517.96,Mercadopago
+2025-03-21,Pago,ARS,-26517.96,Mercadopago
+2025-03-24,Ingreso de dinero,ARS,14450,Mercadopago
+2025-03-24,Pago,ARS,-14450,Mercadopago
+2025-03-24,Ingreso de dinero,ARS,6100,Mercadopago
+2025-03-24,Pago,ARS,-6100,Mercadopago
+2025-03-24,Ingreso de dinero,ARS,9500,Mercadopago
+2025-03-24,Pago,ARS,-9500,Mercadopago
+2025-03-25,Rendimiento positivo de la inversión,ARS,301.2,Mercadopago
+2025-03-25,Ingreso de dinero,ARS,26400,Mercadopago
+2025-03-25,Pago,ARS,-26400,Mercadopago
+2025-03-25,Ingreso de dinero,ARS,2280,Mercadopago
+2025-03-25,Pago,ARS,-2280,Mercadopago
+2025-03-26,Rendimiento positivo de la inversión,ARS,75.52,Mercadopago
+2025-03-26,Ingreso de dinero,ARS,39400,Mercadopago
+2025-03-26,Pago,ARS,-39400,Mercadopago
+2025-03-26,Ingreso de dinero,ARS,1200,Mercadopago
+2025-03-27,Rendimiento positivo de la inversión,ARS,75.58,Mercadopago
+2025-03-27,Ingreso de dinero,ARS,4000,Mercadopago
+2025-03-27,Pago,ARS,-4000,Mercadopago
+2025-03-28,Rendimiento positivo de la inversión,ARS,76.48,Mercadopago
+2025-03-28,Ingreso de dinero,ARS,9500,Mercadopago
+2025-03-28,Pago,ARS,-9500,Mercadopago
+2025-03-31,Rendimiento positivo de la inversión,ARS,230.03,Mercadopago
+2025-03-31,Ingreso de dinero,ARS,238793.65,Mercadopago
+2025-03-31,Ingreso de dinero,ARS,10000,Mercadopago
+2025-03-31,Pago,ARS,-353669.19,Mercadopago
+2025-04-01,Rendimiento positivo de la inversión,ARS,250.12,Mercadopago
+2025-04-02,Ingreso de dinero,ARS,15500,Mercadopago
+2025-04-02,Pago,ARS,-15500,Mercadopago
+2025-04-02,Ingreso de dinero,ARS,2900,Mercadopago
+2025-04-02,Pago,ARS,-2900,Mercadopago
+2025-04-03,Rendimiento positivo de la inversión,ARS,1.67,Mercadopago
+2025-04-04,Rendimiento positivo de la inversión,ARS,0.83,Mercadopago
+2025-04-04,Dinero recibido,ARS,2129768.65,Mercadopago
+2025-04-04,Retiro de dinero,ARS,-2119217.32,Mercadopago
+2025-04-05,Ingreso de dinero,ARS,121569,Mercadopago
+2025-04-05,Pago,ARS,-121569,Mercadopago
+2025-04-06,Ingreso de dinero,ARS,8993.96,Mercadopago
+2025-04-06,Pago,ARS,-8993.96,Mercadopago
+2025-04-07,Rendimiento positivo de la inversión,ARS,25.81,Mercadopago
+2025-04-08,Rendimiento positivo de la inversión,ARS,8.57,Mercadopago
+2025-04-08,Ingreso de dinero,ARS,61724.82,Mercadopago
+2025-04-09,Rendimiento positivo de la inversión,ARS,53.7,Mercadopago
+2025-04-09,Ingreso de dinero,ARS,25620,Mercadopago
+2025-04-09,Pago,ARS,-25620,Mercadopago
+2025-04-10,Rendimiento positivo de la inversión,ARS,54.1,Mercadopago
+2025-04-10,Ingreso de dinero,ARS,249600,Mercadopago
+2025-04-10,Pago,ARS,-249600,Mercadopago
+2025-04-10,Dinero recibido,ARS,613461.83,Mercadopago
+2025-04-10,Pago,ARS,-35000,Mercadopago
+2025-04-10,Retiro de dinero,ARS,-510000,Mercadopago
+2025-04-10,Pago,ARS,-16000,Mercadopago
+2025-04-10,Pago,ARS,-16100,Mercadopago
+2025-04-11,Rendimiento positivo de la inversión,ARS,82.81,Mercadopago
+2025-04-11,Ingreso de dinero,ARS,43976.4,Mercadopago
+2025-04-11,Pago,ARS,-43976.4,Mercadopago
+2025-04-11,Ingreso de dinero,ARS,5100,Mercadopago
+2025-04-11,Pago,ARS,-5100,Mercadopago
+2025-04-13,Pago,ARS,-5000,Mercadopago
+2025-04-14,Rendimiento positivo de la inversión,ARS,274.77,Mercadopago
+2025-04-14,Ingreso de dinero,ARS,17735.5,Mercadopago
+2025-04-14,Pago,ARS,-17735.5,Mercadopago
+2025-04-15,Retiro de dinero,ARS,-89952.53,Mercadopago
+2025-04-15,Rendimiento positivo de la inversión,ARS,91.54,Mercadopago
+2025-04-15,Ingreso de dinero,ARS,68819.38,Mercadopago
+2025-04-15,Pago,ARS,-77946.73,Mercadopago
+2025-04-16,Rendimiento positivo de la inversión,ARS,5.37,Mercadopago
+2025-04-16,Ingreso de dinero,ARS,7136,Mercadopago
+2025-04-16,Pago,ARS,-7136,Mercadopago
+2025-04-19,Ingreso de dinero,ARS,37400,Mercadopago
+2025-04-19,Pago,ARS,-37400,Mercadopago
+2025-04-21,Rendimiento positivo de la inversión,ARS,25.74,Mercadopago
+2025-04-21,Ingreso de dinero,ARS,1350783.64,Mercadopago
+2025-04-21,Retiro de dinero,ARS,-1077694.43,Mercadopago
+2025-04-21,Retiro de dinero,ARS,-45000,Mercadopago
+2025-04-21,Pago,ARS,-53917.1,Mercadopago
+2025-04-22,Rendimiento positivo de la inversión,ARS,182.98,Mercadopago
+2025-04-22,Ingreso de dinero,ARS,175000,Mercadopago
+2025-04-22,Pago,ARS,-175000,Mercadopago
+2025-04-23,Rendimiento positivo de la inversión,ARS,136.96,Mercadopago
+2025-04-23,Ingreso de dinero,ARS,34894.91,Mercadopago
+2025-04-23,Ingreso de dinero,ARS,179985,Mercadopago
+2025-04-23,Retiro de dinero,ARS,-300000,Mercadopago
+2025-04-24,Rendimiento positivo de la inversión,ARS,72.3,Mercadopago
+2025-04-24,Movimiento General,ARS,237.47,Mercadopago
+2025-04-24,Pago con descuento recibido,ARS,-237.47,Mercadopago
+2025-04-24,Pago,ARS,-13071.26,Mercadopago
+2025-04-24,Ingreso de dinero,ARS,1827187.41,Mercadopago
+2025-04-24,Movimiento General,ARS,11900,Mercadopago
+2025-04-24,Pago con descuento recibido,ARS,-11900,Mercadopago
+2025-04-24,Pago,ARS,-1827187.41,Mercadopago
+2025-04-24,Ingreso de dinero,ARS,55000,Mercadopago
+2025-04-24,Pago,ARS,-55000,Mercadopago
+2025-04-25,Rendimiento positivo de la inversión,ARS,63.08,Mercadopago
+2025-04-26,Ingreso de dinero,ARS,70153.97,Mercadopago
+2025-04-26,Pago,ARS,-70153.97,Mercadopago
+2025-04-26,Ingreso de dinero,ARS,15670,Mercadopago
+2025-04-26,Pago,ARS,-15670,Mercadopago
+2025-04-26,Movimiento General,ARS,-44500,Mercadopago
+2025-04-28,Rendimiento positivo de la inversión,ARS,190.75,Mercadopago
+2025-04-29,Rendimiento positivo de la inversión,ARS,28.91,Mercadopago
+2025-04-30,Rendimiento positivo de la inversión,ARS,28.95,Mercadopago
+2025-04-30,Ingreso de dinero,ARS,10000,Mercadopago
+2025-04-30,Ingreso de dinero,ARS,118000,Mercadopago
+2025-04-30,Pago,ARS,-118000,Mercadopago
+2025-04-30,Dinero recibido,ARS,68000,Mercadopago
+2025-05-01,Pago,ARS,-5000,Mercadopago
+2025-05-02,Dinero recibido,ARS,19500,Mercadopago
+2025-05-03,Ingreso de dinero,ARS,4635,Mercadopago
+2025-05-03,Pago,ARS,-4635,Mercadopago
+2025-05-05,Rendimiento positivo de la inversión,ARS,142.74,Mercadopago
+2025-05-05,Ingreso de dinero,ARS,134306.41,Mercadopago
+2025-05-05,Dinero recibido,ARS,100000,Mercadopago
+2025-05-05,Pago,ARS,-278971.23,Mercadopago
+2025-05-06,Rendimiento positivo de la inversión,ARS,62.61,Mercadopago
+2025-05-06,Ingreso de dinero,ARS,785172.09,Mercadopago
+2025-05-06,Retiro de dinero,ARS,-550000,Mercadopago
+2025-05-06,Movimiento General,ARS,-200000,Mercadopago
+2025-05-06,Ingreso de dinero,ARS,29500,Mercadopago
+2025-05-06,Pago,ARS,-29500,Mercadopago
+2025-05-06,Ingreso de dinero,ARS,11028,Mercadopago
+2025-05-06,Pago,ARS,-11028,Mercadopago
+2025-05-07,Rendimiento positivo de la inversión,ARS,87.85,Mercadopago
+2025-05-08,Rendimiento positivo de la inversión,ARS,87.92,Mercadopago
+2025-05-08,Ingreso de dinero,ARS,264400,Mercadopago
+2025-05-08,Pago,ARS,-264400,Mercadopago
+2025-05-09,Rendimiento positivo de la inversión,ARS,88.45,Mercadopago
+2025-05-09,Ingreso de dinero,ARS,1397915.73,Mercadopago
+2025-05-09,Pago,ARS,-35000,Mercadopago
+2025-05-09,Retiro de dinero,ARS,-25000,Mercadopago
+2025-05-09,Retiro de dinero,ARS,-1323685.52,Mercadopago
+2025-05-10,Ingreso de dinero,ARS,10000,Mercadopago
+2025-05-10,Pago,ARS,-10000,Mercadopago
+2025-05-10,Ingreso de dinero,ARS,39574.32,Mercadopago
+2025-05-11,Movimiento General,ARS,-7600,Mercadopago
+2025-05-11,Ingreso de dinero,ARS,13500,Mercadopago
+2025-05-11,Pago,ARS,-13500,Mercadopago
+2025-05-12,Rendimiento positivo de la inversión,ARS,297.84,Mercadopago
+2025-05-13,Rendimiento positivo de la inversión,ARS,123.33,Mercadopago
+2025-05-13,Ingreso de dinero,ARS,11408.63,Mercadopago
+2025-05-13,Pago,ARS,-11408.63,Mercadopago
+2025-05-13,Pago,ARS,-18000,Mercadopago
+2025-05-13,Pago,ARS,-30250,Mercadopago
+2025-05-13,Pago,ARS,-35000,Mercadopago
+2025-05-13,Ingreso de dinero,ARS,25677.6,Mercadopago
+2025-05-13,Movimiento General,ARS,-1677.6,Mercadopago
+2025-05-13,Pago,ARS,-24000,Mercadopago
+2025-05-13,Ingreso de dinero,ARS,2700,Mercadopago
+2025-05-13,Pago,ARS,-2700,Mercadopago
+2025-05-14,Rendimiento positivo de la inversión,ARS,88.55,Mercadopago
+2025-05-14,Ingreso de dinero,ARS,7200,Mercadopago
+2025-05-14,Pago,ARS,-7200,Mercadopago
+2025-05-14,Pago,ARS,-4050,Mercadopago
+2025-05-15,Rendimiento positivo de la inversión,ARS,59.69,Mercadopago
+2025-05-15,Dinero recibido,ARS,2389319.22,Mercadopago
+2025-05-15,Retiro de dinero,ARS,-2046961.62,Mercadopago
+2025-05-16,Pago,ARS,-26000,Mercadopago
+2025-05-16,Rendimiento positivo de la inversión,ARS,312.35,Mercadopago
+2025-05-16,Movimiento General,ARS,-90072.88,Mercadopago
+2025-05-16,Pago,ARS,-77946.73,Mercadopago
+2025-05-16,Pago,ARS,-21500,Mercadopago
+2025-05-16,Pago,ARS,-10000,Mercadopago
+2025-05-17,Ingreso de dinero,ARS,61314.58,Mercadopago
+2025-05-18,Pago,ARS,-58000,Mercadopago
+2025-05-18,Ingreso de dinero,ARS,11300,Mercadopago
+2025-05-18,Pago,ARS,-11300,Mercadopago
+2025-05-19,Rendimiento positivo de la inversión,ARS,503.47,Mercadopago
+2025-05-20,Rendimiento positivo de la inversión,ARS,143.69,Mercadopago
+2025-05-21,Rendimiento positivo de la inversión,ARS,142.97,Mercadopago
+2025-05-22,Rendimiento positivo de la inversión,ARS,143.12,Mercadopago
+2025-05-23,Rendimiento positivo de la inversión,ARS,143.11,Mercadopago
+2025-05-24,Pago,ARS,-16000,Mercadopago
+2025-05-24,Dinero recibido,ARS,20000,Mercadopago
+2025-05-24,Movimiento General,ARS,-50000,Mercadopago
+2025-05-24,Ingreso de dinero,ARS,1760,Mercadopago
+2025-05-24,Pago,ARS,-1760,Mercadopago
+2025-05-25,Pago,ARS,-17000,Mercadopago
+2025-05-25,Ingreso de dinero,ARS,9745.43,Mercadopago
+2025-05-26,Rendimiento positivo de la inversión,ARS,429.83,Mercadopago
+2025-05-26,Ingreso de dinero,ARS,100000,Mercadopago
+2025-05-26,Pago,ARS,-61947.04,Mercadopago
+2025-05-26,Pago,ARS,-122348.29,Mercadopago
+2025-05-27,Rendimiento positivo de la inversión,ARS,175.08,Mercadopago
+2025-05-27,Movimiento General,ARS,-194.9,Mercadopago
+2025-05-28,Rendimiento positivo de la inversión,ARS,46.25,Mercadopago
+2025-05-29,Rendimiento positivo de la inversión,ARS,46.16,Mercadopago
+2025-05-30,Rendimiento positivo de la inversión,ARS,46.06,Mercadopago
+2025-05-30,Ingreso de dinero,ARS,2045209.84,Mercadopago
+2025-05-30,Retiro de dinero,ARS,-950000,Mercadopago
+2025-05-30,Retiro de dinero,ARS,-700000,Mercadopago
+2025-05-31,Pago,ARS,-29000,Mercadopago
+2025-06-01,Ingreso de dinero,ARS,9272.03,Mercadopago
+2025-06-01,Pago,ARS,-9272.03,Mercadopago
+2025-06-02,Rendimiento positivo de la inversión,ARS,966.45,Mercadopago
+2025-06-02,Movimiento General,ARS,-330000,Mercadopago
+2025-06-03,Rendimiento positivo de la inversión,ARS,71.99,Mercadopago
+2025-06-04,Rendimiento positivo de la inversión,ARS,72.17,Mercadopago
+2025-06-05,Rendimiento positivo de la inversión,ARS,71.92,Mercadopago
+2025-06-06,Rendimiento positivo de la inversión,ARS,72.26,Mercadopago
+2025-06-06,Ingreso de dinero,ARS,32199,Mercadopago
+2025-06-06,Pago,ARS,-32199,Mercadopago
+2025-06-06,Ingreso de dinero,ARS,264400,Mercadopago
+2025-06-06,Pago,ARS,-264400,Mercadopago
+2025-06-06,Ingreso de dinero,ARS,21274.69,Mercadopago
+2025-06-06,Pago,ARS,-21274.69,Mercadopago
+2025-06-07,Pago,ARS,-65000,Mercadopago
+2025-06-07,Ingreso de dinero,ARS,13479.26,Mercadopago
+2025-06-07,Ingreso de dinero,ARS,24145,Mercadopago
+2025-06-07,Pago,ARS,-24145,Mercadopago
+2025-06-07,Ingreso de dinero,ARS,2060,Mercadopago
+2025-06-07,Pago,ARS,-2060,Mercadopago
+2025-06-09,Rendimiento positivo de la inversión,ARS,220.55,Mercadopago
+2025-06-09,Ingreso de dinero,ARS,683370.05,Mercadopago
+2025-06-09,Retiro de dinero,ARS,-650000,Mercadopago
+2025-06-10,Rendimiento positivo de la inversión,ARS,61.03,Mercadopago
+2025-06-10,Retiro de dinero,ARS,-25000,Mercadopago
+2025-06-10,Retiro de dinero,ARS,-35000,Mercadopago
+2025-06-10,Ingreso de dinero,ARS,102316.73,Mercadopago
+2025-06-10,Pago,ARS,-98096.95,Mercadopago
+2025-06-10,Ingreso de dinero,ARS,3553.53,Mercadopago
+2025-06-10,Ingreso de dinero,ARS,160446,Mercadopago
+2025-06-10,Pago,ARS,-164000,Mercadopago
+2025-06-11,Rendimiento positivo de la inversión,ARS,21.53,Mercadopago
+2025-06-12,Pago,ARS,-6000,Mercadopago
+2025-06-13,Rendimiento positivo de la inversión,ARS,22.27,Mercadopago
+2025-06-13,Ingreso de dinero,ARS,100000,Mercadopago
+2025-06-13,Pago,ARS,-2148,Mercadopago
+2025-06-13,Retiro de dinero,ARS,-100000,Mercadopago
+2025-06-13,Rendimiento positivo de la inversión,ARS,17.91,Mercadopago
+2025-06-15,Pago,ARS,-20900,Mercadopago
+2025-06-16,Ingreso de dinero,ARS,250000,Mercadopago
+2025-06-16,Pago,ARS,-221882.46,Mercadopago
+2025-06-16,Ingreso de dinero,ARS,45000,Mercadopago
+2025-06-16,Dinero recibido,ARS,103000,Mercadopago
+2025-06-16,Pago,ARS,-158510.43,Mercadopago
+2025-06-16,Ingreso de dinero,ARS,64761.72,Mercadopago
+2025-06-16,Pago,ARS,-64761.72,Mercadopago
+2025-06-17,Rendimiento positivo de la inversión,ARS,363.69,Mercadopago
+2025-06-17,Dinero recibido,ARS,311469.49,Mercadopago
+2025-06-17,Retiro de dinero,ARS,-186127.06,Mercadopago
+2025-06-17,Movimiento General,ARS,-100000,Mercadopago
+2025-06-17,Ingreso de dinero,ARS,5421.18,Mercadopago
+2025-06-18,Pago,ARS,-1060,Mercadopago
+2025-06-18,Retiro de dinero,ARS,-40000,Mercadopago
+2025-06-18,Rendimiento positivo de la inversión,ARS,37.47,Mercadopago
+2025-06-18,Ingreso de dinero,ARS,18000,Mercadopago
+2025-06-18,Pago,ARS,-18000,Mercadopago

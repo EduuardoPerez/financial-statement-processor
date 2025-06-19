@@ -165,7 +165,7 @@ class TestDetectPaymentMethod:
         assert result == "BBVA VISA"
 
     def test_detect_with_actual_bbva_mastercard_pdf_content(self):
-        """Test with actual BBVA Mastercard PDF content to ensure it detects BBVA Mastercard"""
+        """Test with actual BBVA Mastercard PDF content"""
         pdf_path = "tests/test_data/input/BBVA-Mastercard-2025-04.pdf"
 
         with pdfplumber.open(pdf_path) as pdf:
@@ -375,3 +375,54 @@ class TestDetectPaymentMethod:
             assert (
                 result == "Macro VISA"
             ), f"Failed to detect Macro VISA from {csv_path}"
+
+    def test_detect_mercadopago_xlsx_filename(self):
+        """Test detection of Mercadopago from XLSX filename"""
+        test_filenames = [
+            "mercadopago.xlsx",
+            "MERCADOPAGO.xlsx",
+            "Mercadopago_2025.xlsx",
+            "mercadopago-statement.xlsx",
+            "MERCADOPAGO-transactions.xlsx",
+            "mercadopago-account.xlsx",
+        ]
+
+        for filename in test_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert result == "Mercadopago", f"Should detect Mercadopago from {filename}"
+
+    def test_detect_mercadopago_case_insensitive(self):
+        """Test that Mercadopago detection is case insensitive"""
+        test_cases = [
+            ("mercadopago.xlsx", "Mercadopago"),
+            ("MERCADOPAGO.XLSX", "Mercadopago"),
+            ("Mercadopago.xlsx", "Mercadopago"),
+            ("MercadoPago.xlsx", "Mercadopago"),
+        ]
+
+        for filename, expected in test_cases:
+            result = detect_payment_method(file_path=filename)
+            assert result == expected, f"Failed for {filename}, expected {expected}"
+
+    def test_detect_unknown_xlsx_filename(self):
+        """Test that unknown XLSX filenames return Unknown Payment Method"""
+        unknown_filenames = [
+            "santander-account.xlsx",
+            "unknown-bank-statement.xlsx",
+            "other-financial-data.xlsx",
+            "random-file.xlsx",  # Should not match any pattern
+            "other-bank.xlsx",  # Should not match any pattern
+        ]
+
+        for filename in unknown_filenames:
+            result = detect_payment_method(file_path=filename)
+            assert (
+                result == "Unknown Payment Method"
+            ), f"Should return Unknown for {filename}"
+
+    def test_detect_with_actual_mercadopago_xlsx_file(self):
+        """Test with actual Mercadopago XLSX file to ensure correct detection"""
+        xlsx_path = "tests/test_data/input/mercadopago.xlsx"
+
+        result = detect_payment_method(file_path=xlsx_path)
+        assert result == "Mercadopago"
