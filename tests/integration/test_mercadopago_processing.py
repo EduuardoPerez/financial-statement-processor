@@ -1,9 +1,11 @@
-import pytest
-import pandas as pd
 import os
+
+import pandas as pd
+import pytest
+
 from parse_visa_statement import (
-    parse_mercadopago_xlsx,
     detect_payment_method,
+    parse_mercadopago_xlsx,
     validate_mercadopago_balance,
 )
 

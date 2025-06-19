@@ -1,8 +1,10 @@
-import unittest
-import pandas as pd
 import os
 import tempfile
-from parse_visa_statement import parse_macro_account_xls, detect_payment_method
+import unittest
+
+import pandas as pd
+
+from parse_visa_statement import detect_payment_method, parse_macro_account_xls
 
 
 class TestMacroAccountProcessing(unittest.TestCase):

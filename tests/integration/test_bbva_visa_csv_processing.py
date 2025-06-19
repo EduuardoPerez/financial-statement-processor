@@ -1,10 +1,9 @@
-import pytest
 import pandas as pd
-import os
+
 from parse_visa_statement import (
+    detect_payment_method,
     parse_bbva_visa_csv,
     validate_csv_balance,
-    detect_payment_method,
 )
 
 

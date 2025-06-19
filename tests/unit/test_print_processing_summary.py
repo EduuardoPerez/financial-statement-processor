@@ -1,7 +1,7 @@
+
 import pandas as pd
+
 from parse_visa_statement import print_processing_summary
-from io import StringIO
-import sys
 
 
 class TestPrintProcessingSummary:

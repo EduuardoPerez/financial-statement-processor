@@ -1,8 +1,9 @@
 import pandas as pd
+
 from parse_visa_statement import (
+    detect_payment_method,
     parse_macro_visa_csv,
     validate_csv_balance,
-    detect_payment_method,
 )
 
 

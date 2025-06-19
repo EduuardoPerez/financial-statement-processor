@@ -1,8 +1,10 @@
-import pytest
-import pandas as pd
 import os
-import tempfile
 import shutil
+import tempfile
+
+import pandas as pd
+import pytest
+
 from parse_visa_statement import parse_visa_pdf
 
 

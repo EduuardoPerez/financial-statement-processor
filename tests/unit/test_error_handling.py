@@ -1,7 +1,8 @@
-from parse_visa_statement import parse_visa_pdf, extract_balance_from_pdf
-import tempfile
 import os
-from unittest.mock import patch, MagicMock
+import tempfile
+from unittest.mock import MagicMock, patch
+
+from parse_visa_statement import extract_balance_from_pdf, parse_visa_pdf
 
 
 class TestErrorHandling:

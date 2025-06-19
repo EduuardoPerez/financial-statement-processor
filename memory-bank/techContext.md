@@ -217,19 +217,64 @@ These paths represent edge cases that are handled gracefully by the application 
 
 ### Code Quality Tools
 
-- **flake8**: Python linting and code style enforcement
-- **Configuration**: `.flake8` file with project-specific settings
+- **Ruff**: Modern Python linter and formatter (replaces flake8)
+- **Configuration**: Configured in `pyproject.toml` with comprehensive rule sets
 - **Line Length**: 88 characters (Black standard) with test file exceptions
-- **Warning Suppression**: Comprehensive warning filters for clean development
-- **Integration**: Seamless integration with development workflow
+- **Performance**: 10-100x faster than flake8, built in Rust
+- **All-in-one**: Combines linting, formatting, import sorting, and code modernization
+- **Auto-fixing**: Built-in auto-fix capabilities for many issues
 
-#### Flake8 Configuration
+#### Ruff Configuration
 
-```ini
-[flake8]
-max-line-length = 88
-per-file-ignores =
-    tests/*:E501
+```toml
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+[tool.ruff.lint]
+# Enable flake8-equivalent rules plus additional modern checks
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade (modern Python syntax)
+]
+
+# Ignore specific rules for test files
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # Line length in tests
+
+[tool.ruff.format]
+# Use Ruff's formatter (Black-compatible)
+quote-style = "double"
+indent-style = "space"
+```
+
+#### Ruff Commands
+
+**Code Quality Checking**
+
+```bash
+# Check code quality (linting)
+uv run ruff check .
+
+# Auto-fix issues
+uv run ruff check . --fix
+
+# Check with unsafe fixes
+uv run ruff check . --fix --unsafe-fixes
+```
+
+**Code Formatting**
+
+```bash
+# Format code
+uv run ruff format .
+
+# Check formatting without changing
+uv run ruff format --check .
 ```
 
 #### Warning Resolution Implementation
@@ -239,12 +284,6 @@ per-file-ignores =
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::UserWarning:openpyxl.styles.stylesheet",
-]
-
-[tool.flake8]
-max-line-length = 88
-per-file-ignores = [
-    "tests/*:E501",  # Ignore line length in test files
 ]
 ```
 

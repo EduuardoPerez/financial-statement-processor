@@ -1,8 +1,9 @@
-import pdfplumber
-import pandas as pd
-import re
-import os
 import logging
+import os
+import re
+
+import pandas as pd
+import pdfplumber
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")

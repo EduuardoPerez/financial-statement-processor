@@ -1,5 +1,5 @@
 import logging
-from io import StringIO
+
 from parse_visa_statement import validate_balance
 
 
