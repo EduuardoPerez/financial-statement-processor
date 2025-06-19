@@ -21,6 +21,9 @@ dev = [
     "pytest>=8.4.0",
     "pytest-cov>=5.0.0",
     "ruff>=0.12.0",
+    "mypy>=1.8.0",
+    "pandas-stubs>=2.1.0",
+    "types-openpyxl>=3.1.0",
 ]
 
 [tool.ruff]
@@ -50,4 +53,25 @@ indent-style = "space"
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::UserWarning:openpyxl.styles.stylesheet",
+]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+# Exclude test files and documentation initially
+exclude = [
+    "tests/",
+    "memory-bank/",
 ]

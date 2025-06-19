@@ -134,9 +134,9 @@ class TestMercadopagoProcessing:
         ]
 
         for expected_type in expected_types:
-            assert any(
-                expected_type in desc for desc in descriptions
-            ), f"Missing transaction type: {expected_type}"
+            assert any(expected_type in desc for desc in descriptions), (
+                f"Missing transaction type: {expected_type}"
+            )
 
     def test_sorting_order(self, input_file_path, test_output_path):
         """Test that transactions are sorted chronologically"""
@@ -163,9 +163,9 @@ class TestMercadopagoProcessing:
 
         for filename, expected in test_cases:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == expected
-            ), f"Failed for {filename}: expected {expected}, got {result}"
+            assert result == expected, (
+                f"Failed for {filename}: expected {expected}, got {result}"
+            )
 
     def test_input_validation_against_expected(
         self, input_file_path, test_output_path, expected_output_path

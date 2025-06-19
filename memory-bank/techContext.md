@@ -224,6 +224,12 @@ These paths represent edge cases that are handled gracefully by the application 
 - **All-in-one**: Combines linting, formatting, import sorting, and code modernization
 - **Auto-fixing**: Built-in auto-fix capabilities for many issues
 
+- **MyPy**: Static type checker for Python
+- **Modern Type Annotations**: Uses Python 3.11+ syntax (`str | None`, `dict[str, float]`)
+- **Configuration**: Configured in `pyproject.toml` with gradual adoption approach
+- **Type Stubs**: Includes `pandas-stubs` and `types-openpyxl` for better library support
+- **Integration**: Works seamlessly with existing Ruff and pytest workflow
+
 #### Ruff Configuration
 
 ```toml
@@ -336,6 +342,24 @@ uv run pytest -v
 
 # Run main processor
 uv run python parse_visa_statement.py
+```
+
+### Type Checking Workflow
+
+#### MyPy Commands
+
+```bash
+# Basic type checking
+uv run mypy .
+
+# Type checking with error codes
+uv run mypy . --show-error-codes
+
+# Strict type checking (future goal)
+uv run mypy --strict .
+
+# Type checking with detailed output
+uv run mypy . --show-error-codes --show-traceback
 ```
 
 #### Using pip (Alternative)

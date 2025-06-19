@@ -209,9 +209,9 @@ class TestDetectPaymentMethod:
 
         for filename in test_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "BBVA Account"
-            ), f"Should detect BBVA Account from {filename}"
+            assert result == "BBVA Account", (
+                f"Should detect BBVA Account from {filename}"
+            )
 
     def test_detect_macro_account_xls_filename(self):
         """Test detection of Macro Account from XLS filename"""
@@ -225,9 +225,9 @@ class TestDetectPaymentMethod:
 
         for filename in test_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "Macro Account"
-            ), f"Should detect Macro Account from {filename}"
+            assert result == "Macro Account", (
+                f"Should detect Macro Account from {filename}"
+            )
 
     def test_detect_macro_account_case_insensitive(self):
         """Test that Macro Account detection is case insensitive"""
@@ -239,9 +239,9 @@ class TestDetectPaymentMethod:
 
         for filename in test_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "Macro Account"
-            ), f"Should detect Macro Account from {filename}"
+            assert result == "Macro Account", (
+                f"Should detect Macro Account from {filename}"
+            )
 
     def test_detect_xls_vs_pdf_precedence(self):
         """Test that XLS filename detection takes precedence over content detection"""
@@ -272,9 +272,9 @@ class TestDetectPaymentMethod:
 
         for filename in unknown_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "Unknown Payment Method"
-            ), f"Should return Unknown for {filename}"
+            assert result == "Unknown Payment Method", (
+                f"Should return Unknown for {filename}"
+            )
 
     def test_detect_with_actual_macro_account_xls_file(self):
         """Test with actual Macro Account XLS file to ensure correct detection"""
@@ -349,9 +349,9 @@ class TestDetectPaymentMethod:
 
         for filename in unknown_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "Unknown Payment Method"
-            ), f"Should return Unknown for {filename}"
+            assert result == "Unknown Payment Method", (
+                f"Should return Unknown for {filename}"
+            )
 
     def test_detect_with_actual_bbva_visa_csv_files(self):
         """Test with actual BBVA VISA CSV files to ensure correct detection"""
@@ -373,9 +373,9 @@ class TestDetectPaymentMethod:
 
         for csv_path in csv_files:
             result = detect_payment_method(file_path=csv_path)
-            assert (
-                result == "Macro VISA"
-            ), f"Failed to detect Macro VISA from {csv_path}"
+            assert result == "Macro VISA", (
+                f"Failed to detect Macro VISA from {csv_path}"
+            )
 
     def test_detect_mercadopago_xlsx_filename(self):
         """Test detection of Mercadopago from XLSX filename"""
@@ -417,9 +417,9 @@ class TestDetectPaymentMethod:
 
         for filename in unknown_filenames:
             result = detect_payment_method(file_path=filename)
-            assert (
-                result == "Unknown Payment Method"
-            ), f"Should return Unknown for {filename}"
+            assert result == "Unknown Payment Method", (
+                f"Should return Unknown for {filename}"
+            )
 
     def test_detect_with_actual_mercadopago_xlsx_file(self):
         """Test with actual Mercadopago XLSX file to ensure correct detection"""

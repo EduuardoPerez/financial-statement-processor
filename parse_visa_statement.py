@@ -1,16 +1,31 @@
+from __future__ import annotations
+
 import logging
 import os
 import re
+from typing import TYPE_CHECKING
 
 import pandas as pd
 import pdfplumber
+
+if TYPE_CHECKING:
+    from pandas import DataFrame
+
+# Type aliases for better code readability
+Transaction = dict[str, str | float]
+BalanceDict = dict[str, float]
+ValidationResult = dict[str, float]
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 
-def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
+def detect_payment_method(
+    content_or_path: str | None = None,
+    file_path: str | None = None,
+    full_text: str | None = None,
+) -> str:
     """
     Detect payment method from PDF content or filename
     Returns the payment method string (e.g., "Macro VISA", "BBVA VISA",
@@ -71,7 +86,7 @@ def detect_payment_method(content_or_path=None, file_path=None, full_text=None):
     return "Unknown Payment Method"
 
 
-def extract_balance_from_pdf(full_text, payment_method):
+def extract_balance_from_pdf(full_text: str, payment_method: str) -> BalanceDict:
     """
     Extract reported balance from PDF text
     Returns dict with 'ars' and 'usd' balance amounts
@@ -130,7 +145,9 @@ def extract_balance_from_pdf(full_text, payment_method):
     return balance
 
 
-def validate_balance(reported_balance, computed_balance, filename):
+def validate_balance(
+    reported_balance: BalanceDict, computed_balance: BalanceDict, filename: str
+) -> None:
     """
     Validate computed totals against reported balance and log results
     """
@@ -169,8 +186,8 @@ def validate_balance(reported_balance, computed_balance, filename):
         )
 
 
-def parse_visa_pdf(pdf_path, output_path):
-    transactions = []
+def parse_visa_pdf(pdf_path: str, output_path: str) -> DataFrame:
+    transactions: list[Transaction] = []
 
     with pdfplumber.open(pdf_path) as pdf:
         full_text = ""
@@ -210,7 +227,6 @@ def parse_visa_pdf(pdf_path, output_path):
             continue
 
         if match or match_mmm:
-
             # Skip certain lines but handle specific cases
             if "SALDO ANTERIOR" in remaining_line or "Total Consumos" in remaining_line:
                 continue
@@ -633,7 +649,7 @@ def parse_visa_pdf(pdf_path, output_path):
     return df
 
 
-def parse_account_xls(xls_path, output_path):
+def parse_account_xls(xls_path: str, output_path: str) -> DataFrame:
     """
     Parse BBVA Account XLS file and generate Excel output
     """
@@ -1003,8 +1019,7 @@ def validate_csv_balance(input_csv_path, output_df, filename):
     # Log warnings for mismatches (don't raise errors)
     if abs(difference) > 0.01:  # Allow for small rounding differences
         logger.warning(
-            f"[WARNING] Total mismatch in {filename}: "
-            f"difference of {difference:.2f}"
+            f"[WARNING] Total mismatch in {filename}: difference of {difference:.2f}"
         )
 
     return {"input": input_total, "output": output_total}
@@ -1045,8 +1060,7 @@ def validate_mercadopago_balance(input_xlsx_path, output_df, filename):
     # Log warnings for mismatches (don't raise errors)
     if abs(difference) > 0.01:  # Allow for small rounding differences
         logger.warning(
-            f"[WARNING] Total mismatch in {filename}: "
-            f"difference of {difference:.2f}"
+            f"[WARNING] Total mismatch in {filename}: difference of {difference:.2f}"
         )
 
     return {"input": input_total, "output": output_total}
@@ -1093,9 +1107,9 @@ def print_processing_summary(
     filename, df, reported_balance, computed_balance, output_path
 ):
     """Print organized summary of processing results"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"PROCESSING SUMMARY: {filename}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Transactions Processed: {len(df)}")
     print(f"Output File: {output_path}")
 
@@ -1430,6 +1444,6 @@ if __name__ == "__main__":
     for filename, df, reported, computed, output_path in results:
         print_processing_summary(filename, df, reported, computed, output_path)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("ALL PROCESSING COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
