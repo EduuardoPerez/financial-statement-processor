@@ -129,7 +129,6 @@ class TestBBVAVisaProcessing:
             f"Maximum date mismatch: expected {expected_max_date}, got {actual_max_date}"
         )
 
-        date_pattern = r"^\d{4}-\d{2}-\d{2}$"
         for date_str in result_df["Date"]:
             assert pd.to_datetime(date_str).strftime("%Y-%m-%d") == date_str, (
                 f"Date {date_str} is not in YYYY-MM-DD format"

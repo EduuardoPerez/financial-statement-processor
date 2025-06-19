@@ -178,7 +178,6 @@ class TestBBVAAccountProcessing(unittest.TestCase):
 
         # Convert to datetime for comparison
         result_dates = pd.to_datetime(result_df["Date"])
-        expected_dates = pd.to_datetime(expected_df["Date"])
 
         # Check that dates are in descending order
         is_sorted = result_dates.is_monotonic_decreasing

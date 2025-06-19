@@ -950,7 +950,7 @@ def parse_mercadopago_xlsx(xlsx_path, output_path):
 
             # Amount is already in proper numeric format
             try:
-                amount = float(importe)
+                amount = float(str(importe))
             except (ValueError, TypeError):
                 continue  # Skip invalid amounts
 
@@ -989,7 +989,7 @@ def validate_csv_balance(input_csv_path, output_df, filename):
 
     # Read input CSV and calculate total
     input_df = pd.read_csv(input_csv_path, sep=";")
-    input_total = 0
+    input_total = 0.0
     for _, row in input_df.iterrows():
         importe_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
         if importe_str and importe_str != "nan":
@@ -1033,7 +1033,7 @@ def validate_mercadopago_balance(input_xlsx_path, output_df, filename):
 
     # Read input XLSX and calculate total
     input_df = pd.read_excel(input_xlsx_path)
-    input_total = 0
+    input_total = 0.0
     for _, row in input_df.iterrows():
         importe = row["Importe"] if pd.notna(row["Importe"]) else 0
         try:
@@ -1095,10 +1095,11 @@ def convert_date(date_str):
         day, month, year = date_str.split(".")
 
     # Assuming years < 50 = 20XX, years >= 50 = 19XX
-    if int(year) < 50:
-        full_year = 2000 + int(year)
+    year_int = int(year)
+    if year_int < 50:
+        full_year = 2000 + year_int
     else:
-        full_year = 1900 + int(year)
+        full_year = 1900 + year_int
 
     return f"{full_year}-{month.zfill(2)}-{day.zfill(2)}"
 
@@ -1258,7 +1259,7 @@ if __name__ == "__main__":
     # For XLS validation, compare against input file totals
     input_df = pd.read_excel(input_file)
     input_data_rows = input_df.iloc[2:]  # Skip header rows
-    input_total = 0
+    input_total = 0.0
     for _, row in input_data_rows.iterrows():
         if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
             importe_str = str(row.iloc[3]).strip()
@@ -1297,7 +1298,7 @@ if __name__ == "__main__":
     first_saldo_value = input_df.iloc[3, 4]  # First data row, Saldo column
 
     # Parse "$ 34.122,00" format to 34122.00
-    expected_total = float(first_saldo_value)
+    expected_total = float(str(first_saldo_value))
 
     computed_total = df_macro_account["Amount"].sum()
 
