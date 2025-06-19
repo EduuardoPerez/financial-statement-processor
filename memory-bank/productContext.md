@@ -23,7 +23,7 @@
 
 ### What We're Building
 
-An intelligent multi-format processor that transforms both messy PDF bank statements and structured XLS account files into clean, standardized Excel data ready for financial analysis. Currently supports Macro VISA, BBVA VISA, BBVA Mastercard (PDF), and BBVA Account (XLS) with automatic payment method detection.
+A comprehensive multi-format financial statement processor that transforms diverse bank statements (PDF, XLS, CSV, XLSX) into clean, standardized Excel data ready for financial analysis. Supports 10 statement types across 4 file formats from major Argentine banks with intelligent automatic detection and processing.
 
 ### Core Value Propositions
 

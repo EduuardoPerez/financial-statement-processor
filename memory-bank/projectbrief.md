@@ -24,11 +24,16 @@ A Python-based tool that automates the conversion of financial PDF statements fr
 
 ### Current Scope
 
-- **Supported**: 10 statement types - Macro VISA (PDF), BBVA VISA (PDF), BBVA Mastercard (PDF), BBVA Account (XLS), Macro Account (XLS), BBVA VISA Autorizaciones (CSV), BBVA VISA Movimientos (CSV), Macro VISA Autorizaciones (CSV), Macro VISA Movimientos (CSV), and Mercadopago (XLSX)
-- **Formats**: PDF input → Excel output, XLS input → Excel output, CSV input → Excel output, XLSX input → Excel output
-- **Currencies**: ARS (Argentine Peso) and USD
-- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions, investment returns, money transfers
-- **Date Formats**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), YYYY-MM-DD (datetime objects in Macro Account), ISO 8601 timestamps (Mercadopago XLSX)
+- **Supported**: 10 statement types across 4 file formats
+  - **PDF Statements**: Macro VISA, BBVA VISA, BBVA Mastercard
+  - **XLS Statements**: BBVA Account, Macro Account
+  - **CSV Statements**: BBVA VISA Autorizaciones, BBVA VISA Movimientos, Macro VISA Autorizaciones, Macro VISA Movimientos
+  - **XLSX Statements**: Mercadopago
+- **Processing Pipeline**: Multi-format input → Standardized Excel output
+- **Currencies**: ARS (Argentine Peso) and USD with automatic detection
+- **Transaction Types**: Purchases, payments, taxes, adjustments, transfers, interest, compensations, commissions, investment returns, money transfers, bonifications, promotions
+- **Date Formats**: DD.MM.YY (PDF VISA), DD-MMM-YY (PDF Mastercard), DD/MM/YYYY (XLS/CSV), ISO 8601 timestamps (XLSX)
+- **Quality Assurance**: 178 tests with 90% coverage, pre-commit hooks, type safety
 
 ### Expansion Roadmap
 

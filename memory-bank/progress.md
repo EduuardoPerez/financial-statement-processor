@@ -43,7 +43,7 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 89.74% meaningful coverage with 178 well-organized tests
+- **Professional Test Coverage**: 90% meaningful coverage with 178 well-organized tests
 - **Pre-commit Hook Integration**: Automated quality checks with ruff, mypy, and pytest before every commit
 - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive mypy validation
 - **Test Suite Expansion**: Added comprehensive Mercadopago XLSX and CSV processing integration tests (48 new tests total)
@@ -159,7 +159,7 @@
 - **Manual File Paths**: Hardcoded input/output directory paths
 - **PDF Format Dependency**: Requires text-based PDFs, not scanned images
 - **Language Specific**: Designed for Spanish/Argentine banking terminology
-- **Three-Bank Limit**: Currently supports Macro and BBVA only
+- **Single-File Architecture**: Monolithic design suitable for current 10-statement-type scope
 
 ### Technical Debt
 

@@ -17,6 +17,39 @@ CSV Input → Data Reading → Column Mapping → Data Transformation → Excel 
 XLSX Input → Data Reading → Column Mapping → Data Transformation → Excel Output
 ```
 
+### Format-Specific Processing Pipelines
+
+#### PDF Processing Pipeline
+
+```
+PDF File → pdfplumber → Text Extraction → Line-by-Line Parsing →
+Regex Pattern Matching → Transaction Classification → Amount/Date Conversion →
+Balance Validation → DataFrame Creation → Excel Output
+```
+
+#### XLS Processing Pipeline
+
+```
+XLS File → pandas.read_excel → Structured Data → Row Iteration →
+Direct Data Access → Date/Amount Conversion → DataFrame Creation → Excel Output
+```
+
+#### CSV Processing Pipeline
+
+```
+CSV File → pandas.read_csv → Column Mapping → Row Iteration →
+Date/Currency Conversion → European Number Parsing → DataFrame Creation →
+CSV Balance Validation → Excel Output
+```
+
+#### XLSX Processing Pipeline
+
+```
+XLSX File → pandas.read_excel → Column Access → Row Iteration →
+ISO 8601 Date Conversion → Direct Amount Access → DataFrame Creation →
+XLSX Balance Validation → Excel Output
+```
+
 ## Core Design Patterns
 
 ### 1. Strategy Pattern for Bank Detection
