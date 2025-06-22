@@ -761,13 +761,66 @@
       print(f"Validation failed: {result.errors}")
   ```
 
+### Prompt 20: FilenameGenerator Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - FilenameGenerator domain service successfully implemented with comprehensive validation
+- **Achievement**: Complete implementation of Prompt 20 requirements generating filenames from payment method and first transaction date
+- **Implementation**: Complete `src/domain/filename.py` with `FilenameGenerator` class following domain service patterns
+- **Key Requirements Met**:
+  1. **✅ Create `src/domain/filename.py`**: Successfully implemented with clean domain service architecture
+  2. **✅ Implement `generate(statement)` method**: Core method generating filenames from Statement objects
+  3. **✅ Output matches `^[A-Z_]+_\d{8}\.xlsx$`**: All generated filenames comply with required regex pattern
+  4. **✅ Uses payment method & first transaction date**: Extracts payment method prefix and earliest transaction date
+- **Key Features**:
+  - **FilenameGenerator class**: Domain service for standardized filename generation following clean architecture principles
+  - **generate(statement) method**: Takes Statement object, returns filename matching required pattern
+  - **Payment Method Mapping**: Maps all 6 supported payment methods to standardized prefixes (BBVA_VISA, MACRO_ACCOUNT, etc.)
+  - **First Transaction Date**: Uses `min(t.date for t in statement.transactions)` to find earliest date
+  - **Pattern Compliance**: Generates filenames like `BBVA_VISA_20250328.xlsx` matching `^[A-Z_]+_\d{8}\.xlsx$`
+  - **Comprehensive Error Handling**: Raises ValueError for statements with no transactions
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Domain Integration**: Seamlessly integrates with existing Statement and PaymentMethod models
+- **Technical Implementation**:
+  - **_get_method_prefix()**: Maps PaymentMethod enum to uppercase underscore-separated prefixes
+  - **Date Formatting**: Uses `strftime("%Y%m%d")` for 8-digit date format (YYYYMMDD)
+  - **Fallback Logic**: Handles unknown payment methods by converting enum value to uppercase with underscores
+  - **Validation**: Ensures statement has transactions before processing
+- **Unit Tests**: Complete `tests/unit/domain/test_filename.py` with 16 comprehensive tests covering:
+  - **All Payment Methods**: BBVA VISA, BBVA Mastercard, BBVA Account, Macro VISA, Macro Account, Mercadopago
+  - **Pattern Validation**: Regex matching for all generated filenames
+  - **Date Handling**: Multiple transactions use earliest date, edge cases (leap year, year boundaries)
+  - **Error Scenarios**: Empty statements, validation requirements
+  - **Consistency**: Same input generates same output, different dates generate unique filenames
+  - **Component Order**: Filename structure validation (METHOD_PREFIX_YYYYMMDD.xlsx)
+- **Validation Results**: ✅ All requirements successfully validated
+  - ✅ Generated filename: `BBVA_VISA_20250328.xlsx`
+  - ✅ Matches required pattern: `^[A-Z_]+_\d{8}\.xlsx$`
+  - ✅ All 16 unit tests pass with comprehensive coverage
+  - ✅ All 168 domain tests pass (152 existing + 16 new), zero regression
+- **Quality Standards**:
+  - **Code Quality**: Flake8 compliant with proper line length management, raw string docstrings
+  - **Type Safety**: Comprehensive type annotations with mypy compliance
+  - **Documentation**: Complete docstrings with examples and usage patterns
+  - **Domain Export**: Added to `src/domain/__init__.py` with proper `__all__` export
+- **Architecture Integration**: Pure domain service with no external dependencies, ready for injection into application services
+- **Usage Pattern**:
+
+  ```python
+  generator = FilenameGenerator()
+  filename = generator.generate(statement)
+  # Returns: "BBVA_VISA_20250328.xlsx"
+  ```
+
+- **Architecture Impact**: Completes Prompt 20 from Phase 2, providing standardized filename generation for clean architecture
+- **Next Phase**: Ready for integration with application services or additional domain enhancements
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Prompt 19 StatementValidator Implementation
-- **Last Update**: After completing Prompt 19 balance-consistency checker implementation
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure, comprehensive type safety, complete domain layer with validation service, infrastructure layer with parsers and repositories, application service with comprehensive unit tests
-- **Architecture Progress**: Clean architecture transformation with working end-to-end application service, comprehensive unit test coverage, and balance validation service
-- **Next Phase**: Ready for additional application layer enhancements or integration of validation service into processing workflow
+- **Status**: ✅ UPDATED - June 2025 - Post-Prompt 20 FilenameGenerator Implementation
+- **Last Update**: After completing Prompt 20 FilenameGenerator domain service implementation
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure, comprehensive type safety, complete domain layer with validation and filename generation services, infrastructure layer with parsers and repositories, application service with comprehensive unit tests
+- **Architecture Progress**: Clean architecture transformation with working end-to-end application service, comprehensive unit test coverage, balance validation service, and filename generation service
+- **Next Phase**: Ready for additional application layer enhancements, CLI interface implementation, or integration of new domain services into processing workflow
 
 ## Recent Patterns Discovered
 
