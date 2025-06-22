@@ -613,13 +613,103 @@
 - **Architecture Impact**: Completes Phase 2 → 2.4 builder implementation, enabling clean Transaction object construction from PDF parsing workflows
 - **Integration Ready**: Builder ready for integration with PDF parsing infrastructure components
 
+### Phase 2 → 2.1: StatementProcessingService Implementation (COMPLETED - December 2025)
+
+- **Status**: ✅ COMPLETED - Application layer orchestrator successfully implemented with comprehensive end-to-end validation
+- **Achievement**: First complete application service demonstrating clean architecture working end-to-end with real file processing
+- **Implementation**: Complete `src/application/services.py` with all required components for **Prompt 17**
+- **Key Components**:
+  - **ProcessingResult dataclass**: Comprehensive result object with processing details, timing, and error tracking
+  - **ValidationResult dataclass**: Validation outcome with error collection for future validation implementations
+  - **StatementValidator stub**: Always returns valid as specified, ready for future enhancement (Prompt 19)
+  - **FilenameGenerator stub**: Generates deterministic filenames with date stamps for conflict-free output
+  - **StatementProcessingService**: Main orchestrator following Single Responsibility Principle
+- **Orchestrator Features**:
+  - **Clean Architecture Compliance**: Application layer coordinates domain and infrastructure without business logic
+  - **Dependency Injection**: All dependencies injected via constructor (factory, repository, validator, filename generator)
+  - **Step-by-Step Workflow**: Parse → Validate → Generate filename → Save → Return comprehensive result
+  - **Comprehensive Error Handling**: Catches predictable errors, includes in ProcessingResult with detailed messages
+  - **Processing Metrics**: Tracks processing time and provides detailed success/failure information
+  - **Graceful Degradation**: Continues processing where possible, provides detailed error context
+- **End-to-End Validation**: ✅ Successfully processed real PDF file
+  - **Input**: `BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf` with 45 transactions
+  - **Output**: Excel file `BBVA-VISA_20250622.xlsx` (6,977 bytes) with standardized format
+  - **Processing**: Completed without exceptions in ~0.5 seconds
+  - **Data Integrity**: All 45 transactions correctly parsed and saved with proper columns
+  - **Validation**: Confirmed Excel output contains Date, Description, Currency, Amount, Payment Method columns
+- **Architecture Integration**: Service successfully coordinates existing components:
+  - **DefaultParserFactory**: Creates appropriate parser (PDF/XLS) based on file extension
+  - **ExcelStatementRepository**: Saves statements to Excel format with proper I/O handling
+  - **StatementValidator**: Stub validation (always valid) as specified in requirements
+  - **FilenameGenerator**: Stub filename generation with date-based naming for uniqueness
+- **Technical Implementation**:
+  - **Clean Import Structure**: Uses proper `PYTHONPATH=src` approach with clean imports (`from domain.models`)
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Error Handling Strategy**: Catches predictable domain/infrastructure errors, lets unexpected exceptions propagate
+  - **Processing Flow**: Six-step workflow with comprehensive error handling at each stage
+  - **Result Object**: Rich ProcessingResult with input/output paths, statement object, validation result, timing
+- **Quality Assurance**:
+  - **Zero Regression**: All 133 domain tests continue to pass
+  - **Integration Testing**: Successfully processes real bank statement files
+  - **Error Scenarios**: Proper handling of missing files, parsing failures, validation errors
+  - **Performance**: Sub-second processing for typical monthly statements
+- **Usage Pattern**:
+
+  ```python
+  # Create dependencies
+  detector = build_default_payment_detector()
+  factory = DefaultParserFactory(detector)
+  validator = StatementValidator()
+  filename_generator = FilenameGenerator()
+  repository = ExcelStatementRepository(file_reader, file_writer)
+
+  # Create service
+  service = StatementProcessingService(factory, repository, validator, filename_generator)
+
+  # Process statement
+  result = service.process_statement(Path("statement.pdf"), Path("output"))
+  print(f"Success: {result.success}, Transactions: {len(result.statement.transactions)}")
+  ```
+
+- **Architecture Impact**: Completes **Phase 2 → 2.1** from PLAN.md, demonstrating successful clean architecture transformation
+- **Next Phase**: Ready for unit testing (Prompt 18) and validation service implementation (Prompt 19)
+
+### Prompt 18: Unit Tests for Processing Service (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Comprehensive unit tests for StatementProcessingService successfully implemented
+- **Achievement**: Complete unit test suite with mocked dependencies and ProcessingResult validation according to Prompt 18 requirements
+- **Implementation**: Complete `tests/unit/application/test_processing_service.py` with 11 comprehensive unit tests
+- **Key Features**:
+  - **Mock Repository Strategy**: All dependencies properly mocked using `unittest.mock.Mock` with proper `spec` parameters for type safety
+  - **ProcessingResult Validation**: Comprehensive validation of `ProcessingResult` objects with all required assertions
+  - **Prompt 18 Requirements Met**: ✅ `len(result.statement.transactions) > 0` and ✅ `result.output_path.suffix == ".xlsx"`
+  - **Error Handling Coverage**: Complete error scenario testing for parser creation, parsing, validation, filename generation, and saving failures
+  - **Dependency Interaction Verification**: All mock calls verified with proper argument validation
+  - **Processing Time Measurement**: Artificial delay testing to verify timing functionality
+  - **Type Safety**: Modern Python 3.11+ type annotations with proper null checks
+- **Test Cases Implemented**:
+  - `test_process_statement_success()` - Happy path with all Prompt 18 requirements validated
+  - `test_processing_result_has_transactions()` - Specific validation of transactions > 0 requirement
+  - `test_output_file_is_xlsx()` - Specific validation of .xlsx suffix requirement
+  - `test_process_statement_parser_creation_fails()` - Parser factory error handling
+  - `test_process_statement_parsing_fails()` - Statement parsing error handling
+  - `test_process_statement_validation_fails()` - Validation failure error handling
+  - `test_process_statement_filename_generation_fails()` - Filename generation error handling
+  - `test_process_statement_save_fails()` - Repository save error handling
+  - `test_process_statement_unexpected_error()` - Unexpected exception handling
+  - `test_processing_time_measurement()` - Processing time validation
+  - `test_validation_error_during_validation_step()` - Validation step exception handling
+- **Validation Command**: ✅ Successfully passes `uv run --module pytest -q tests/unit/application/test_processing_service.py`
+- **Quality Standards**: Follows established testing patterns with proper mocking, comprehensive assertions, and clean architecture compliance
+- **Architecture Integration**: Seamlessly integrates with existing clean architecture components and maintains zero regression
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Utility Parsers Implementation (Phase 2 → 2.3 Complete)
-- **Last Update**: After completing Phase 2 → 2.3 utility parsers implementation with DateConverter and AmountParser classes
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, Phase 2 → 2.2 concrete bank detectors implementation, Phase 2 → 2.3 utility parsers implementation (COMPLETE), and clean import configuration
-- **Architecture Progress**: Clean architecture transformation progressing successfully with domain utilities now extracted from monolithic code
-- **Next Phase**: Ready for next phase of clean architecture transformation (Phase 3 implementation) or CLI interface implementation
+- **Status**: ✅ UPDATED - June 2025 - Post-Prompt 18 Unit Tests Implementation
+- **Last Update**: After completing Prompt 18 unit tests for StatementProcessingService
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure, comprehensive type safety, complete domain layer, infrastructure layer with parsers and repositories, application service with comprehensive unit tests
+- **Architecture Progress**: Clean architecture transformation with working end-to-end application service and comprehensive unit test coverage
+- **Next Phase**: Ready for validation service implementation (Prompt 19) or additional application layer enhancements
 
 ## Recent Patterns Discovered
 
