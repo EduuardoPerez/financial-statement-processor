@@ -287,6 +287,52 @@ def generate_output_filename(
 - **Examples**: `BBVA-VISA-transactions.xlsx`, `MACRO-ACCOUNT-transactions.xlsx`, `BBVA-VISA-auth-transactions.xlsx`
 - **Quality**: 23 comprehensive unit tests covering all functionality and edge cases
 
+### 10. Repository Pattern for Hexagonal Architecture (Phase 1 → 1.2)
+
+- **Challenge**: Tight coupling between business logic and data access operations
+- **Solution**: Abstract repository interfaces (ports) that infrastructure adapters will implement
+- **Implementation**: Protocol-based and ABC-based abstractions for clean architecture
+
+```python
+# src/domain/repositories.py
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Protocol
+from .models import Statement
+
+class FileReader(Protocol):
+    """Protocol for file reading operations"""
+    def read(self, path: Path) -> bytes: ...
+    def exists(self, path: Path) -> bool: ...
+
+class FileWriter(Protocol):
+    """Protocol for file writing operations"""
+    def write(self, path: Path, content: bytes) -> None: ...
+    def ensure_directory(self, path: Path) -> None: ...
+
+class StatementRepository(ABC):
+    """Abstract repository for statement persistence"""
+
+    @abstractmethod
+    def save_statement(self, statement: Statement, output_path: Path) -> None: ...
+
+    @abstractmethod
+    def load_raw_data(self, input_path: Path) -> bytes: ...
+```
+
+- **Architecture Benefits**:
+  - **Dependency Inversion**: Core domain depends on abstractions, not concrete implementations
+  - **Hexagonal Architecture**: These serve as ports that infrastructure adapters will implement
+  - **Testability**: Easy to mock and test business logic in isolation
+  - **Extensibility**: New storage backends can be added without changing domain logic
+- **Design Decisions**:
+  - **Protocol vs ABC**: FileReader/FileWriter use Protocol for structural typing flexibility
+  - **StatementRepository ABC**: Uses nominal typing for strict interface contracts
+  - **Type Safety**: Full pathlib.Path integration with comprehensive type annotations
+- **Quality**: Comprehensive documentation with Args, Returns, and Raises sections
+- **Validation**: Successfully validated with import tests and integration with domain models
+- **Next Phase**: Infrastructure layer will implement concrete adapters for these abstractions
+
 ## Transaction Type Detection Patterns
 
 ### 1. Tax Transaction Pattern

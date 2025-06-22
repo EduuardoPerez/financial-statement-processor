@@ -224,6 +224,7 @@
 - ✅ **v0.2.11**: MyPy static type checking integration - Modern Python 3.11+ type annotations with comprehensive type safety
 - ✅ **v0.2.12**: File naming normalization - Centralized filename generation with 201 tests and maintained 90% coverage
 - ✅ **v0.3.0-alpha**: Clean Architecture Foundation - Project skeleton with hexagonal architecture directory structure (Phase 1 → 1.0 from PLAN.md)
+- ✅ **v0.3.1**: Repository Abstractions Implementation - Core ports (interfaces) for hexagonal architecture with FileReader/FileWriter Protocols and StatementRepository ABC (Phase 1 → 1.2 from PLAN.md)
 
 ### Upcoming Milestones
 
