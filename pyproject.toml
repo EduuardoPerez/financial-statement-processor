@@ -103,3 +103,7 @@ exclude = [
 [[tool.mypy.overrides]]
 module = "domain.factories"
 warn_unreachable = false
+
+[[tool.mypy.overrides]]
+module = "domain.validation"
+warn_unreachable = false

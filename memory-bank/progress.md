@@ -287,10 +287,10 @@
 - ✅ **v0.3.12**: Prompt 15 Implementation - Successfully implemented sophisticated PDF transaction parsing with full test validation and real-world PDF processing (Prompt 15 from task requirements)
 - ✅ **v0.3.13**: StatementProcessingService Implementation - Complete application layer orchestrator with end-to-end validation, implementing Phase 2 → 2.1 from PLAN.md (Prompt 17 from task requirements)
 - ✅ **v0.3.14**: Application Service Unit Testing - Comprehensive unit tests for StatementProcessingService with mocked dependencies and ProcessingResult validation (Prompt 18 from task requirements)
+- ✅ **v0.3.15**: StatementValidator Implementation - Balance-consistency checker with comprehensive validation logic and MyPy error resolution (Prompt 19 from task requirements)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.15**: Validation Service Implementation - StatementValidator with business rule validation (Prompt 19)
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging
