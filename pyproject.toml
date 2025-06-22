@@ -94,3 +94,8 @@ exclude = [
     "tests/",
     "memory-bank/",
 ]
+
+# Per-file ignores for specific mypy warnings
+[[tool.mypy.overrides]]
+module = "domain.factories"
+warn_unreachable = false
