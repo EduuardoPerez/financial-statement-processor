@@ -92,19 +92,36 @@
 - `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (12 tests)
 - `test_mercadopago_processing.py` - Mercadopago XLSX complete workflow (14 tests)
 
-### Clean Architecture Implementation (Complete - Phase 2 → 2.2)
+### Clean Architecture Implementation (Complete - Phase 2 → 2.3)
 
-- **Domain Layer**: Complete with models, repositories, services abstractions, and payment method detection
+- **Domain Layer**: Complete with models, repositories, services abstractions, payment method detection, and utility parsers
 - **Infrastructure Layer**: ExcelStatementRepository, PDFStatementParser, and concrete bank detectors implementing domain abstractions
 - **Hexagonal Architecture**: Ports and adapters pattern with dependency inversion
 - **Strategy Pattern Implementation**: StatementParser ABC with concrete implementations and BankDetector strategy pattern
 - **Concrete Bank Detectors**: MacroDetector and BBVADetector with build_default_payment_detector factory function
 - **Payment Method Detection**: Extensible content-based detection using regex/substring logic with registry pattern
+- **Utility Parsers**: DateConverter and AmountParser classes implementing Single Responsibility Principle
 - **pdfplumber Integration**: Robust PDF text extraction with comprehensive error handling
 - **Type Safety**: Modern Python 3.11+ annotations with comprehensive mypy validation
 - **SOLID Principles**: Single responsibility, dependency inversion, open/closed, and strategy patterns implemented
-- **Zero Regression**: All 89 domain tests continue to pass with new architecture components
+- **Zero Regression**: All domain tests continue to pass with new architecture components
 - **Extensible Design**: Open/Closed Principle enables adding new banks without modifying existing code
+
+### Utility Parsers Implementation (Complete - Phase 2 → 2.3)
+
+- **DateConverter Class**: Utility for converting various date formats to standardized date objects
+  - **convert_dd_mm_yy()**: Converts DD.MM.YY format (VISA statements) with year logic <50 = 2000s, >=50 = 1900s
+  - **convert_dd_mmm_yy()**: Converts DD-MMM-YY format (Mastercard statements) with Spanish month support
+  - **Spanish Month Support**: Handles "Abr" for April and other Spanish abbreviations
+  - **Comprehensive Error Handling**: Descriptive ValueError messages for invalid formats
+- **AmountParser Class**: Utility for parsing European number format amounts to Decimal objects
+  - **parse_european_format()**: Handles 1.234,56 notation with financial precision using Decimal
+  - **Multiple Format Support**: 1.234.567,89 (dots + comma), 1234,56 (comma only), 1500,75- (trailing dash)
+  - **Negative Amount Handling**: Supports both leading and trailing dash notation
+  - **Financial Precision**: Uses Decimal for accurate financial calculations
+- **Code Quality Standards**: Flake8 compliant, modern type annotations, comprehensive documentation
+- **Validation Requirements**: All requirements met including DateConverter().convert_dd_mm_yy("05.06.25").year == 2025
+- **Integration Ready**: Utilities ready for integration with infrastructure parsers
 
 ### Development Infrastructure (Complete)
 
@@ -251,10 +268,11 @@
 - ✅ **v0.3.6**: ParserFactory Base Implementation - Complete Factory Pattern implementation for parser creation and management with comprehensive testing (Phase 1 → 1.4 from PLAN.md)
 - ✅ **v0.3.7**: DefaultParserFactory Implementation - Concrete infrastructure factory with auto-registration of PDF and XLS parsers for convenient usage (Phase 1 → 1.4 from PLAN.md)
 - ✅ **v0.3.8**: PaymentMethodDetector Implementation - Abstract BankDetector and registry-based PaymentMethodDetector with Strategy Pattern for extensible bank identification (Phase 2 → 2.2 from PLAN.md)
+- ✅ **v0.3.9**: Utility Parsers Implementation - DateConverter and AmountParser utility classes implementing Single Responsibility Principle for date conversion and European number format parsing (Phase 2 → 2.3 from PLAN.md)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.9**: Next Phase Implementation - Continue with clean architecture transformation
+- 📋 **v0.3.10**: Next Phase Implementation - Continue with clean architecture transformation
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging

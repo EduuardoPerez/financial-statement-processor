@@ -450,12 +450,48 @@
   # Returns PaymentMethod.MACRO_VISA
   ```
 
+### Phase 2 → 2.3: Utility Parsers Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - DateConverter and AmountParser utility classes successfully implemented
+- **Achievement**: Single Responsibility Principle utilities extracting date conversion and European number format parsing logic from monolithic code
+- **Implementation**: Complete `src/domain/utils.py` with `DateConverter` and `AmountParser` classes
+- **Key Features**:
+  - **DateConverter Class**: Utility for converting various date formats to standardized date objects
+    - **convert_dd_mm_yy()**: Converts DD.MM.YY format (VISA statements) with year logic <50 = 2000s, >=50 = 1900s
+    - **convert_dd_mmm_yy()**: Converts DD-MMM-YY format (Mastercard statements) with Spanish month support
+    - **Spanish Month Support**: Handles "Abr" for April and other Spanish abbreviations
+    - **Comprehensive Error Handling**: Descriptive ValueError messages for invalid formats
+  - **AmountParser Class**: Utility for parsing European number format amounts to Decimal objects
+    - **parse_european_format()**: Handles 1.234,56 notation with financial precision using Decimal
+    - **Multiple Format Support**: 1.234.567,89 (dots + comma), 1234,56 (comma only), 1500,75- (trailing dash)
+    - **Negative Amount Handling**: Supports both leading and trailing dash notation
+    - **Financial Precision**: Uses Decimal for accurate financial calculations
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ `DateConverter().convert_dd_mm_yy("05.06.25").year == 2025` (key validation requirement)
+  - ✅ Proper year logic implementation with 2000s/1900s cutoff at 50
+  - ✅ Spanish month abbreviation support for Mastercard statements
+  - ✅ European number format parsing with Decimal precision
+- **Code Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Clean Architecture**: Domain layer utilities following Single Responsibility Principle
+  - **Error Handling**: Comprehensive ValueError handling with descriptive messages
+  - **Code Quality**: Flake8 compliant with proper line length management (79 characters)
+  - **Documentation**: Comprehensive docstrings with Args, Returns, Raises, and Examples
+- **Testing Validation**: ✅ Comprehensive functionality testing passed
+  - ✅ Date conversion: "05.06.25" → 2025-06-05 (year 2025 confirmed)
+  - ✅ Spanish months: "04-Abr-25" → 2025-04-04 (April in Spanish)
+  - ✅ European amounts: "1.234,56" → Decimal('1234.56') (financial precision)
+  - ✅ All utility methods working correctly with proper error handling
+- **Architecture Impact**: Enables clean extraction of utility logic from monolithic parsers, supporting clean architecture transformation
+- **Integration Ready**: Utilities ready for integration with infrastructure parsers (PDFStatementParser, XLSStatementParser)
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Concrete Bank Detectors Implementation
-- **Last Update**: After completing Phase 2 → 2.2 concrete bank detectors implementation with MacroDetector, BBVADetector, and build_default_payment_detector factory function
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, Phase 2 → 2.2 concrete bank detectors implementation, and clean import configuration
-- **Next Phase**: Ready for next phase of clean architecture transformation or CLI interface implementation
+- **Status**: ✅ UPDATED - June 2025 - Post-Utility Parsers Implementation (Phase 2 → 2.3 Complete)
+- **Last Update**: After completing Phase 2 → 2.3 utility parsers implementation with DateConverter and AmountParser classes
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, Phase 2 → 2.2 concrete bank detectors implementation, Phase 2 → 2.3 utility parsers implementation (COMPLETE), and clean import configuration
+- **Architecture Progress**: Clean architecture transformation progressing successfully with domain utilities now extracted from monolithic code
+- **Next Phase**: Ready for next phase of clean architecture transformation (Phase 3 implementation) or CLI interface implementation
 
 ## Recent Patterns Discovered
 
