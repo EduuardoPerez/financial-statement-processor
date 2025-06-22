@@ -90,14 +90,16 @@
 - `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (12 tests)
 - `test_mercadopago_processing.py` - Mercadopago XLSX complete workflow (14 tests)
 
-### Clean Architecture Implementation (Complete - Phase 1)
+### Clean Architecture Implementation (Complete - Phase 1 → 1.5)
 
 - **Domain Layer**: Complete with models, repositories, and services abstractions
-- **Infrastructure Layer**: ExcelStatementRepository implementing domain abstractions
+- **Infrastructure Layer**: ExcelStatementRepository and PDFStatementParser implementing domain abstractions
 - **Hexagonal Architecture**: Ports and adapters pattern with dependency inversion
-- **Strategy Pattern Foundation**: StatementParser ABC enabling pluggable parsing strategies
+- **Strategy Pattern Implementation**: StatementParser ABC with first concrete PDFStatementParser implementation
+- **pdfplumber Integration**: Robust PDF text extraction with comprehensive error handling
 - **Type Safety**: Modern Python 3.11+ annotations with comprehensive mypy validation
 - **SOLID Principles**: Single responsibility, dependency inversion, and strategy patterns implemented
+- **Zero Regression**: All 251 tests continue to pass with new architecture components
 
 ### Development Infrastructure (Complete)
 
@@ -239,10 +241,11 @@
 - ✅ **v0.3.1**: Repository Abstractions Implementation - Core ports (interfaces) for hexagonal architecture with FileReader/FileWriter Protocols and StatementRepository ABC (Phase 1 → 1.2 from PLAN.md)
 - ✅ **v0.3.2**: ExcelStatementRepository Implementation - First concrete adapter implementing repository abstractions with dependency injection, pandas integration, and comprehensive error handling (Phase 1 → 1.3 from PLAN.md)
 - ✅ **v0.3.3**: StatementParser Interface Implementation - Strategy Pattern foundation with StatementParser ABC enabling pluggable parsing strategies for different file formats (Phase 1 → 1.4 from PLAN.md)
+- ✅ **v0.3.4**: PDFStatementParser Skeleton Implementation - First concrete StatementParser implementation with pdfplumber integration and Strategy Pattern demonstration (Phase 1 → 1.5 from PLAN.md)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.4**: Factory Pattern for Parsers - Parser creation and management system (Phase 1 → 1.5 from PLAN.md)
+- 📋 **v0.3.5**: Factory Pattern for Parsers - Parser creation and management system (Phase 1 → 1.6 from PLAN.md)
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging

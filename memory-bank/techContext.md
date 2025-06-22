@@ -23,6 +23,9 @@
 - **Benefits**: Handles complex PDF layouts, maintains text positioning
 - **Limitations**: Requires text-based PDFs (not scanned images)
 - **Alternative Considered**: PyPDF2 (less reliable for complex layouts)
+- **Implementation**: Used in `PDFStatementParser` for robust text extraction from Argentine bank statements
+- **Usage Pattern**: `pdfplumber.open(file_path)` with page-by-page text extraction and error handling
+- **Integration**: Seamlessly integrated with clean architecture through Strategy Pattern implementation
 
 ### Data Processing: pandas
 
