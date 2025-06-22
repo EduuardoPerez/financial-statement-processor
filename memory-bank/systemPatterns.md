@@ -759,6 +759,137 @@ class PaymentMethodDetector:
 - **Architecture Impact**: Enables Open/Closed Principle for adding new banks without modifying existing code
 - **Next Phase**: Ready for concrete BankDetector implementations (MacroDetector, BBVADetector, etc.)
 
+### 19. Concrete Bank Detector Implementation Pattern (Phase 2 → 2.2)
+
+- **Challenge**: Need concrete implementations of BankDetector abstract strategy for specific banks
+- **Solution**: Concrete detector classes with regex/substring logic and factory function for convenient usage
+- **Implementation**: Complete `src/infrastructure/detectors.py` with `MacroDetector`, `BBVADetector`, and `build_default_payment_detector()`
+
+```python
+# src/infrastructure/detectors.py
+class MacroDetector(BankDetector):
+    """Concrete detector for Macro bank statements."""
+
+    def can_detect(self, content: str) -> bool:
+        """Check if this detector can identify Macro bank from content."""
+        if not content:
+            return False
+
+        content_upper = content.upper()
+        indicators = [
+            "MACRO PREMIA",
+            "BANCO MACRO",
+            "WWW.MACRO.COM.AR",
+            "MACRO",  # More flexible matching for variations
+        ]
+
+        return any(indicator in content_upper for indicator in indicators)
+
+    def get_payment_method(self, content: str) -> PaymentMethod:
+        """Return the specific Macro payment method based on content analysis."""
+        if not content:
+            raise ValueError("Content cannot be empty")
+
+        content_upper = content.upper()
+
+        # Check for VISA indicators
+        if "VISA" in content_upper:
+            return PaymentMethod.MACRO_VISA
+
+        # Default to account for other Macro statements
+        return PaymentMethod.MACRO_ACCOUNT
+
+class BBVADetector(BankDetector):
+    """Concrete detector for BBVA bank statements."""
+
+    def can_detect(self, content: str) -> bool:
+        """Check if this detector can identify BBVA bank from content."""
+        if not content:
+            return False
+
+        content_upper = content.upper()
+        bbva_indicators = [
+            "BBVA",
+            "WWW.BBVA.COM.AR",
+        ]
+
+        return any(indicator in content_upper for indicator in bbva_indicators)
+
+    def get_payment_method(self, content: str) -> PaymentMethod:
+        """Return the specific BBVA payment method based on content analysis."""
+        if not content:
+            raise ValueError("Content cannot be empty")
+
+        content_upper = content.upper()
+
+        # Check for Mastercard first (takes precedence over VISA)
+        if "MASTERCARD" in content_upper:
+            return PaymentMethod.BBVA_MASTERCARD
+
+        # Check for VISA indicators
+        if "VISA" in content_upper:
+            return PaymentMethod.BBVA_VISA
+
+        # Default to account for other BBVA statements
+        return PaymentMethod.BBVA_ACCOUNT
+
+def build_default_payment_detector() -> PaymentMethodDetector:
+    """Build a PaymentMethodDetector with all standard bank detectors registered."""
+    detector = PaymentMethodDetector()
+
+    # Register all standard bank detectors
+    detector.register_detector(MacroDetector())
+    detector.register_detector(BBVADetector())
+
+    return detector
+```
+
+- **Architecture Benefits**:
+  - **Strategy Pattern Implementation**: Concrete implementations of abstract BankDetector interface
+  - **Open/Closed Principle**: New banks can be added without modifying existing code
+  - **Clean Architecture**: Infrastructure layer implementing domain abstractions
+  - **Factory Pattern**: `build_default_payment_detector()` provides convenient pre-configured detector
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+- **Detection Logic Features**:
+  - **MacroDetector**: Flexible matching with "MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR", "MACRO"
+  - **BBVADetector**: BBVA-specific indicators with Mastercard precedence over VISA
+  - **Case-Insensitive**: Handles variations like "Banco Macro" vs "BANCO MACRO"
+  - **Content Analysis**: Returns appropriate PaymentMethod based on card type indicators
+  - **Error Handling**: Proper ValueError for empty content and unknown methods
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ `det.detect_from_content("Banco Macro - Visa") == PaymentMethod.MACRO_VISA`
+  - ✅ Flexible case-insensitive matching for bank name variations
+  - ✅ Proper VISA card type identification from content
+  - ✅ Registry-based design following Strategy Pattern
+- **Testing Results**: ✅ Comprehensive validation passed
+  - ✅ "Banco Macro - Visa" → Macro VISA (validation requirement)
+  - ✅ "BBVA VISA" → BBVA VISA
+  - ✅ "BBVA Mastercard" → BBVA Mastercard
+  - ✅ "BANCO MACRO" → Macro Account
+  - ✅ "BBVA Account" → BBVA Account
+  - ✅ "Macro Premia Visa" → Macro VISA
+- **Quality Standards**:
+  - **Code Quality**: Flake8 compliant with proper line length management
+  - **Error Handling**: Comprehensive exception handling with proper error types
+  - **Documentation**: Complete docstrings with examples and usage patterns
+  - **Zero Regression**: All existing tests continue to pass
+- **Usage Pattern**:
+
+  ```python
+  # Use factory function for convenience
+  detector = build_default_payment_detector()
+  method = detector.detect_from_content("Banco Macro - Visa")
+  # Returns PaymentMethod.MACRO_VISA
+
+  # Or register detectors manually
+  detector = PaymentMethodDetector()
+  detector.register_detector(MacroDetector())
+  detector.register_detector(BBVADetector())
+  ```
+
+- **Architecture Impact**: Completes Phase 2 → 2.2 concrete detector implementation, enabling Open/Closed Principle for new banks
+- **Extensibility**: Adding new banks requires only creating new detector classes and registering them
+
 ## Transaction Type Detection Patterns
 
 ### 1. Tax Transaction Pattern

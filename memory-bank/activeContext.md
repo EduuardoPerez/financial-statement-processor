@@ -406,11 +406,55 @@
 - **Architecture Impact**: Enables Open/Closed Principle for adding new banks without modifying existing code
 - **SOLID Compliance**: Perfect implementation of Strategy Pattern with registry-based extensibility
 
+### Phase 2 → 2.2: Concrete Bank Detectors Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - MacroDetector and BBVADetector successfully implemented with build_default_payment_detector function
+- **Achievement**: Complete concrete bank detector implementations enabling extensible payment method detection from content
+- **Implementation**: Complete `src/infrastructure/detectors.py` with `MacroDetector`, `BBVADetector`, and `build_default_payment_detector()` function
+- **Key Features**:
+  - **MacroDetector**: Concrete implementation for Macro bank statement identification
+    - **Detection Indicators**: "MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR", "MACRO" (flexible matching)
+    - **Payment Method Logic**: Returns `MACRO_VISA` for VISA content, `MACRO_ACCOUNT` for other Macro statements
+    - **Case-Insensitive**: Handles variations like "Banco Macro" vs "BANCO MACRO"
+  - **BBVADetector**: Concrete implementation for BBVA bank statement identification
+    - **Detection Indicators**: "BBVA", "WWW.BBVA.COM.AR"
+    - **Payment Method Logic**: Returns `BBVA_MASTERCARD` (priority), `BBVA_VISA`, or `BBVA_ACCOUNT`
+    - **Precedence Handling**: Mastercard detection takes precedence over VISA when both present
+  - **build_default_payment_detector()**: Factory function creating pre-configured detector
+    - **Auto-Registration**: Automatically registers MacroDetector and BBVADetector
+    - **Ready-to-Use**: Returns fully configured PaymentMethodDetector instance
+    - **Extensible**: Additional detectors can still be registered if needed
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ `det.detect_from_content("Banco Macro - Visa") == PaymentMethod.MACRO_VISA`
+  - ✅ Flexible case-insensitive matching for bank name variations
+  - ✅ Proper VISA card type identification from content
+  - ✅ Registry-based design following Strategy Pattern
+- **Testing Results**: ✅ Comprehensive validation passed
+  - ✅ "Banco Macro - Visa" → Macro VISA (validation requirement)
+  - ✅ "BBVA VISA" → BBVA VISA
+  - ✅ "BBVA Mastercard" → BBVA Mastercard
+  - ✅ "BANCO MACRO" → Macro Account
+  - ✅ "BBVA Account" → BBVA Account
+  - ✅ "Macro Premia Visa" → Macro VISA
+- **Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Error Handling**: Proper ValueError for empty content and unknown methods
+  - **Clean Architecture**: Infrastructure layer implementing domain abstractions
+  - **Code Quality**: Flake8 compliant with proper line length management
+- **Architecture Impact**: Completes Phase 2 → 2.2 concrete detector implementation, enabling Open/Closed Principle for new banks
+- **Usage Pattern**:
+
+  ```python
+  detector = build_default_payment_detector()
+  method = detector.detect_from_content("Banco Macro - Visa")
+  # Returns PaymentMethod.MACRO_VISA
+  ```
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-PaymentMethodDetector Implementation
-- **Last Update**: After completing Phase 2 → 2.2 PaymentMethodDetector implementation with abstract BankDetector and registry-based detection system
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, and clean import configuration
+- **Status**: ✅ UPDATED - June 2025 - Post-Concrete Bank Detectors Implementation
+- **Last Update**: After completing Phase 2 → 2.2 concrete bank detectors implementation with MacroDetector, BBVADetector, and build_default_payment_detector factory function
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, Phase 2 → 2.2 concrete bank detectors implementation, and clean import configuration
 - **Next Phase**: Ready for next phase of clean architecture transformation or CLI interface implementation
 
 ## Recent Patterns Discovered

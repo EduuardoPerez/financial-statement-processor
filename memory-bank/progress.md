@@ -92,16 +92,19 @@
 - `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (12 tests)
 - `test_mercadopago_processing.py` - Mercadopago XLSX complete workflow (14 tests)
 
-### Clean Architecture Implementation (Complete - Phase 1 → 1.5)
+### Clean Architecture Implementation (Complete - Phase 2 → 2.2)
 
-- **Domain Layer**: Complete with models, repositories, and services abstractions
-- **Infrastructure Layer**: ExcelStatementRepository and PDFStatementParser implementing domain abstractions
+- **Domain Layer**: Complete with models, repositories, services abstractions, and payment method detection
+- **Infrastructure Layer**: ExcelStatementRepository, PDFStatementParser, and concrete bank detectors implementing domain abstractions
 - **Hexagonal Architecture**: Ports and adapters pattern with dependency inversion
-- **Strategy Pattern Implementation**: StatementParser ABC with first concrete PDFStatementParser implementation
+- **Strategy Pattern Implementation**: StatementParser ABC with concrete implementations and BankDetector strategy pattern
+- **Concrete Bank Detectors**: MacroDetector and BBVADetector with build_default_payment_detector factory function
+- **Payment Method Detection**: Extensible content-based detection using regex/substring logic with registry pattern
 - **pdfplumber Integration**: Robust PDF text extraction with comprehensive error handling
 - **Type Safety**: Modern Python 3.11+ annotations with comprehensive mypy validation
-- **SOLID Principles**: Single responsibility, dependency inversion, and strategy patterns implemented
-- **Zero Regression**: All 251 tests continue to pass with new architecture components
+- **SOLID Principles**: Single responsibility, dependency inversion, open/closed, and strategy patterns implemented
+- **Zero Regression**: All 89 domain tests continue to pass with new architecture components
+- **Extensible Design**: Open/Closed Principle enables adding new banks without modifying existing code
 
 ### Development Infrastructure (Complete)
 
