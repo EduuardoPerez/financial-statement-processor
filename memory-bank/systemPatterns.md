@@ -562,6 +562,12 @@ class PDFStatementParser(StatementParser):
 - **Solution**: Complete Factory Pattern implementation with registration-based design and comprehensive error handling
 - **Implementation**: Complete `src/domain/factories.py` with `ParserFactory` class
 
+### 17. DefaultParserFactory Implementation Pattern (Phase 1 → 1.4)
+
+- **Challenge**: Need convenient, pre-configured factory for common usage scenarios
+- **Solution**: Concrete infrastructure factory that auto-registers standard parsers with dependency injection
+- **Implementation**: Complete `src/infrastructure/factories.py` with `DefaultParserFactory` class
+
 ```python
 # src/domain/factories.py
 class ParserFactory:

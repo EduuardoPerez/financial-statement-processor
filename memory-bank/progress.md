@@ -244,10 +244,11 @@
 - ✅ **v0.3.4**: PDFStatementParser Skeleton Implementation - First concrete StatementParser implementation with pdfplumber integration and Strategy Pattern demonstration (Phase 1 → 1.5 from PLAN.md)
 - ✅ **v0.3.5**: XLSStatementParser Skeleton Implementation - Second concrete StatementParser implementation with pandas integration and Strategy Pattern expansion (Phase 1 → 1.3 from PLAN.md task)
 - ✅ **v0.3.6**: ParserFactory Base Implementation - Complete Factory Pattern implementation for parser creation and management with comprehensive testing (Phase 1 → 1.4 from PLAN.md)
+- ✅ **v0.3.7**: DefaultParserFactory Implementation - Concrete infrastructure factory with auto-registration of PDF and XLS parsers for convenient usage (Phase 1 → 1.4 from PLAN.md)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.7**: Infrastructure Factory Implementation - Concrete factory with all parsers registered (Phase 1 → 1.6 from PLAN.md)
+- 📋 **v0.3.8**: Next Phase Implementation - Continue with clean architecture transformation
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging
