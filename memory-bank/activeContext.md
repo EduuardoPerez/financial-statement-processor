@@ -2,7 +2,26 @@
 
 ## Current Work Focus
 
-### Complete Multi-Format Financial Statement Processing System (CURRENT STATUS - June 2025)
+### Phase 1 → 1.1: Core Domain Models Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Core domain models successfully implemented
+- **Achievement**: Foundation of clean architecture transformation with comprehensive domain layer
+- **Implementation**: Complete `src/domain/models.py` with all required classes and business logic
+- **Key Features**:
+  - **Currency enum**: ARS and USD support with proper string representation
+  - **PaymentMethod enum**: All 6 supported payment methods (Macro VISA, BBVA VISA, BBVA Mastercard, BBVA Account, Macro Account, Mercadopago)
+  - **Transaction value object**: Immutable with comprehensive validation and utility methods
+  - **Balance value object**: Immutable with currency-specific calculations and comparisons
+  - **Statement aggregate root**: Mutable container with business logic and transaction management
+  - **Modern Python 3.11+ generics**: Uses `list[Transaction]` instead of `List[Transaction]`
+  - **Standard library only**: dataclasses, enum, datetime, decimal, typing
+  - **Comprehensive validation**: Business rule enforcement with descriptive error messages
+  - **Public API**: Clean exports via `__all__` for controlled interface
+- **Validation**: Task validation example works perfectly - all requirements met
+- **Quality**: Comprehensive testing with immutability, validation, and business logic verification
+- **Architecture Alignment**: Perfect foundation for hexagonal architecture and SOLID principles
+
+### Complete Multi-Format Financial Statement Processing System (PRODUCTION READY - June 2025)
 
 - **Status**: ✅ PRODUCTION READY - Comprehensive 10-statement-type processing system fully operational
 - **Achievement**: Complete financial statement processor supporting all major Argentine banks and file formats
