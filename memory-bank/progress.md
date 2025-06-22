@@ -288,6 +288,8 @@
 - ✅ **v0.3.13**: StatementProcessingService Implementation - Complete application layer orchestrator with end-to-end validation, implementing Phase 2 → 2.1 from PLAN.md (Prompt 17 from task requirements)
 - ✅ **v0.3.14**: Application Service Unit Testing - Comprehensive unit tests for StatementProcessingService with mocked dependencies and ProcessingResult validation (Prompt 18 from task requirements)
 - ✅ **v0.3.15**: StatementValidator Implementation - Balance-consistency checker with comprehensive validation logic and MyPy error resolution (Prompt 19 from task requirements)
+- ✅ **v0.3.16**: FilenameGenerator Implementation - Domain service for standardized filename generation using payment method and first transaction date (Prompt 20 from task requirements)
+- ✅ **v0.3.17**: StatementProcessingService Refactoring - Complete Phase 2 stub replacement with real StatementValidator and FilenameGenerator injection, achieving full clean architecture implementation (Prompt 21 from task requirements)
 
 ### Upcoming Milestones
 

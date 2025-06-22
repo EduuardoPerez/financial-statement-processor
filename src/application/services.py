@@ -7,43 +7,24 @@ Following clean architecture principles, these services coordinate
 without containing business logic themselves.
 
 Classes:
-    ValidationResult: Result of statement validation
     ProcessingResult: Result of statement processing
-    StatementValidator: Stub validator for statements
-    FilenameGenerator: Stub generator for output filenames
     StatementProcessingService: Main orchestrator service
 """
 
-import datetime
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from domain.factories import ParserFactory
+from domain.filename import FilenameGenerator
 from domain.models import Statement
 from domain.repositories import StatementRepository
+from domain.validation import StatementValidator, ValidationResult
 
 __all__ = [
-    "ValidationResult",
     "ProcessingResult",
-    "StatementValidator",
-    "FilenameGenerator",
     "StatementProcessingService",
 ]
-
-
-@dataclass
-class ValidationResult:
-    """
-    Result of statement validation.
-
-    Attributes:
-        is_valid: Whether the statement passed validation
-        errors: List of validation error messages
-    """
-
-    is_valid: bool
-    errors: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -68,53 +49,6 @@ class ProcessingResult:
     success: bool
     errors: list[str] = field(default_factory=list)
     processing_time: float = 0.0
-
-
-class StatementValidator:
-    """
-    Stub validator for statements.
-
-    This is a temporary implementation that always returns valid.
-    A real validator with balance checking and business rules
-    will be implemented in a future prompt.
-    """
-
-    def validate(self, stmt: Statement) -> ValidationResult:
-        """
-        Validate a statement.
-
-        Args:
-            stmt: Statement to validate
-
-        Returns:
-            ValidationResult indicating the statement is valid
-        """
-        return ValidationResult(is_valid=True, errors=[])
-
-
-class FilenameGenerator:
-    """
-    Stub generator for output filenames.
-
-    This is a temporary implementation that generates simple
-    deterministic filenames. A full-featured generator will
-    be implemented in a future prompt.
-    """
-
-    def generate(self, stmt: Statement) -> str:
-        """
-        Generate output filename for a statement.
-
-        Args:
-            stmt: Statement to generate filename for
-
-        Returns:
-            Generated filename with .xlsx extension
-        """
-        today = datetime.date.today().strftime("%Y%m%d")
-        # Clean payment method name for filename
-        payment_method = stmt.payment_method.value.replace(" ", "-")
-        return f"{payment_method}_{today}.xlsx"
 
 
 class StatementProcessingService:

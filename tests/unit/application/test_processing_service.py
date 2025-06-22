@@ -14,16 +14,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from application.services import (
-    FilenameGenerator,
-    StatementProcessingService,
-    StatementValidator,
-    ValidationResult,
-)
+from application.services import StatementProcessingService
 from domain.factories import ParserFactory
+from domain.filename import FilenameGenerator
 from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.repositories import StatementRepository
 from domain.services import StatementParser
+from domain.validation import StatementValidator, ValidationResult
 
 
 class TestStatementProcessingService:
