@@ -465,6 +465,15 @@ class StatementParser(ABC):
 - **Solution**: Skeleton XLS/XLSX parser with pandas integration and dual extension support
 - **Implementation**: Complete `src/infrastructure/parsers/xls_parser.py` with `XLSStatementParser` class
 
+### 15. Clean Import Configuration Pattern (June 2025)
+
+- **Challenge**: MyPy import path conflicts with src/ layout causing "Source file found twice under different module names" errors
+- **Solution**: Configure project for clean imports without src. prefix using proper MyPy and package configuration
+- **Implementation**: Updated `pyproject.toml` MyPy config and package discovery settings
+- **Benefits**: Clean readable imports (`from domain.models` vs `from src.domain.models`), better IDE support, standard Python conventions
+- **Configuration**: `mypy_path = "src"`, `namespace_packages = true`, `explicit_package_bases = true`, proper setuptools package discovery
+- **Result**: Permanent solution eliminating MyPy conflicts while enabling preferred clean import style
+
 ```python
 # src/infrastructure/parsers/pdf_parser.py
 class PDFStatementParser(StatementParser):
@@ -880,6 +889,15 @@ uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 - **Current Achievement**: 91.08% meaningful coverage with comprehensive domain layer testing
 - **Quality Focus**: Meaningful coverage of business logic, domain models, and service interfaces
 - **Professional Organization**: Tests grouped by functionality with descriptive names
+- **Industry Standard**: Exceeds typical 70-80% industry benchmarks with higher quality
+- **Architecture Coverage**: Complete validation of clean architecture components (domain, infrastructure)
+
+### 6. Test Maintainability Pattern
+
+- **Professional Structure**: Clear, logical test organization
+- **Descriptive Names**: Every test clearly explains what behavior it validates
+- **Easy Extension**: Simple to add new tests for new functionality
+- **Quality Standards**: Maintained through consistent naming and organization conventions
 - **Industry Standard**: Exceeds typical 70-80% industry benchmarks with higher quality
 - **Architecture Coverage**: Complete validation of clean architecture components (domain, infrastructure)
 

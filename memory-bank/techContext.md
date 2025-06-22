@@ -252,9 +252,12 @@ These paths represent edge cases that are handled gracefully by the application 
 
 - **MyPy**: Static type checker for Python
 - **Modern Type Annotations**: Uses Python 3.11+ syntax (`str | None`, `dict[str, float]`)
-- **Configuration**: Configured in `pyproject.toml` with gradual adoption approach
+- **Configuration**: Configured in `pyproject.toml` with clean import support for src/ layout
+- **Clean Import Configuration**: `mypy_path = "src"`, `namespace_packages = true`, `explicit_package_bases = true`
+- **Import Style**: Enables clean imports (`from domain.models` vs `from src.domain.models`)
 - **Type Stubs**: Includes `pandas-stubs` and `types-openpyxl` for better library support
 - **Integration**: Works seamlessly with existing Ruff and pytest workflow
+- **VS Code Integration**: `.vscode/settings.json` configured with `python.analysis.extraPaths = ["./src"]`
 
 - **Pre-commit Hooks**: Automated quality enforcement before commits
 - **Hook Configuration**: `.pre-commit-config.yaml` with ruff, mypy, and pytest
