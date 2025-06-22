@@ -9,6 +9,8 @@ transformation.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -20,8 +22,17 @@ if TYPE_CHECKING:
         Transaction,
     )
     from .utils import AmountParser, DateConverter
+else:
+    # Runtime imports for dataclass and Path usage
+    dataclass = dataclass
+    Path = Path
 
-__all__ = ["TransactionBuilder", "StatementBuilder"]
+__all__ = [
+    "TransactionBuilder",
+    "StatementBuilder",
+    "ProcessingReportBuilder",
+    "ProcessingReport",
+]
 
 
 class TransactionBuilder:
@@ -291,4 +302,202 @@ class StatementBuilder:
         self._payment_method = None
         self._transactions.clear()
         self._reported_balance = None
+        return self
+
+
+@dataclass(frozen=True)
+class ProcessingReport:
+    """
+    Immutable report of batch processing results.
+
+    This dataclass contains comprehensive information about a batch processing
+    operation, including successful and failed files, success rates, and
+    processing metrics. It follows the established patterns in the codebase
+    for immutable value objects.
+    """
+
+    successful_files: list[Path]
+    failed_files: list[tuple[Path, str]]
+    total_processing_time: float = 0.0
+    total_transactions: int = 0
+
+    @property
+    def success_rate(self) -> float:
+        """
+        Calculate the success rate as a float between 0.0 and 1.0.
+
+        Returns:
+            float: Success rate (successful files / total files)
+                  Returns 0.0 if no files were processed
+
+        Example:
+            >>> report = ProcessingReport([Path("file1.pdf")], [])
+            >>> report.success_rate
+            1.0
+            >>> report = ProcessingReport([Path("file1.pdf")],
+            ...                          [(Path("file2.pdf"), "error")])
+            >>> report.success_rate
+            0.5
+        """
+        total_files = len(self.successful_files) + len(self.failed_files)
+        if total_files == 0:
+            return 0.0
+        return len(self.successful_files) / total_files
+
+    @property
+    def total_files(self) -> int:
+        """
+        Get total number of files processed (successful + failed).
+
+        Returns:
+            int: Total number of files processed
+        """
+        return len(self.successful_files) + len(self.failed_files)
+
+    def print_summary(self) -> None:
+        """
+        Print formatted summary of processing results.
+
+        Displays a comprehensive summary including success rate, file counts,
+        processing time, and transaction totals in a readable format.
+        """
+        print("\n" + "=" * 60)
+        print("BATCH PROCESSING SUMMARY")
+        print("=" * 60)
+        print(f"✅ Successful files: {len(self.successful_files)}")
+        print(f"❌ Failed files: {len(self.failed_files)}")
+        print(f"📊 Success rate: {self.success_rate:.1%}")
+        print(f"📈 Total transactions: {self.total_transactions}")
+        print(f"⏱️  Processing time: {self.total_processing_time:.2f}s")
+
+        if self.failed_files:
+            print("\n❌ Failed Files:")
+            for file_path, error in self.failed_files:
+                print(f"   {file_path.name}: {error}")
+
+
+class ProcessingReportBuilder:
+    """
+    Builder for constructing ProcessingReport objects.
+
+    This class provides a fluent interface for building ProcessingReport
+    objects with method chaining. It tracks successful and failed file
+    processing operations and automatically calculates success rates.
+
+    The builder follows the established patterns in the codebase and
+    integrates seamlessly with existing domain models.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize ProcessingReportBuilder with empty state.
+
+        Example:
+            >>> builder = ProcessingReportBuilder()
+            >>> report = (builder
+            ...     .add_success(Path("file1.pdf"), 45)
+            ...     .add_failure(Path("file2.pdf"), "Parse error")
+            ...     .build())
+            >>> report.success_rate
+            0.5
+        """
+        self._successful_files: list[Path] = []
+        self._failed_files: list[tuple[Path, str]] = []
+        self._total_processing_time: float = 0.0
+        self._total_transactions: int = 0
+
+    def add_success(
+        self, file_path: Path, transaction_count: int = 0
+    ) -> ProcessingReportBuilder:
+        """
+        Add a successfully processed file to the report.
+
+        Args:
+            file_path: Path to the successfully processed file
+            transaction_count: Number of transactions processed from this file
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.add_success(Path("statement.pdf"), 45)
+        """
+        self._successful_files.append(file_path)
+        self._total_transactions += transaction_count
+        return self
+
+    def add_failure(
+        self, file_path: Path, error_message: str
+    ) -> ProcessingReportBuilder:
+        """
+        Add a failed file to the report.
+
+        Args:
+            file_path: Path to the file that failed processing
+            error_message: Description of the error that occurred
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.add_failure(Path("bad.pdf"), "File corrupted")
+        """
+        self._failed_files.append((file_path, error_message))
+        return self
+
+    def with_processing_time(self, time_seconds: float) -> ProcessingReportBuilder:
+        """
+        Set the total processing time for the batch operation.
+
+        Args:
+            time_seconds: Total processing time in seconds
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.with_processing_time(45.2)
+        """
+        self._total_processing_time = time_seconds
+        return self
+
+    def build(self) -> ProcessingReport:
+        """
+        Build the final ProcessingReport object.
+
+        Creates a ProcessingReport with all accumulated data and automatically
+        calculated success rate.
+
+        Returns:
+            ProcessingReport: Immutable report with processing results
+
+        Example:
+            >>> report = builder.build()
+            >>> report.success_rate
+            0.5
+        """
+        return ProcessingReport(
+            successful_files=self._successful_files.copy(),
+            failed_files=self._failed_files.copy(),
+            total_processing_time=self._total_processing_time,
+            total_transactions=self._total_transactions,
+        )
+
+    def reset(self) -> ProcessingReportBuilder:
+        """
+        Reset builder state for reuse.
+
+        Clears all previously accumulated data, allowing the builder to be
+        reused for constructing multiple reports.
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.reset().add_success(Path("new_file.pdf"))
+        """
+        self._successful_files.clear()
+        self._failed_files.clear()
+        self._total_processing_time = 0.0
+        self._total_transactions = 0
         return self
