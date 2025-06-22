@@ -270,10 +270,12 @@
 - ✅ **v0.3.8**: PaymentMethodDetector Implementation - Abstract BankDetector and registry-based PaymentMethodDetector with Strategy Pattern for extensible bank identification (Phase 2 → 2.2 from PLAN.md)
 - ✅ **v0.3.9**: Utility Parsers Implementation - DateConverter and AmountParser utility classes implementing Single Responsibility Principle for date conversion and European number format parsing (Phase 2 → 2.3 from PLAN.md)
 - ✅ **v0.3.10**: TransactionBuilder Implementation - TransactionBuilder class with dependency injection for constructing Transaction objects from PDF line components (Phase 2 → 2.4 from PLAN.md)
+- ✅ **v0.3.11**: PDFStatementParser Integration - Complete PDFStatementParser implementation with TransactionBuilder integration, comprehensive unit and integration tests (Phase 2 → 2.5 from PLAN.md)
+- ✅ **v0.3.12**: Prompt 15 Implementation - Successfully implemented sophisticated PDF transaction parsing with full test validation and real-world PDF processing (Prompt 15 from task requirements)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.11**: Next Phase Implementation - Continue with clean architecture transformation
+- 📋 **v0.3.12**: Next Phase Implementation - Continue with clean architecture transformation
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging
