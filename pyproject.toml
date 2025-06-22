@@ -78,6 +78,10 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
+# Configure for src/ layout to prevent module path conflicts
+mypy_path = "src"
+explicit_package_bases = true
+
 # Exclude test files and documentation initially
 exclude = [
     "tests/",

@@ -13,8 +13,8 @@ from typing import Any
 
 import pandas as pd
 
-from ..domain.models import Statement
-from ..domain.repositories import FileReader, FileWriter, StatementRepository
+from domain.models import Statement
+from domain.repositories import FileReader, FileWriter, StatementRepository
 
 __all__ = [
     "ExcelStatementRepository",

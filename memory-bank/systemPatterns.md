@@ -401,6 +401,63 @@ class ExcelStatementRepository(StatementRepository):
   - **Template Method**: Standardized data transformation pipeline
 - **Next Phase**: Ready for Strategy Pattern implementation for different file format parsers
 
+### 12. StatementParser Interface Pattern (Phase 1 → 1.4)
+
+- **Challenge**: Need pluggable parsing strategies for different file formats while maintaining clean architecture
+- **Solution**: Abstract Base Class defining the contract for all statement parsers with Strategy Pattern foundation
+- **Implementation**: Complete `src/domain/services.py` with `StatementParser` ABC
+
+```python
+# src/domain/services.py
+from abc import ABC, abstractmethod
+from pathlib import Path
+from .models import Statement
+
+class StatementParser(ABC):
+    """Abstract strategy for parsing different statement formats."""
+
+    @abstractmethod
+    def can_parse(self, file_path: Path) -> bool:
+        """Determine if this parser can handle the given file."""
+        pass
+
+    @abstractmethod
+    def parse(self, file_path: Path) -> Statement:
+        """Parse the file and return a Statement object."""
+        pass
+
+    @abstractmethod
+    def get_supported_extensions(self) -> set[str]:
+        """Return supported file extensions."""
+        pass
+```
+
+- **Architecture Benefits**:
+  - **Strategy Pattern Foundation**: Enables pluggable parsing strategies for PDF, XLS, CSV, XLSX formats
+  - **Clean Architecture Compliance**: Domain service abstraction following hexagonal architecture principles
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Validation Ready**: Supports `issubclass(ConcreteParser, StatementParser)` for runtime validation
+  - **Domain Integration**: Seamlessly integrates with existing Statement domain model
+- **Design Features**:
+  - **can_parse()**: File format detection and parser selection capability
+  - **parse()**: Core parsing logic returning properly constructed Statement objects
+  - **get_supported_extensions()**: Parser discovery and factory pattern support
+  - **Abstract Base Class**: Prevents direct instantiation, enforces interface compliance
+  - **Comprehensive Documentation**: Detailed docstrings with Args, Returns, and Raises sections
+- **Future Concrete Implementations**:
+  - **PDFStatementParser**: For PDF statement processing (Macro VISA, BBVA VISA, BBVA Mastercard)
+  - **XLSStatementParser**: For XLS account statement processing (BBVA Account, Macro Account)
+  - **CSVStatementParser**: For CSV transaction processing (BBVA/Macro VISA Auth/Movs)
+  - **XLSXStatementParser**: For XLSX statement processing (Mercadopago)
+- **Quality Standards**:
+  - **100% Interface Coverage**: Comprehensive unit tests validating all abstract methods
+  - **Strategy Pattern Validation**: Tests confirm interface supports intended design patterns
+  - **Domain Model Integration**: Validates seamless integration with existing models
+  - **Error Handling**: Tests incomplete implementations and validation scenarios
+  - **Multiple Implementations**: Confirms multiple concrete parsers can coexist
+- **Architecture Impact**: Provides foundation for Factory Pattern implementation (Phase 1 → 1.5)
+- **SOLID Compliance**: Perfect implementation of Strategy Pattern with clean abstractions
+
 ## Transaction Type Detection Patterns
 
 ### 1. Tax Transaction Pattern
@@ -687,15 +744,16 @@ uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 
 #### Test Quality Metrics (Current State - June 2025)
 
-- **Total Tests**: 130 (all passing) ✅
-- **Unit Tests**: 8 professional test files covering core functions
-- **Integration Tests**: 5 test files covering end-to-end workflows
+- **Total Tests**: 251 (all passing) ✅
+- **Unit Tests**: 9 professional test files covering core functions and domain services
+- **Integration Tests**: 8 test files covering end-to-end workflows
 - **Bank Coverage**: MACRO VISA, BBVA VISA, BBVA Mastercard, BBVA Account, Macro Account with comprehensive patterns
 - **Test Organization**: Professional structure with logical grouping by functionality
 - **Test Quality**: Descriptive names, clear behavior validation, excellent maintainability
-- **Coverage**: 91% meaningful coverage focused on behavior validation
+- **Coverage**: 91.08% meaningful coverage focused on behavior validation
 - **Real Data Validation**: Uses actual bank statements for testing confidence
-- **Recent Addition**: 21 new tests for Macro Account XLS functionality
+- **Recent Addition**: 9 new tests for StatementParser interface and Strategy Pattern validation
+- **Domain Testing**: Complete validation of domain models, repository abstractions, and service interfaces
 
 ## Test Coverage Implementation Patterns
 
@@ -730,10 +788,11 @@ uv run pytest tests/integration/test_bbva_mastercard_processing.py -v
 
 ### 5. Coverage Quality Assessment
 
-- **Current Achievement**: 90% meaningful coverage (vs previous 93% artificial)
-- **Quality Focus**: Meaningful coverage of business logic, not artificial inflation
+- **Current Achievement**: 91.08% meaningful coverage with comprehensive domain layer testing
+- **Quality Focus**: Meaningful coverage of business logic, domain models, and service interfaces
 - **Professional Organization**: Tests grouped by functionality with descriptive names
 - **Industry Standard**: Exceeds typical 70-80% industry benchmarks with higher quality
+- **Architecture Coverage**: Complete validation of clean architecture components (domain, infrastructure)
 
 ### 6. Test Maintainability Pattern
 

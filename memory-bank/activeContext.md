@@ -211,12 +211,42 @@
 - **Quality**: Comprehensive integration tests with 12 new test cases for complete workflow validation
 - **Validation**: XLS-specific validation against input file totals, exact output matching expected results
 
+### Phase 1 → 1.4: StatementParser Interface Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - StatementParser ABC successfully implemented with Strategy Pattern foundation
+- **Achievement**: Core service abstraction established for pluggable parsing strategies, enabling clean architecture transformation
+- **Implementation**: Complete `src/domain/services.py` with `StatementParser` abstract base class
+- **Key Features**:
+  - **StatementParser ABC**: Abstract strategy interface for different statement formats with three required methods
+  - **can_parse(file_path: Path) -> bool**: Determine if parser can handle the given file format
+  - **parse(file_path: Path) -> Statement**: Parse file and return properly constructed Statement object
+  - **get_supported_extensions() -> set[str]**: Return supported file extensions for parser selection
+  - **Strategy Pattern Foundation**: Enables pluggable parsing strategies for PDF, XLS, CSV, XLSX formats
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Domain Integration**: Seamlessly integrates with existing Statement domain model
+  - **Validation Ready**: Supports `issubclass(ConcreteParser, StatementParser)` as required
+  - **Clean Exports**: Proper `__all__` definition for controlled public API
+- **Unit Tests**: Complete `tests/unit/domain/test_services.py` with 9 comprehensive tests covering:
+  - **ABC Validation**: Confirms proper abstract base class configuration
+  - **Interface Compliance**: Tests all required abstract methods are defined
+  - **issubclass Validation**: Key requirement validation for future concrete parsers
+  - **Strategy Pattern Support**: Demonstrates interface supports intended design patterns
+  - **Domain Model Integration**: Validates seamless integration with existing models
+  - **Error Handling**: Tests incomplete implementations and validation scenarios
+  - **Multiple Implementations**: Confirms multiple concrete parsers can coexist
+  - **Instantiation Control**: Validates abstract class cannot be instantiated directly
+  - **Concrete Implementation**: Tests that proper implementations work correctly
+- **Validation**: All tests pass with `uv run pytest tests/unit/domain/test_services.py -v`
+- **Quality**: 100% interface coverage with comprehensive behavioral validation
+- **Architecture Impact**: Provides foundation for Factory Pattern implementation (Phase 1 → 1.5)
+- **SOLID Compliance**: Perfect implementation of Strategy Pattern with clean abstractions
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Phase 1 → 1.3 ExcelStatementRepository Implementation
-- **Last Update**: After completing first concrete infrastructure adapter with dependency injection and pandas integration
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, and Phase 1 → 1.3 ExcelStatementRepository implementation
-- **Next Phase**: Ready for Phase 1 → 1.4 Strategy Pattern implementation for different file format parsers
+- **Status**: ✅ UPDATED - June 2025 - Post-Phase 1 → 1.4 StatementParser Interface Implementation
+- **Last Update**: After completing Strategy Pattern foundation with StatementParser ABC and comprehensive unit tests
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, and Phase 1 → 1.4 StatementParser interface
+- **Next Phase**: Ready for Phase 1 → 1.5 Factory Pattern implementation for parser creation and management
 
 ## Recent Patterns Discovered
 
@@ -464,10 +494,10 @@
 
 ### Test Quality Metrics
 
-- **Total Tests**: 178 (all passing)
-- **Coverage**: 89.74% meaningful coverage
-- **Organization**: Professional, logical grouping
-- **Maintainability**: Excellent - descriptive names, clear structure
-- **Functionality**: All application features verified working correctly
-- **Recent Addition**: 48 new tests for Mercadopago and CSV functionality
-- **Quality Assurance**: Pre-commit hooks ensure all tests pass before commits
+- **Total Tests**: 251 (all passing) - Added 9 new tests for StatementParser interface
+- **Coverage**: 91.08% meaningful coverage (exceeds 90% requirement)
+- **Organization**: Professional, logical grouping with new domain services test module
+- **Maintainability**: Excellent - descriptive names, clear structure, comprehensive interface testing
+- **Functionality**: All application features verified working correctly including new Strategy Pattern foundation
+- **Recent Addition**: 9 comprehensive StatementParser interface tests covering ABC validation, Strategy Pattern support, and domain integration
+- **Quality Assurance**: Pre-commit hooks ensure all tests pass before commits, zero regression maintained

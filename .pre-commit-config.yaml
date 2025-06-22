@@ -6,11 +6,14 @@ repos:
         args: [--fix, --ignore=E501] # Auto-fix issues, ignore line length for now
       - id: ruff-format # Auto-format code
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.8.0
+  - repo: local
     hooks:
       - id: mypy
-        additional_dependencies: [pandas-stubs>=2.1.0, types-openpyxl>=3.1.0]
+        name: mypy type checking
+        entry: uv run mypy src/
+        language: system
+        types: [python]
+        pass_filenames: false
 
   - repo: local
     hooks:
