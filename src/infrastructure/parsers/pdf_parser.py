@@ -13,8 +13,8 @@ from typing import Any
 
 import pdfplumber
 
-from domain.models import PaymentMethod, Statement
-from domain.services import StatementParser
+from src.domain.models import PaymentMethod, Statement
+from src.domain.services import StatementParser
 
 __all__ = [
     "PDFStatementParser",

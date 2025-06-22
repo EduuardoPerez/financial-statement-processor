@@ -87,7 +87,7 @@
   - **European Number Format**: Perfect 1.234,56 handling across all formats
   - **Multiple Date Formats**: DD.MM.YY, DD-MMM-YY, DD/MM/YYYY, ISO 8601 timestamps
   - **Standardized Output**: Consistent filename normalization across all statement types
-- **Quality Metrics**: 201 tests with 90% coverage, zero warnings, professional development workflow
+- **Quality Metrics**: 251 tests with 91% coverage, zero warnings, professional development workflow
 - **Development Infrastructure**: Pre-commit hooks (ruff, mypy, pytest), type safety, automated quality enforcement
 
 ### File Naming Normalization Implementation (COMPLETED - June 2025)
@@ -261,13 +261,37 @@
 - **Testing**: Successfully tested with real PDF files, extracts 11,421 characters from BBVA VISA statement
 - **Quality**: All 251 existing tests continue to pass, zero regression
 - **Architecture Impact**: Demonstrates successful Strategy Pattern implementation ready for full parsing logic
-- **Next Phase**: Ready for Factory Pattern implementation (Phase 1 → 1.6) and full PDF parsing migration
+- **Next Phase**: Ready for XLSStatementParser implementation (Phase 1 → 1.3 from task)
+
+### Phase 1 → 1.3: XLSStatementParser Skeleton Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Second concrete StatementParser implementation successfully created
+- **Achievement**: Skeleton XLS/XLSX parser demonstrating Strategy Pattern expansion with pandas integration
+- **Implementation**: Complete `src/infrastructure/parsers/xls_parser.py` with `XLSStatementParser` class
+- **Key Features**:
+  - **Strategy Pattern Expansion**: Second concrete implementation of `StatementParser` ABC
+  - **Dual Extension Support**: `can_parse()` returns `True` for both `.xls` and `.xlsx` files (case-insensitive)
+  - **Pandas Integration**: `_load_excel_data()` helper method for robust Excel data loading
+  - **Skeleton Parse Method**: Returns `Statement` with zero transactions (foundation for full implementation)
+  - **Comprehensive Error Handling**: FileNotFoundError, ValueError, PermissionError, OSError with proper chaining
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Dependency Injection**: Constructor accepts detector parameter for clean architecture compliance
+  - **Clean Architecture**: Infrastructure layer implementing domain abstractions
+- **Validation Requirements**:
+  - ✅ `XLSStatementParser(detector).can_parse(Path("file.xlsx"))` returns `True`
+  - ✅ `XLSStatementParser(detector).can_parse(Path("file.xls"))` returns `True`
+  - ✅ `XLSStatementParser(detector).can_parse(Path("file.pdf"))` returns `False`
+  - ✅ `parser.get_supported_extensions()` returns `{'.xls', '.xlsx'}`
+- **Testing**: Successfully tested with mock files, creates proper Statement objects with zero transactions
+- **Quality**: All 50 domain tests continue to pass, zero regression
+- **Architecture Impact**: Demonstrates successful Strategy Pattern expansion with multiple concrete parsers
+- **Next Phase**: Ready for Factory Pattern implementation (Phase 1 → 1.6) for parser creation and management
 
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Phase 1 → 1.5 PDFStatementParser Skeleton Implementation
-- **Last Update**: After completing first concrete StatementParser implementation with pdfplumber integration and Strategy Pattern demonstration
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, and Phase 1 → 1.5 PDFStatementParser skeleton
+- **Status**: ✅ UPDATED - June 2025 - Post-XLSStatementParser Skeleton Implementation
+- **Last Update**: After completing Phase 1 → 1.3 XLSStatementParser skeleton implementation with pandas integration and Strategy Pattern expansion
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, and Phase 1 → 1.3 XLSStatementParser skeleton
 - **Next Phase**: Ready for Phase 1 → 1.6 Factory Pattern implementation for parser creation and management
 
 ## Recent Patterns Discovered
