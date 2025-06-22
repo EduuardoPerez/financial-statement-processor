@@ -43,15 +43,38 @@
 
 ```
 financial-statement-processor/
-├── parse_visa_statement.py    # Main processor
-├── test_parse_visa_statement.py  # Comprehensive test suite
-├── pyproject.toml             # Dependencies and metadata
-├── uv.lock                    # Dependency lock file
-├── input/                     # PDF files to process
-├── output/                    # Generated Excel files
+├── src/
+│   ├── domain/
+│   │   ├── __init__.py
+│   │   ├── models.py          # Core domain models (Transaction, Statement, etc.)
+│   │   └── repositories.py    # Repository abstractions (FileReader, FileWriter, StatementRepository)
+│   ├── application/
+│   │   └── __init__.py
+│   ├── cli/
+│   │   └── __init__.py
+│   └── infrastructure/
+│       ├── __init__.py
+│       └── repositories.py    # ExcelStatementRepository implementation
+├── tests/
+│   ├── unit/
+│   │   └── domain/
+│   │       └── test_models.py  # Domain model unit tests
+│   └── integration/
+├── memory-bank/               # Project documentation and context
+├── input/                     # Sample input files for testing
+├── output/                    # Generated output files
 ├── expected_output/           # Reference files for testing
-└── memory-bank/               # Project documentation
+├── parse_visa_statement.py    # Legacy monolithic implementation
+├── pyproject.toml            # Project configuration and dependencies
+└── README.md
 ```
+
+### Architecture Evolution
+
+- **Phase 1 → 1.1**: ✅ Core domain models implemented with comprehensive unit tests
+- **Phase 1 → 1.2**: ✅ Repository abstractions implemented for hexagonal architecture
+- **Phase 1 → 1.3**: ✅ ExcelStatementRepository implementation with dependency injection and pandas integration
+- **Future Phases**: Strategy patterns, factory patterns, and full clean architecture transformation
 
 ### Setup Requirements
 

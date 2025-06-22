@@ -225,9 +225,11 @@
 - ✅ **v0.2.12**: File naming normalization - Centralized filename generation with 201 tests and maintained 90% coverage
 - ✅ **v0.3.0-alpha**: Clean Architecture Foundation - Project skeleton with hexagonal architecture directory structure (Phase 1 → 1.0 from PLAN.md)
 - ✅ **v0.3.1**: Repository Abstractions Implementation - Core ports (interfaces) for hexagonal architecture with FileReader/FileWriter Protocols and StatementRepository ABC (Phase 1 → 1.2 from PLAN.md)
+- ✅ **v0.3.2**: ExcelStatementRepository Implementation - First concrete adapter implementing repository abstractions with dependency injection, pandas integration, and comprehensive error handling (Phase 1 → 1.3 from PLAN.md)
 
 ### Upcoming Milestones
 
+- 📋 **v0.3.3**: Strategy Pattern for Parsers - Pluggable parsing strategies for different file formats (Phase 1 → 1.4 from PLAN.md)
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging

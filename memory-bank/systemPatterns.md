@@ -331,7 +331,75 @@ class StatementRepository(ABC):
   - **Type Safety**: Full pathlib.Path integration with comprehensive type annotations
 - **Quality**: Comprehensive documentation with Args, Returns, and Raises sections
 - **Validation**: Successfully validated with import tests and integration with domain models
-- **Next Phase**: Infrastructure layer will implement concrete adapters for these abstractions
+
+### 11. ExcelStatementRepository Implementation Pattern (Phase 1 → 1.3)
+
+- **Challenge**: Need concrete implementation of repository abstractions for Excel output
+- **Solution**: Infrastructure adapter implementing domain repository interface with dependency injection
+- **Implementation**: Clean architecture with pandas integration and comprehensive error handling
+
+```python
+# src/infrastructure/repositories.py
+class ExcelStatementRepository(StatementRepository):
+    """Excel-based statement repository implementation."""
+
+    def __init__(self, file_reader: FileReader, file_writer: FileWriter):
+        """Initialize with injected dependencies for clean architecture."""
+        self._file_reader = file_reader
+        self._file_writer = file_writer
+
+    def save_statement(self, statement: Statement, output_path: Path) -> None:
+        """Save statement to Excel file using pandas with openpyxl engine."""
+        if not statement.transactions:
+            raise ValueError("Cannot save statement with no transactions")
+
+        # Ensure output directory exists
+        self._file_writer.ensure_directory(output_path.parent)
+
+        # Convert statement to DataFrame
+        df = self._statement_to_dataframe(statement)
+
+        # Save as Excel file using pandas with openpyxl engine
+        try:
+            df.to_excel(output_path, index=False, sheet_name="Sheet1", engine="openpyxl")
+        except Exception as e:
+            raise OSError(f"Failed to save Excel file to {output_path}: {str(e)}") from e
+
+    def _statement_to_dataframe(self, statement: Statement) -> pd.DataFrame:
+        """Convert Statement domain objects to pandas DataFrame for Excel output."""
+        data = []
+        for transaction in statement.transactions:
+            data.append({
+                "Date": transaction.date.strftime("%Y-%m-%d"),
+                "Description": transaction.description,
+                "Currency": transaction.currency.value,
+                "Amount": float(transaction.amount),
+                "Payment Method": transaction.payment_method.value,
+            })
+        return pd.DataFrame(data)
+```
+
+- **Architecture Benefits**:
+  - **Dependency Injection**: Uses injected FileReader/FileWriter for clean architecture compliance
+  - **Infrastructure Layer**: Concrete adapter implementing domain abstractions without circular dependencies
+  - **Hexagonal Architecture**: Demonstrates successful ports and adapters pattern implementation
+  - **Clean Separation**: Business logic (domain) separated from technical concerns (infrastructure)
+- **Technical Features**:
+  - **Excel I/O Integration**: Leverages pandas with openpyxl engine for robust Excel operations
+  - **Data Transformation**: Helper method converts domain objects to standardized DataFrame format
+  - **Standardized Output**: Creates Excel files with consistent column structure
+  - **Error Handling**: Comprehensive exception handling with proper error types and chaining
+- **Quality Standards**:
+  - **Type Safety**: Full modern Python 3.11+ type annotations with explicit type declarations
+  - **Documentation**: Comprehensive docstrings with Args, Returns, and Raises sections
+  - **Validation**: Zero regression - all 242 tests continue to pass
+  - **Integration**: Successfully tested with domain models and mock dependencies
+- **Design Patterns Applied**:
+  - **Repository Pattern**: Concrete implementation of abstract repository interface
+  - **Dependency Injection**: Constructor injection of file operation dependencies
+  - **Adapter Pattern**: Adapts pandas DataFrame operations to domain Statement objects
+  - **Template Method**: Standardized data transformation pipeline
+- **Next Phase**: Ready for Strategy Pattern implementation for different file format parsers
 
 ## Transaction Type Detection Patterns
 
