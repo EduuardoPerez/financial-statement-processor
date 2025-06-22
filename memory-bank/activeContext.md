@@ -369,11 +369,48 @@
 - **Validation**: All 251 tests pass, MyPy type checking successful, pre-commit hooks working
 - **Result**: Permanent solution preventing future MyPy import conflicts while enabling preferred clean import syntax
 
+### Phase 2 → 2.2: Payment-Method Detection Core Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Abstract PaymentMethodDetector successfully implemented with Strategy Pattern
+- **Achievement**: Core payment method detection abstraction established for extensible bank identification, enabling Open/Closed Principle
+- **Implementation**: Complete `src/domain/detectors.py` with abstract `BankDetector` and concrete `PaymentMethodDetector` classes
+- **Key Features**:
+  - **BankDetector ABC**: Abstract strategy interface for bank identification with `can_detect()` and `get_payment_method()` methods
+  - **PaymentMethodDetector**: Registry-based detector with registration and detection methods following Strategy Pattern
+  - **Registration System**: `register_detector()` method for adding new bank detection strategies dynamically
+  - **Content Detection**: `detect_from_content()` method using registered detectors with validation requirement
+  - **Filename Detection**: `detect_from_filename()` method for structured file naming patterns (CSV, XLS, XLSX)
+  - **Validation Requirement**: ✅ Raises `ValueError` when `detect_from_content` is called before any detectors are registered
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Clean Architecture**: Domain layer abstraction enabling dependency inversion and extensibility
+- **Core Methods**:
+  - **register_detector()**: Register BankDetector implementations with type validation
+  - **detect_from_content()**: Detect payment method from content using registered detectors (key validation requirement)
+  - **detect_from_filename()**: Detect payment method from filename patterns for CSV/XLS/XLSX files
+  - **get_registered_detectors()**: Return copy of registered detectors for inspection
+  - **clear_detectors()**: Remove all registered detectors for testing/reconfiguration
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ Calling `detect_from_content` before any detectors are registered raises `ValueError`
+  - ✅ Registration and detection methods work correctly with proper error handling
+  - ✅ Integration with existing `PaymentMethod` enum from domain models
+  - ✅ Follows established clean architecture patterns in the codebase
+- **Comprehensive Testing**: Complete `tests/unit/domain/test_detectors.py` with 23 comprehensive tests covering:
+  - **Abstract Base Class**: BankDetector cannot be instantiated, proper subclass validation
+  - **Registration System**: Valid detector registration, invalid type rejection, multiple detector support
+  - **Content Detection**: Successful detection, first match wins, no match handling, empty content validation
+  - **Filename Detection**: CSV (BBVA/Macro VISA), XLS (BBVA/Macro Account), XLSX (Mercadopago) pattern recognition
+  - **Error Handling**: TypeError for invalid types, ValueError for no detectors/unknown patterns
+  - **Registry Management**: Copy protection, detector clearing, registration order precedence
+  - **Integration Tests**: Concrete detector implementations, precedence order validation
+- **Quality Metrics**: All 290 tests pass (267 existing + 23 new), coverage at 91.86% (exceeds 90% requirement)
+- **Architecture Impact**: Enables Open/Closed Principle for adding new banks without modifying existing code
+- **SOLID Compliance**: Perfect implementation of Strategy Pattern with registry-based extensibility
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-DefaultParserFactory Implementation
-- **Last Update**: After completing Phase 1 → 1.4 DefaultParserFactory implementation with auto-registration of PDF and XLS parsers
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, and clean import configuration
+- **Status**: ✅ UPDATED - June 2025 - Post-PaymentMethodDetector Implementation
+- **Last Update**: After completing Phase 2 → 2.2 PaymentMethodDetector implementation with abstract BankDetector and registry-based detection system
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure with clean pre-commit workflow, comprehensive type safety, Phase 1 → 1.2 repository abstractions, Phase 1 → 1.3 ExcelStatementRepository implementation, Phase 1 → 1.4 StatementParser interface, Phase 1 → 1.5 PDFStatementParser skeleton, Phase 1 → 1.3 XLSStatementParser skeleton, Phase 1 → 1.4 ParserFactory base implementation, Phase 1 → 1.4 DefaultParserFactory implementation, Phase 2 → 2.2 PaymentMethodDetector implementation, and clean import configuration
 - **Next Phase**: Ready for next phase of clean architecture transformation or CLI interface implementation
 
 ## Recent Patterns Discovered

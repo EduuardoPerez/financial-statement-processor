@@ -44,7 +44,7 @@
 
 ### Quality Assurance (Complete - Enhanced June 2025)
 
-- **Professional Test Coverage**: 91.08% meaningful coverage with 267 well-organized tests
+- **Professional Test Coverage**: 91.86% meaningful coverage with 290 well-organized tests
 - **Pre-commit Hook Integration**: Automated quality checks with ruff, mypy, and pytest before every commit
 - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive mypy validation
 - **Test Suite Expansion**: Added comprehensive Mercadopago XLSX and CSV processing integration tests (48 new tests total)
@@ -78,6 +78,8 @@
 - `test_validate_balance.py` - Balance validation logic
 - `domain/test_models.py` - Domain model validation and business logic
 - `domain/test_services.py` - StatementParser interface and Strategy Pattern validation
+- `domain/test_detectors.py` - PaymentMethodDetector and BankDetector Strategy Pattern validation
+- `domain/test_factories.py` - ParserFactory and DefaultParserFactory implementation validation
 
 #### Integration Tests (8 files, end-to-end testing)
 
@@ -126,7 +128,7 @@
 - **Unit Tests**: ✅ Date conversion, payment detection, number formatting, domain models, service interfaces
 - **Edge Cases**: ✅ Negative amounts, trailing dashes, mixed currencies, bonifications
 - **Regression Tests**: ✅ Prevents breaking existing functionality
-- **Quality Metrics**: 267 meaningful tests with 91.08% coverage
+- **Quality Metrics**: 290 meaningful tests with 91.86% coverage
 - **Professional Organization**: Logical grouping by functionality, descriptive names
 - **Architecture Testing**: ✅ Domain models, repository abstractions, and service interfaces fully validated
 
@@ -245,10 +247,11 @@
 - ✅ **v0.3.5**: XLSStatementParser Skeleton Implementation - Second concrete StatementParser implementation with pandas integration and Strategy Pattern expansion (Phase 1 → 1.3 from PLAN.md task)
 - ✅ **v0.3.6**: ParserFactory Base Implementation - Complete Factory Pattern implementation for parser creation and management with comprehensive testing (Phase 1 → 1.4 from PLAN.md)
 - ✅ **v0.3.7**: DefaultParserFactory Implementation - Concrete infrastructure factory with auto-registration of PDF and XLS parsers for convenient usage (Phase 1 → 1.4 from PLAN.md)
+- ✅ **v0.3.8**: PaymentMethodDetector Implementation - Abstract BankDetector and registry-based PaymentMethodDetector with Strategy Pattern for extensible bank identification (Phase 2 → 2.2 from PLAN.md)
 
 ### Upcoming Milestones
 
-- 📋 **v0.3.8**: Next Phase Implementation - Continue with clean architecture transformation
+- 📋 **v0.3.9**: Next Phase Implementation - Continue with clean architecture transformation
 - 📋 **v0.3.0**: CLI interface and batch processing
 - 📋 **v0.4.0**: Additional banks (Santander)
 - 📋 **v0.5.0**: Configuration system and logging
