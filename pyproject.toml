@@ -18,6 +18,12 @@ dependencies = [
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
@@ -78,9 +84,10 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-# Configure for src/ layout to prevent module path conflicts
+# Configure for src/ layout with clean imports
+mypy_path = "src"
 explicit_package_bases = true
-packages = ["src"]
+namespace_packages = true
 
 # Exclude test files and documentation initially
 exclude = [
