@@ -290,6 +290,58 @@
 - ✅ **v0.3.15**: StatementValidator Implementation - Balance-consistency checker with comprehensive validation logic and MyPy error resolution (Prompt 19 from task requirements)
 - ✅ **v0.3.16**: FilenameGenerator Implementation - Domain service for standardized filename generation using payment method and first transaction date (Prompt 20 from task requirements)
 - ✅ **v0.3.17**: StatementProcessingService Refactoring - Complete Phase 2 stub replacement with real StatementValidator and FilenameGenerator injection, achieving full clean architecture implementation (Prompt 21 from task requirements)
+- ✅ **v0.3.18**: Command Pattern Implementation - Complete Command Pattern setup for Phase 3 → 3.1 enabling operation encapsulation, undo functionality, and batch processing with transactional rollback (Prompt 22 from task requirements)
+
+### Command Pattern Implementation (Complete - June 2025)
+
+- **Status**: ✅ COMPLETED - Command Pattern successfully implemented for Phase 3 → 3.1
+- **Achievement**: Complete Command Pattern setup enabling operation encapsulation, undo functionality, and batch processing with transactional rollback
+- **Implementation**: Complete `src/domain/commands.py` with all required Command Pattern components
+- **Key Components**:
+  - **Command ABC**: Abstract base class defining command interface with `execute()`, `undo()`, and `can_undo()` methods
+  - **CommandResult dataclass**: Rich result object with success status, message, data, execution time, and error collection
+  - **ProcessStatementCommand**: Concrete command encapsulating single statement processing with undo capability
+  - **BatchProcessCommand**: Concrete command handling multiple statements with transactional rollback on failure
+- **Key Features**:
+  - **Operation Encapsulation**: Commands are first-class objects that can be stored, queued, and manipulated
+  - **Undo/Redo Support**: Built-in support for reversing operations (e.g., deleting generated output files)
+  - **Batch Processing**: Transactional batch operations with automatic rollback on any command failure
+  - **Comprehensive Error Handling**: Graceful error handling with detailed error reporting and timing metrics
+  - **Clean Architecture Integration**: Seamless integration with existing StatementProcessingService
+- **ProcessStatementCommand Features**:
+  - Encapsulates complete statement processing workflow using dependency injection
+  - Integrates with existing StatementProcessingService for real processing logic
+  - Supports undo by removing generated output files when `can_undo()` returns True
+  - Comprehensive error handling with timing metrics and detailed error messages
+  - Validation requirement met: `ProcessStatementCommand(...).execute().success is True`
+- **BatchProcessCommand Features**:
+  - Executes multiple ProcessStatementCommand instances sequentially
+  - Automatic rollback on any command failure using reverse-order undo operations
+  - Detailed batch processing results with success rates and individual command results
+  - Transactional behavior ensuring all-or-nothing processing with proper cleanup
+  - Comprehensive error handling for both individual command failures and unexpected exceptions
+- **Unit Tests**: Complete `tests/unit/domain/test_commands.py` with 28 comprehensive tests covering:
+  - **CommandResult functionality**: Success/failure scenarios, default values, error collection
+  - **Command ABC validation**: Abstract class behavior, subclass requirements, interface compliance
+  - **ProcessStatementCommand**: Initialization, execution, error handling, undo operations, file cleanup
+  - **BatchProcessCommand**: Batch execution, rollback scenarios, error handling, undo management
+  - **Integration tests**: End-to-end command workflows and validation requirements
+- **Validation Results**: ✅ All requirements successfully met
+  - ✅ `ProcessStatementCommand(...).execute().success is True` (key validation requirement)
+  - ✅ All 28 new unit tests pass with comprehensive coverage
+  - ✅ Zero regression - all 449 tests passing (421 existing + 28 new command tests)
+  - ✅ Clean architecture integration with existing components
+  - ✅ Professional error handling and comprehensive documentation
+- **Architecture Impact**:
+  - **Command Pattern Foundation**: Enables operation encapsulation, logging, auditing, and queuing
+  - **Enterprise Readiness**: Supports transactional operations, batch processing, and undo functionality
+  - **Extensibility**: Easy to add new command types for different operations (CLI, batch processing, etc.)
+  - **Phase 3 → 3.1 Completion**: Successfully completes first advanced design pattern from PLAN.md
+- **Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Error Handling**: Comprehensive exception handling with proper error types and chaining
+  - **Clean Architecture**: Domain layer commands with infrastructure integration
+  - **Professional Testing**: 28 unit tests with mocking, integration scenarios, and edge case coverage
 
 ### Upcoming Milestones
 

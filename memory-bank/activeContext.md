@@ -867,13 +867,84 @@
 - **Architecture Achievement**: Completes Phase 2 from PLAN.md, achieving full clean architecture transformation with real domain services
 - **Next Phase**: Ready for Phase 3-4 enterprise features including CLI interface, batch processing, and advanced capabilities
 
+### Prompt 22: Command Pattern Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - Command Pattern successfully implemented for Phase 3 → 3.1
+- **Achievement**: Complete Command Pattern setup enabling operation encapsulation, undo functionality, and batch processing with transactional rollback
+- **Implementation**: Complete `src/domain/commands.py` with all required Command Pattern components
+- **Key Components**:
+  - **Command ABC**: Abstract base class defining command interface with `execute()`, `undo()`, and `can_undo()` methods
+  - **CommandResult dataclass**: Rich result object with success status, message, data, execution time, and error collection
+  - **ProcessStatementCommand**: Concrete command encapsulating single statement processing with undo capability
+  - **BatchProcessCommand**: Concrete command handling multiple statements with transactional rollback on failure
+- **Key Features**:
+  - **Operation Encapsulation**: Commands are first-class objects that can be stored, queued, and manipulated
+  - **Undo/Redo Support**: Built-in support for reversing operations (e.g., deleting generated output files)
+  - **Batch Processing**: Transactional batch operations with automatic rollback on any command failure
+  - **Comprehensive Error Handling**: Graceful error handling with detailed error reporting and timing metrics
+  - **Clean Architecture Integration**: Seamless integration with existing StatementProcessingService
+- **ProcessStatementCommand Features**:
+  - Encapsulates complete statement processing workflow using dependency injection
+  - Integrates with existing StatementProcessingService for real processing logic
+  - Supports undo by removing generated output files when `can_undo()` returns True
+  - Comprehensive error handling with timing metrics and detailed error messages
+  - Validation requirement met: `ProcessStatementCommand(...).execute().success is True`
+- **BatchProcessCommand Features**:
+  - Executes multiple ProcessStatementCommand instances sequentially
+  - Automatic rollback on any command failure using reverse-order undo operations
+  - Detailed batch processing results with success rates and individual command results
+  - Transactional behavior ensuring all-or-nothing processing with proper cleanup
+  - Comprehensive error handling for both individual command failures and unexpected exceptions
+- **Unit Tests**: Complete `tests/unit/domain/test_commands.py` with 28 comprehensive tests covering:
+  - **CommandResult functionality**: Success/failure scenarios, default values, error collection
+  - **Command ABC validation**: Abstract class behavior, subclass requirements, interface compliance
+  - **ProcessStatementCommand**: Initialization, execution, error handling, undo operations, file cleanup
+  - **BatchProcessCommand**: Batch execution, rollback scenarios, error handling, undo management
+  - **Integration tests**: End-to-end command workflows and validation requirements
+- **Validation Results**: ✅ All requirements successfully met
+  - ✅ `ProcessStatementCommand(...).execute().success is True` (key validation requirement)
+  - ✅ All 28 new unit tests pass with comprehensive coverage
+  - ✅ Zero regression - all 449 tests passing (421 existing + 28 new command tests)
+  - ✅ Clean architecture integration with existing components
+  - ✅ Professional error handling and comprehensive documentation
+- **Architecture Impact**:
+  - **Command Pattern Foundation**: Enables operation encapsulation, logging, auditing, and queuing
+  - **Enterprise Readiness**: Supports transactional operations, batch processing, and undo functionality
+  - **Extensibility**: Easy to add new command types for different operations (CLI, batch processing, etc.)
+  - **Phase 3 → 3.1 Completion**: Successfully completes first advanced design pattern from PLAN.md
+- **Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Error Handling**: Comprehensive exception handling with proper error types and chaining
+  - **Clean Architecture**: Domain layer commands with infrastructure integration
+  - **Professional Testing**: 28 unit tests with mocking, integration scenarios, and edge case coverage
+- **Usage Pattern**:
+
+  ```python
+  # Single statement processing
+  command = ProcessStatementCommand(
+      input_path=Path("statement.pdf"),
+      output_dir=Path("output"),
+      processing_service=service
+  )
+  result = command.execute()
+  if result.success and command.can_undo():
+      command.undo()  # Remove generated file
+
+  # Batch processing with rollback
+  commands = [ProcessStatementCommand(...) for file in files]
+  batch_command = BatchProcessCommand(commands)
+  result = batch_command.execute()  # Automatic rollback on failure
+  ```
+
+- **Next Phase**: Ready for Observer Pattern (Phase 3 → 3.2) and additional enterprise features
+
 ### Memory Bank Status
 
-- **Status**: ✅ UPDATED - June 2025 - Post-Prompt 21 StatementProcessingService Refactoring
-- **Last Update**: After completing Prompt 21 refactoring to inject real StatementValidator & FilenameGenerator
-- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure, comprehensive type safety, complete domain layer with validation and filename generation services, infrastructure layer with parsers and repositories, fully refactored application service with real domain dependencies
-- **Architecture Progress**: Clean architecture transformation with working end-to-end application service using real validation and filename generation, comprehensive unit test coverage, zero regression with all 421 tests passing
-- **Next Phase**: Ready for CLI interface implementation, batch processing enhancements, or additional enterprise features from PLAN.md Phase 3-4
+- **Status**: ✅ UPDATED - June 2025 - Post-Prompt 22 Command Pattern Implementation
+- **Last Update**: After completing Prompt 22 Command Pattern setup for Phase 3 → 3.1
+- **Coverage**: Complete documentation of all 10 supported statement types, modern development infrastructure, comprehensive type safety, complete domain layer with validation and filename generation services, infrastructure layer with parsers and repositories, fully refactored application service with real domain dependencies, and Command Pattern implementation for advanced operations
+- **Architecture Progress**: Clean architecture transformation with working end-to-end application service, Command Pattern for operation encapsulation and batch processing, comprehensive unit test coverage, zero regression with all 449 tests passing
+- **Next Phase**: Ready for Observer Pattern implementation (Phase 3 → 3.2), CLI interface, or additional enterprise features from PLAN.md Phase 3-4
 
 ## Recent Patterns Discovered
 
