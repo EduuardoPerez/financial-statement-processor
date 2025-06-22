@@ -4,8 +4,8 @@
 
 ### Phase 1 → 1.1: Core Domain Models Implementation (COMPLETED - June 2025)
 
-- **Status**: ✅ COMPLETED - Core domain models successfully implemented
-- **Achievement**: Foundation of clean architecture transformation with comprehensive domain layer
+- **Status**: ✅ COMPLETED - Core domain models successfully implemented with comprehensive unit tests
+- **Achievement**: Foundation of clean architecture transformation with comprehensive domain layer and complete test coverage
 - **Implementation**: Complete `src/domain/models.py` with all required classes and business logic
 - **Key Features**:
   - **Currency enum**: ARS and USD support with proper string representation
@@ -17,7 +17,14 @@
   - **Standard library only**: dataclasses, enum, datetime, decimal, typing
   - **Comprehensive validation**: Business rule enforcement with descriptive error messages
   - **Public API**: Clean exports via `__all__` for controlled interface
-- **Validation**: Task validation example works perfectly - all requirements met
+- **Unit Tests**: Complete `tests/unit/domain/test_models.py` with 41 comprehensive tests covering:
+  - **Valid Construction**: All domain objects with required and optional fields
+  - **Validation Rules**: Empty descriptions, zero amounts, payment method mismatches
+  - **Immutability**: Transaction and Balance objects are properly frozen
+  - **Business Logic**: Statement transaction management, balance calculations, filtering
+  - **Error Handling**: Descriptive error messages for all validation failures
+  - **Utility Methods**: Credit/debit detection, currency filtering, date ranges
+- **Validation**: All tests pass with `uv run --module pytest -q tests/unit/domain/test_models.py`
 - **Quality**: Comprehensive testing with immutability, validation, and business logic verification
 - **Architecture Alignment**: Perfect foundation for hexagonal architecture and SOLID principles
 
