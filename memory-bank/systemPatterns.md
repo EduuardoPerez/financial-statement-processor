@@ -1890,3 +1890,519 @@ class BatchProcessCommand(Command):
   - ✅ Clean architecture integration with existing components
   - ✅ Professional error handling and comprehensive documentation
 - **Next Phase**: Ready for Observer Pattern implementation (Phase 3 → 3.2) and additional enterprise features
+
+### 25. Observer Pattern Implementation (Phase 3 → 3.2 - June 2025)
+
+- **Challenge**: Need event-driven architecture with progress tracking and monitoring for long-running statement processing operations
+- **Solution**: Complete Observer Pattern implementation with domain events, event publisher, and infrastructure observers
+- **Implementation**: Complete `src/domain/events.py` and `src/infrastructure/observers.py` with all Observer Pattern components
+
+```python
+# src/domain/events.py
+from abc import ABC
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Callable, Optional, Any
+
+@dataclass
+class Event(ABC):
+    """Abstract base class for all domain events with automatic timestamp generation."""
+    timestamp: datetime = None
+
+    def __post_init__(self):
+        """Automatically set timestamp when event is created."""
+        if self.timestamp is None:
+            self.timestamp = datetime.now()
+
+@dataclass
+class ProcessingStartedEvent(Event):
+    """Event published when statement processing begins."""
+    file_path: Path
+    file_size: int
+
+@dataclass
+class TransactionParsedEvent(Event):
+    """Event published when a transaction is successfully parsed."""
+    transaction_count: int
+    file_path: Path
+
+@dataclass
+class ProcessingCompletedEvent(Event):
+    """Event published when statement processing completes successfully."""
+    file_path: Path
+    output_path: Path
+    transaction_count: int
+    processing_time: float
+
+@dataclass
+class ValidationFailedEvent(Event):
+    """Event published when statement validation fails."""
+    file_path: Path
+    errors: list[str]
+
+@dataclass
+class ProcessingFailedEvent(Event):
+    """Event published when statement processing fails."""
+    file_path: Path
+    error_message: str
+
+# Type alias for event handler functions
+EventHandler = Callable[[Event], None]
+
+class EventPublisher:
+    """Publisher implementing Observer pattern with subscription management and resilient event publishing."""
+
+    def __init__(self) -> None:
+        """Initialize publisher with empty subscription registry."""
+        self._subscribers: dict[type[Event], list[EventHandler]] = {}
+
+    def subscribe(self, event_type: type[Event], handler: EventHandler) -> None:
+        """Subscribe a handler to a specific event type."""
+        if event_type not in self._subscribers:
+            self._subscribers[event_type] = []
+        self._subscribers[event_type].append(handler)
+
+    def unsubscribe(self, event_type: type[Event], handler: EventHandler) -> None:
+        """Unsubscribe a handler from a specific event type."""
+        if event_type in self._subscribers:
+            try:
+                self._subscribers[event_type].remove(handler)
+            except ValueError:
+                pass  # Handler not found, ignore
+
+    def publish(self, event: Event) -> None:
+        """Publish event to all subscribed handlers with exception isolation."""
+        event_type = type(event)
+        if event_type in self._subscribers:
+            for handler in self._subscribers[event_type]:
+                try:
+                    handler(event)
+                except Exception:
+                    # Handler exceptions don't stop other handlers from executing
+                    pass
+
+    def clear_subscribers(self, event_type: Optional[type[Event]] = None) -> None:
+        """Clear subscribers for specific event type or all event types."""
+        if event_type is None:
+            self._subscribers.clear()
+        elif event_type in self._subscribers:
+            self._subscribers[event_type].clear()
+
+    def get_subscriber_count(self, event_type: type[Event]) -> int:
+        """Get number of subscribers for a specific event type."""
+        return len(self._subscribers.get(event_type, []))
+```
+
+```python
+# src/infrastructure/observers.py
+from pathlib import Path
+from typing import Any
+
+from domain.events import (
+    Event,
+    ProcessingStartedEvent,
+    TransactionParsedEvent,
+    ProcessingCompletedEvent,
+    ValidationFailedEvent,
+    ProcessingFailedEvent,
+)
+
+class ProgressTracker:
+    """Observer providing real-time progress feedback and error tracking during statement processing."""
+
+    def __init__(self) -> None:
+        """Initialize progress tracker with clean state."""
+        self._current_file: Optional[Path] = None
+        self._transaction_count = 0
+        self._error_count = 0
+        self._last_update_count = 0
+
+    def handle_processing_started(self, event: ProcessingStartedEvent) -> None:
+        """Handle processing started event with real-time progress output."""
+        self._current_file = event.file_path
+        self._transaction_count = 0
+        self._error_count = 0
+        self._last_update_count = 0
+
+        # Format file size with thousands separators for readability
+        file_size_formatted = f"{event.file_size:,}"
+
+        print(f"🚀 Processing started: {event.file_path.name} ({file_size_formatted} bytes)")
+
+    def handle_transaction_parsed(self, event: TransactionParsedEvent) -> None:
+        """Handle transaction parsed event with progress updates every 10 transactions."""
+        self._transaction_count = event.transaction_count
+
+        # Update progress every 10 transactions to avoid output spam
+        if self._transaction_count % 10 == 0:
+            print(f"📊 Parsed {self._transaction_count} transactions...")
+
+    def handle_processing_completed(self, event: ProcessingCompletedEvent) -> None:
+        """Handle processing completed event with comprehensive summary."""
+        print(f"✅ Processing completed: {event.file_path.name}")
+        print(f"   📁 Output: {event.output_path.name}")
+        print(f"   📊 Transactions: {event.transaction_count}")
+        print(f"   ⏱️  Time: {event.processing_time:.2f}s")
+
+        if self._error_count > 0:
+            print(f"   ⚠️  Errors: {self._error_count}")
+
+        # Reset state after completion
+        self._reset_state()
+
+    def handle_processing_failed(self, event: ProcessingFailedEvent) -> None:
+        """Handle processing failed event with error reporting."""
+        self._error_count += 1
+        print(f"❌ Processing failed: {event.file_path.name}")
+        print(f"   Error: {event.error_message}")
+
+        # Reset state after failure
+        self._reset_state()
+
+    def _reset_state(self) -> None:
+        """Reset tracker state for next processing operation."""
+        self._current_file = None
+        self._transaction_count = 0
+        self._error_count = 0
+        self._last_update_count = 0
+
+class ValidationReporter:
+    """Observer for detailed validation reporting and error collection."""
+
+    def __init__(self) -> None:
+        """Initialize validation reporter with clean state."""
+        self._validation_errors: list[str] = []
+        self._validation_warnings: list[str] = []
+
+    def handle_validation_failed(self, event: ValidationFailedEvent) -> None:
+        """Handle validation failed event with detailed error collection."""
+        self._validation_errors.extend(event.errors)
+
+        print(f"⚠️  Validation failed: {event.file_path.name}")
+        for error in event.errors:
+            print(f"   • {error}")
+
+    def handle_processing_completed(self, event: ProcessingCompletedEvent) -> None:
+        """Handle processing completed event with validation status reporting."""
+        if not self._validation_errors and not self._validation_warnings:
+            print(f"✅ Validation passed: {event.file_path.name}")
+        elif self._validation_warnings and not self._validation_errors:
+            print(f"⚠️  Validation completed with warnings: {event.file_path.name}")
+            for warning in self._validation_warnings:
+                print(f"   • {warning}")
+
+        # Reset state after completion
+        self._reset_state()
+
+    def get_validation_summary(self) -> dict[str, Any]:
+        """Get comprehensive validation summary."""
+        return {
+            "errors": self._validation_errors.copy(),
+            "warnings": self._validation_warnings.copy(),
+            "error_count": len(self._validation_errors),
+            "warning_count": len(self._validation_warnings),
+            "has_errors": len(self._validation_errors) > 0,
+            "has_warnings": len(self._validation_warnings) > 0,
+        }
+
+    def _reset_state(self) -> None:
+        """Reset reporter state for next validation operation."""
+        self._validation_errors.clear()
+        self._validation_warnings.clear()
+```
+
+- **Architecture Benefits**:
+  - **Event-Driven Architecture**: Decoupled communication between components during statement processing
+  - **Observer Pattern Implementation**: Publishers and observers with type-safe event handling
+  - **Progress Monitoring**: Real-time feedback during long-running statement processing operations
+  - **Error Tracking**: Comprehensive error collection and reporting across processing pipeline
+  - **Clean Architecture**: Domain events with infrastructure observers following hexagonal architecture
+  - **Type Safety**: Modern Python 3.11+ type annotations with EventHandler type alias
+- **Key Components**:
+  - **Event ABC**: Abstract base class for all domain events with automatic timestamp generation
+  - **Domain Events**: ProcessingStartedEvent, TransactionParsedEvent, ProcessingCompletedEvent, ValidationFailedEvent, ProcessingFailedEvent
+  - **EventPublisher**: Publisher implementing Observer pattern with subscription management and resilient event publishing
+  - **ProgressTracker**: Observer providing real-time progress feedback and error tracking during statement processing
+  - **ValidationReporter**: Observer for detailed validation reporting and error collection
+- **EventPublisher Features**:
+  - Type-safe subscription management with EventHandler type alias for clean method signatures
+  - Resilient event publishing with exception isolation between handlers
+  - Subscriber count tracking and management utilities
+  - Clear/unsubscribe functionality for proper resource management
+- **ProgressTracker Features**:
+  - Real-time progress output with emoji indicators for visual clarity
+  - File size formatting with thousands separators for readability
+  - Progress updates every 10 transactions to avoid output spam
+  - Comprehensive error tracking and summary reporting
+  - State management with automatic reset after processing completion/failure
+  - **Validation Requirement Met**: Publishing ProcessingStartedEvent triggers tracker output
+- **ValidationReporter Features**:
+  - Detailed validation error collection and reporting
+  - Separate tracking for validation errors and warnings
+  - Comprehensive validation summary with clear success/failure indicators
+  - Integration with processing completion events for validation status reporting
+- **Quality Standards**:
+  - **Error Handling**: Resilient event publishing with proper exception isolation
+  - **Professional Testing**: 38 unit tests with mocking, real-time output validation, and comprehensive coverage
+  - **Zero Regression**: All 487 tests passing (449 existing + 38 new event tests)
+  - **Observer Pattern Validation**: Type-safe event handling with comprehensive behavioral testing
+- **Usage Pattern**:
+
+  ```python
+  # Create event publisher and observers
+  publisher = EventPublisher()
+  tracker = ProgressTracker()
+  reporter = ValidationReporter()
+
+  # Subscribe observers to events
+  publisher.subscribe(ProcessingStartedEvent, tracker.handle_processing_started)
+  publisher.subscribe(TransactionParsedEvent, tracker.handle_transaction_parsed)
+  publisher.subscribe(ProcessingCompletedEvent, tracker.handle_processing_completed)
+  publisher.subscribe(ValidationFailedEvent, reporter.handle_validation_failed)
+  publisher.subscribe(ProcessingFailedEvent, tracker.handle_processing_failed)
+
+  # Publish events during processing
+  event = ProcessingStartedEvent(file_path=Path("statement.pdf"), file_size=1024)
+  publisher.publish(event)  # Triggers real-time progress output
+  ```
+
+- **Validation Results**: ✅ All requirements successfully met
+  - ✅ Publishing ProcessingStartedEvent triggers tracker output (key validation requirement)
+  - ✅ All 38 new unit tests pass with comprehensive coverage
+  - ✅ Zero regression - all 487 tests passing (449 existing + 38 new event tests)
+  - ✅ Observer pattern working correctly with type-safe event handling
+  - ✅ Event-driven architecture functional with real-time progress feedback
+- **Architecture Impact**:
+  - **Observer Pattern Foundation**: Enables decoupled, event-driven communication between components
+  - **Progress Monitoring**: Real-time feedback during long-running statement processing operations
+  - **Error Tracking**: Comprehensive error collection and reporting across processing pipeline
+  - **Phase 3 → 3.2 Completion**: Successfully completes second advanced design pattern from PLAN.md
+- **Next Phase**: Ready for Builder Pattern implementation (Phase 3 → 3.3), CLI interface, or additional enterprise features
+
+### 26. Builder Pattern Implementation (Phase 3 → 3.3 - June 2025)
+
+- **Challenge**: Need fluent builder pattern for Statement construction with comprehensive validation ensuring builder-produced statements equal direct constructor results
+- **Solution**: Complete StatementBuilder implementation with method chaining, data integrity, and comprehensive validation
+- **Implementation**: Complete `src/domain/builders.py` with `StatementBuilder` class following established domain patterns
+
+```python
+# src/domain/builders.py - StatementBuilder class
+class StatementBuilder:
+    """
+    Fluent builder for constructing Statement objects.
+
+    This class provides a fluent interface for building Statement objects
+    with method chaining. It ensures that the builder-produced statement
+    equals the result of direct constructor usage while providing a more
+    readable and flexible construction API.
+
+    The builder follows the established patterns in the codebase and
+    integrates seamlessly with existing domain models.
+    """
+
+    def __init__(self) -> None:
+        """
+        Initialize StatementBuilder with empty state.
+
+        Example:
+            >>> builder = StatementBuilder()
+            >>> statement = (builder
+            ...     .with_payment_method(PaymentMethod.BBVA_VISA)
+            ...     .add_transaction(transaction)
+            ...     .build())
+        """
+        self._payment_method: PaymentMethod | None = None
+        self._transactions: list[Transaction] = []
+        self._reported_balance: Balance | None = None
+
+    def with_payment_method(self, payment_method: PaymentMethod) -> "StatementBuilder":
+        """
+        Set the payment method for the statement.
+
+        Args:
+            payment_method: PaymentMethod enum value
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.with_payment_method(PaymentMethod.BBVA_VISA)
+        """
+        self._payment_method = payment_method
+        return self
+
+    def add_transaction(self, transaction: Transaction) -> "StatementBuilder":
+        """
+        Add a single transaction to the statement.
+
+        Args:
+            transaction: Transaction object to add
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.add_transaction(transaction)
+        """
+        self._transactions.append(transaction)
+        return self
+
+    def add_transactions(self, transactions: list[Transaction]) -> "StatementBuilder":
+        """
+        Add multiple transactions to the statement.
+
+        Args:
+            transactions: List of Transaction objects to add
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.add_transactions([transaction1, transaction2])
+        """
+        self._transactions.extend(transactions)
+        return self
+
+    def with_reported_balance(self, balance: Balance) -> "StatementBuilder":
+        """
+        Set the reported balance for the statement.
+
+        Args:
+            balance: Balance object with reported amounts
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> from decimal import Decimal
+            >>> balance = Balance(Decimal("1000.00"), Decimal("100.00"))
+            >>> builder.with_reported_balance(balance)
+        """
+        self._reported_balance = balance
+        return self
+
+    def build(self) -> Statement:
+        """
+        Build the final Statement object with validation.
+
+        Creates a Statement using the same constructor as direct instantiation,
+        ensuring that builder-produced statements equal direct constructor
+        results.
+
+        Returns:
+            Statement: Properly constructed and validated Statement object
+
+        Raises:
+            ValueError: If payment method is not set or other validation fails
+
+        Example:
+            >>> statement = builder.build()
+            >>> len(statement.transactions)
+            2
+        """
+        # Import here to avoid circular imports
+        from .models import Statement
+
+        if self._payment_method is None:
+            raise ValueError("Payment method is required to build Statement")
+
+        # Create statement using exact same constructor as direct usage
+        # This ensures builder-produced statement equals direct constructor result
+        statement = Statement(
+            payment_method=self._payment_method,
+            transactions=self._transactions.copy(),  # Copy to prevent mutation
+            reported_balance=self._reported_balance,
+        )
+
+        return statement
+
+    def reset(self) -> "StatementBuilder":
+        """
+        Reset builder state for reuse.
+
+        Clears all previously set values, allowing the builder to be reused
+        for constructing multiple statements.
+
+        Returns:
+            Self for method chaining
+
+        Example:
+            >>> builder.reset().with_payment_method(PaymentMethod.MACRO_VISA)
+        """
+        self._payment_method = None
+        self._transactions.clear()
+        self._reported_balance = None
+        return self
+```
+
+- **Architecture Benefits**:
+  - **Fluent Interface**: Method chaining with readable, expressive API for Statement construction
+  - **Validation Requirement**: Builder-produced statements equal direct constructor results (key requirement from Prompt 24)
+  - **Data Integrity**: Transaction list copying prevents mutation, ensuring independence between builder and built objects
+  - **Clean Architecture**: Follows established domain layer patterns and integrates seamlessly with existing models
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Builder Pattern Compliance**: Complete implementation following Gang of Four Builder Pattern principles
+- **Key Features**:
+  - **with_payment_method()**: Set payment method for the statement (required)
+  - **add_transaction()**: Add single transaction with method chaining
+  - **add_transactions()**: Add multiple transactions as list with method chaining
+  - **with_reported_balance()**: Set reported balance for the statement (optional)
+  - **build()**: Create final Statement object with validation (copies transaction list for isolation)
+  - **reset()**: Clear builder state for reuse with multiple statements
+- **Core Methods Implementation**:
+  - **Method Chaining**: All builder methods return `self` for fluent interface
+  - **Data Isolation**: Transaction list copying in `build()` prevents mutation between builder and built objects
+  - **Error Handling**: Requires payment method before building, comprehensive validation with descriptive error messages
+  - **Reusability**: Reset functionality allows builder reuse for multiple statements
+  - **Constructor Equivalence**: Uses exact same Statement constructor as direct instantiation
+- **Quality Standards**:
+  - **Error Handling**: Comprehensive validation with descriptive error messages
+  - **Code Quality**: Follows established patterns and integrates seamlessly with existing domain models
+  - **Professional Testing**: 14 unit tests with comprehensive validation coverage
+  - **Zero Regression**: All 213 domain tests pass (199 existing + 14 new), zero regression maintained
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ Builder-produced statement equals direct constructor result (key validation requirement)
+  - ✅ Fluent interface with method chaining works correctly
+  - ✅ Transaction list isolation prevents mutation between builder and built objects
+  - ✅ Payment method validation enforced before building
+  - ✅ Reset functionality enables builder reuse
+- **Unit Tests Coverage**:
+  - **Builder Equals Direct Constructor**: Multiple test scenarios confirming builder-produced statements equal direct constructor results
+  - **Fluent Interface**: Method chaining validation with all builder methods
+  - **Transaction Management**: Single transaction, multiple transactions, transaction list operations
+  - **Data Isolation**: Transaction list copying prevents mutation, ensuring independence
+  - **Error Handling**: Payment method requirement, validation integration
+  - **Reset Functionality**: Builder reuse for multiple statements
+  - **Edge Cases**: Empty statements, validation scenarios, builder state management
+- **Usage Pattern**:
+
+  ```python
+  # Fluent interface construction
+  statement = (StatementBuilder()
+      .with_payment_method(PaymentMethod.BBVA_VISA)
+      .add_transaction(transaction1)
+      .add_transactions([transaction2, transaction3])
+      .with_reported_balance(balance)
+      .build())
+
+  # Builder reuse
+  builder = StatementBuilder()
+  statement1 = builder.with_payment_method(PaymentMethod.BBVA_VISA).build()
+  statement2 = builder.reset().with_payment_method(PaymentMethod.MACRO_VISA).build()
+
+  # Validation: Builder equals direct constructor
+  builder_statement = StatementBuilder().with_payment_method(PaymentMethod.BBVA_VISA).build()
+  direct_statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+  assert builder_statement.payment_method == direct_statement.payment_method
+  assert builder_statement.transactions == direct_statement.transactions
+  assert builder_statement.reported_balance == direct_statement.reported_balance
+  ```
+
+- **Test Results**: ✅ All 14 new tests pass with comprehensive validation
+  - ✅ All 213 domain tests pass (199 existing + 14 new), zero regression maintained
+  - ✅ Builder equals direct constructor validation confirmed across all scenarios
+  - ✅ Fluent interface and method chaining working correctly
+  - ✅ Transaction isolation and data integrity verified
+- **Architecture Impact**: Completes Phase 3 → 3.3 Builder Pattern implementation from PLAN.md
+- **Next Phase**: Ready for CLI interface, additional enterprise features, or Phase 4 capabilities from PLAN.md
