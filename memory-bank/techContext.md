@@ -86,6 +86,47 @@ financial-statement-processor/
 - **Storage**: PDF and Excel files, no significant storage needs
 - **Platform**: Cross-platform (Windows, macOS, Linux)
 
+### Environment Configuration
+
+#### PYTHONPATH Setup for Clean Imports
+
+The project uses clean imports (`from domain.models import ...`) instead of relative imports. This requires proper PYTHONPATH configuration:
+
+**Development Setup**:
+
+1. Copy `.env.example` to `.env`: `cp .env.example .env`
+2. The `.env` file sets `PYTHONPATH=src` for development tools
+
+**Pytest Configuration**:
+
+- Automatically configured in `pyproject.toml` with `pythonpath = ["src"]`
+- No manual PYTHONPATH needed for running tests
+- Tests work with: `uv run pytest tests/`
+
+**Main Script Execution**:
+
+- Works automatically with pytest configuration
+- No manual PYTHONPATH needed: `uv run python parse_visa_statement.py`
+
+**Dependencies**:
+
+- `python-dotenv>=1.0.0` included in dev dependencies for environment file support
+- Install with: `uv sync`
+
+**Benefits**:
+
+- ✅ No more PYTHONPATH errors
+- ✅ Consistent across all environments
+- ✅ Works in VS Code, pytest, and scripts
+- ✅ Team-friendly - all developers get same setup
+- ✅ Standard Python practices
+
+**Security Note**:
+
+- `.env` files are excluded from git (in `.gitignore`)
+- Only `.env.example` is committed as a template
+- Developers copy `.env.example` to `.env` locally
+
 ## Technical Constraints
 
 ### Format-Specific Limitations

@@ -38,6 +38,7 @@ dev = [
     "pandas-stubs>=2.1.0",
     "types-openpyxl>=3.1.0",
     "pre-commit>=3.6.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [tool.ruff]
@@ -68,6 +69,9 @@ indent-style = "space"
 filterwarnings = [
     "ignore::UserWarning:openpyxl.styles.stylesheet",
 ]
+# Automatically load environment variables from .env
+addopts = "--import-mode=importlib"
+pythonpath = ["src"]
 
 [tool.mypy]
 python_version = "3.11"
