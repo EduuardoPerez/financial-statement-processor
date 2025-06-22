@@ -765,6 +765,127 @@ class PaymentMethodDetector:
 - **Solution**: Concrete detector classes with regex/substring logic and factory function for convenient usage
 - **Implementation**: Complete `src/infrastructure/detectors.py` with `MacroDetector`, `BBVADetector`, and `build_default_payment_detector()`
 
+### 20. TransactionBuilder Pattern (Phase 2 → 2.4)
+
+- **Challenge**: Need clean construction of Transaction objects from parsed PDF line components
+- **Solution**: Builder class with dependency injection following Single Responsibility Principle
+- **Implementation**: Complete `src/domain/builders.py` with `TransactionBuilder` class
+
+```python
+# src/domain/builders.py
+class TransactionBuilder:
+    """Builder for constructing Transaction objects from parsed components."""
+
+    def __init__(
+        self, date_converter: DateConverter, amount_parser: AmountParser
+    ) -> None:
+        """Initialize TransactionBuilder with injected dependencies."""
+        self._date_converter = date_converter
+        self._amount_parser = amount_parser
+
+    def build_from_pdf_line(
+        self,
+        date_str: str,
+        description: str,
+        amount_str: str,
+        currency: Currency,
+        payment_method: PaymentMethod,
+    ) -> Transaction:
+        """Build Transaction object from PDF line components."""
+        # Import here to avoid circular imports
+        from .models import Transaction
+
+        if not date_str or not date_str.strip():
+            raise ValueError("Date string cannot be empty")
+
+        if not description or not description.strip():
+            raise ValueError("Description cannot be empty")
+
+        if not amount_str or not amount_str.strip():
+            raise ValueError("Amount string cannot be empty")
+
+        try:
+            # Use injected DateConverter to parse date
+            date_clean = date_str.strip()
+            parsed_date = self._date_converter.convert_dd_mm_yy(date_clean)
+
+            # Use injected AmountParser to parse amount
+            parsed_amount = self._amount_parser.parse_european_format(
+                amount_str.strip()
+            )
+
+            # Clean description
+            clean_description = description.strip()
+
+            # Construct Transaction using domain model
+            transaction = Transaction(
+                date=parsed_date,
+                description=clean_description,
+                amount=parsed_amount,
+                currency=currency,
+                payment_method=payment_method,
+            )
+
+            return transaction
+
+        except ValueError as e:
+            # Re-raise with context about which component failed
+            msg = f"Failed to build transaction from PDF line components: {e}"
+            raise ValueError(msg) from e
+        except Exception as e:
+            # Handle unexpected errors
+            msg = f"Unexpected error building transaction: {str(e)}"
+            raise ValueError(msg) from e
+```
+
+- **Architecture Benefits**:
+  - **Single Responsibility Principle**: Focuses solely on Transaction object construction
+  - **Dependency Injection**: Uses injected DateConverter and AmountParser for clean architecture compliance
+  - **Clean Architecture**: Domain layer builder using domain utilities without external dependencies
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Error Handling**: Comprehensive ValueError handling with descriptive error messages and proper exception chaining
+- **Key Features**:
+  - **build_from_pdf_line()**: Core method for building Transaction objects from parsed PDF line components
+  - **Component Validation**: Validates all input components (date_str, description, amount_str) before processing
+  - **Utility Integration**: Uses injected DateConverter for date parsing and AmountParser for European number format parsing
+  - **Transaction Construction**: Creates properly validated Transaction domain objects with all required fields
+  - **Error Context**: Provides descriptive error messages with context about which component failed
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ Injects `DateConverter` & `AmountParser` dependencies successfully
+  - ✅ Provides `build_from_pdf_line` method with proper signature
+  - ✅ Sample build returns valid `Transaction` object with correct properties
+  - ✅ Proper date parsing: "05.06.25" → 2025-06-05
+  - ✅ Proper amount parsing: "1.234,56" → Decimal('1234.56')
+  - ✅ Error handling for empty/invalid inputs
+- **Testing Validation**: ✅ Comprehensive functionality testing passed
+  - ✅ Basic transaction building with ARS currency and BBVA VISA payment method
+  - ✅ USD transaction building with Macro VISA payment method
+  - ✅ Error handling for empty date, description, and amount strings
+  - ✅ All transaction properties validated (date, amount, currency, payment method, description)
+- **Usage Pattern**:
+
+  ```python
+  # Create dependencies
+  date_converter = DateConverter()
+  amount_parser = AmountParser()
+
+  # Create TransactionBuilder with injected dependencies
+  builder = TransactionBuilder(date_converter, amount_parser)
+
+  # Build transaction from PDF line components
+  transaction = builder.build_from_pdf_line(
+      date_str="05.06.25",
+      description="COMPRA EN COMERCIO",
+      amount_str="1.234,56",
+      currency=Currency.ARS,
+      payment_method=PaymentMethod.BBVA_VISA
+  )
+  # Returns properly constructed Transaction object
+  ```
+
+- **Architecture Impact**: Completes Phase 2 → 2.4 builder implementation, enabling clean Transaction object construction from PDF parsing workflows
+- **Integration Ready**: Builder ready for integration with PDF parsing infrastructure components
+
 ```python
 # src/infrastructure/detectors.py
 class MacroDetector(BankDetector):

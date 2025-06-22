@@ -485,6 +485,52 @@
 - **Architecture Impact**: Enables clean extraction of utility logic from monolithic parsers, supporting clean architecture transformation
 - **Integration Ready**: Utilities ready for integration with infrastructure parsers (PDFStatementParser, XLSStatementParser)
 
+### Phase 2 → 2.4: TransactionBuilder Implementation (COMPLETED - June 2025)
+
+- **Status**: ✅ COMPLETED - TransactionBuilder class successfully implemented with dependency injection
+- **Achievement**: Single Responsibility Principle builder for constructing Transaction objects from PDF line components
+- **Implementation**: Complete `src/domain/builders.py` with `TransactionBuilder` class
+- **Key Features**:
+  - **Dependency Injection**: Constructor accepts `DateConverter` and `AmountParser` instances for clean architecture compliance
+  - **build_from_pdf_line()**: Core method for building Transaction objects from parsed PDF line components
+  - **Component Validation**: Validates all input components (date_str, description, amount_str) before processing
+  - **Error Handling**: Comprehensive ValueError handling with descriptive error messages and proper exception chaining
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Clean Architecture**: Domain layer builder following Single Responsibility Principle
+- **Method Signature**:
+
+  ```python
+  def build_from_pdf_line(
+      self,
+      date_str: str,           # DD.MM.YY format (e.g., "05.06.25")
+      description: str,        # Transaction description text
+      amount_str: str,         # European format (e.g., "1.234,56")
+      currency: Currency,      # Currency enum value (ARS or USD)
+      payment_method: PaymentMethod,  # PaymentMethod enum value
+  ) -> Transaction:
+  ```
+
+- **Validation Requirements**: ✅ All requirements met
+  - ✅ Injects `DateConverter` & `AmountParser` dependencies successfully
+  - ✅ Provides `build_from_pdf_line` method with proper signature
+  - ✅ Sample build returns valid `Transaction` object with correct properties
+  - ✅ Proper date parsing: "05.06.25" → 2025-06-05
+  - ✅ Proper amount parsing: "1.234,56" → Decimal('1234.56')
+  - ✅ Error handling for empty/invalid inputs
+- **Testing Validation**: ✅ Comprehensive functionality testing passed
+  - ✅ Basic transaction building with ARS currency and BBVA VISA payment method
+  - ✅ USD transaction building with Macro VISA payment method
+  - ✅ Error handling for empty date, description, and amount strings
+  - ✅ All transaction properties validated (date, amount, currency, payment method, description)
+- **Code Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
+  - **Clean Architecture**: Domain layer builder using injected domain utilities
+  - **Error Handling**: Comprehensive ValueError handling with descriptive messages
+  - **Code Quality**: Flake8 compliant with proper line length management
+  - **Documentation**: Comprehensive docstrings with Args, Returns, Raises, and Examples
+- **Architecture Impact**: Completes Phase 2 → 2.4 builder implementation, enabling clean Transaction object construction from PDF parsing workflows
+- **Integration Ready**: Builder ready for integration with PDF parsing infrastructure components
+
 ### Memory Bank Status
 
 - **Status**: ✅ UPDATED - June 2025 - Post-Utility Parsers Implementation (Phase 2 → 2.3 Complete)
