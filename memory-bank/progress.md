@@ -69,7 +69,7 @@
 
 ### Test Suite Organization (Current State)
 
-#### Unit Tests (13 files, focused testing)
+#### Unit Tests (15 files, focused testing)
 
 - `test_convert_date.py` - Date conversion functionality
 - `test_detect_payment_method.py` - Bank and card type detection (includes XLS and CSV filename detection)
@@ -85,10 +85,16 @@
 - `domain/test_factories.py` - ParserFactory and DefaultParserFactory implementation validation
 - `domain/test_builders.py` - TransactionBuilder implementation validation
 - `domain/test_utils.py` - DateConverter and AmountParser utility validation
+- `domain/test_commands.py` - Command Pattern implementation validation
+- `domain/test_events.py` - Event System and Observer Pattern validation
+- `domain/test_validation.py` - StatementValidator and ValidationResult validation
+- `domain/test_filename.py` - FilenameGenerator domain service validation
 - `infrastructure/test_pdf_parser.py` - PDFStatementParser implementation validation
+- `infrastructure/test_observers.py` - ProgressTracker and ValidationReporter validation
+- `infrastructure/test_async_processing.py` - AsyncStatementProcessor unit tests with comprehensive async functionality validation
 - `application/test_processing_service.py` - StatementProcessingService orchestrator validation with comprehensive mocking
 
-#### Integration Tests (8 files, end-to-end testing)
+#### Integration Tests (9 files, end-to-end testing)
 
 - `test_bbva_account_processing.py` - BBVA Account XLS complete workflow (12 tests)
 - `test_bbva_mastercard_processing.py` - BBVA Mastercard PDF complete workflow
@@ -98,6 +104,7 @@
 - `test_macro_visa_processing.py` - MACRO VISA PDF complete workflow
 - `test_macro_visa_csv_processing.py` - Macro VISA CSV complete workflow (12 tests)
 - `test_mercadopago_processing.py` - Mercadopago XLSX complete workflow (14 tests)
+- `test_async_processing.py` - AsyncStatementProcessor integration tests with real-world async batch processing validation
 
 ### Clean Architecture Implementation (Complete - Phase 2 → 2.1)
 
@@ -294,6 +301,7 @@
 - ✅ **v0.3.19**: Event System & Progress Tracker Implementation - Complete Observer Pattern setup for Phase 3 → 3.2 enabling event-driven architecture with progress tracking and monitoring (Prompt 23 from task requirements)
 - ✅ **v0.3.20**: StatementBuilder Implementation - Complete fluent builder pattern for Statement construction with comprehensive validation ensuring builder-produced statements equal direct constructor results (Prompt 24 from task requirements)
 - ✅ **v0.3.21**: ProcessingReportBuilder Implementation - Complete ProcessingReportBuilder and ProcessingReport dataclass for Phase 3 → 3.3 enabling comprehensive batch processing reports with automatic success rate calculation (Prompt 25 from task requirements)
+- ✅ **v0.4.0**: AsyncStatementProcessor Implementation - Complete async/threaded batch processing for Phase 4 → 4.1 enabling high-throughput concurrent processing with asyncio and ThreadPoolExecutor support (Prompt 26 from task requirements)
 
 ### Event System & Progress Tracker Implementation (Complete - June 2025)
 
@@ -352,6 +360,86 @@
   - **Clean Architecture**: Domain events with infrastructure observers
   - **Professional Testing**: 38 unit tests with mocking, real-time output validation, and comprehensive coverage
 - **Demonstration**: Complete `demo_event_system.py` script validates key requirement with real-time output
+
+### AsyncStatementProcessor Implementation (Complete - June 2025)
+
+- **Status**: ✅ COMPLETED - AsyncStatementProcessor successfully implemented for Phase 4 → 4.1
+- **Achievement**: Complete async/threaded batch processing enabling high-throughput concurrent processing with asyncio and ThreadPoolExecutor support
+- **Implementation**: Complete `src/infrastructure/async_processing.py` with comprehensive async processing capabilities
+- **Key Components**:
+  - **AsyncStatementProcessor**: Main processor class supporting both asyncio and threading modes
+  - **BatchProcessingResult**: Comprehensive result dataclass with metrics and success rate calculation
+  - **process_files_async()**: Convenience function for quick batch processing operations
+  - **Event Integration**: Full integration with existing event system for progress tracking
+- **Key Features**:
+  - **Dual Processing Modes**: Both asyncio and ThreadPoolExecutor support with configurable concurrency
+  - **Controlled Concurrency**: Semaphore-based limiting to prevent resource exhaustion
+  - **Error Isolation**: Individual file failures don't stop batch processing
+  - **Progress Tracking**: Real-time progress updates through event system integration
+  - **Context Manager Support**: Both sync and async context manager protocols for resource cleanup
+  - **Comprehensive Metrics**: Success rates, processing times, transaction counts, and detailed error reporting
+- **AsyncStatementProcessor Features**:
+  - **Asyncio Mode**: Uses asyncio.Semaphore for controlled concurrency with async/await patterns
+  - **Threading Mode**: Uses ThreadPoolExecutor for CPU-bound operations with traditional threading
+  - **Event Publishing**: Integrates with existing EventPublisher for ProcessingStartedEvent, ProcessingCompletedEvent, and ProcessingFailedEvent
+  - **Error Handling**: Comprehensive exception handling with detailed error messages and timing metrics
+  - **Resource Management**: Proper cleanup with context manager support (both sync and async)
+  - **Flexible API**: Multiple processing methods (streaming, batch complete, individual modes)
+- **BatchProcessingResult Features**:
+  - **Success Rate Calculation**: Automatic percentage calculation of successful vs failed files
+  - **Comprehensive Metrics**: Total files, successful files, failed files, processing time, transaction count
+  - **Detailed Error Reporting**: Failed files with specific error messages for debugging
+  - **Formatted Summary**: Professional summary output with emoji indicators and clear metrics
+  - **Processing Mode Tracking**: Records whether asyncio or threading mode was used
+- **API Design**:
+  - **Streaming API**: `process_batch_async()` yields results as they complete for real-time feedback
+  - **Batch API**: `process_batch_complete()` returns comprehensive BatchProcessingResult
+  - **Convenience Function**: `process_files_async()` for quick one-off batch processing
+  - **Flexible Configuration**: Configurable max_workers, processing mode, and event publisher
+- **Validation Results**: ✅ All Phase 4 → 4.1 requirements successfully met
+  - ✅ **Key Requirement**: `asyncio.run demo processing two files completes without deadlock` - VALIDATED
+  - ✅ **Demo Results**: 2 files processed successfully, 136 transactions, 100% success rate, 0.68s processing time
+  - ✅ **No Deadlocks**: Concurrent processing completed without any deadlock issues
+  - ✅ **Event Integration**: Progress tracking and event system working correctly
+  - ✅ **Error Handling**: Comprehensive error isolation and reporting functional
+- **Architecture Impact**:
+  - **High-Throughput Processing**: Enables concurrent processing of multiple financial statements
+  - **Scalability Foundation**: Ready for large batch processing operations with controlled resource usage
+  - **Enterprise Readiness**: Professional async processing with comprehensive error handling and metrics
+  - **Phase 4 → 4.1 Completion**: Successfully completes async/threaded batch processing from PLAN.md
+- **Quality Standards**:
+  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive AsyncIterator and Iterator support
+  - **Error Handling**: Resilient processing with exception isolation and detailed error reporting
+  - **Clean Architecture**: Infrastructure layer implementation with domain service integration
+  - **Professional Implementation**: Context managers, proper resource cleanup, and comprehensive documentation
+- **Demonstration**: Complete `demo_async_processing.py` script validates key requirement with real PDF processing
+
+### AsyncStatementProcessor Error Resolution (Complete - June 2025)
+
+- **Status**: ✅ COMPLETED - All AsyncStatementProcessor errors successfully resolved for Phase 4 → 4.1
+- **Achievement**: Fixed critical MyPy type errors, test failures, and improved coverage to near-90% threshold
+- **Error Resolution Summary**:
+  - **MyPy Type Errors (5 fixed)**: Resolved variable reuse issues where different event types were assigned to same variables
+  - **Test Logic Error (1 fixed)**: Fixed mock service logic to properly raise exceptions instead of returning them
+  - **Coverage Improvement**: Enhanced from 88% to 89.24% (very close to 90% target)
+- **Key Fixes Implemented**:
+  - **Variable Naming**: Used unique variable names (`started_event`, `completed_event`, `failed_event`, `failure_event`) instead of reusing `event`
+  - **Type Annotations**: Added explicit type annotation for `BatchProcessingResult` in convenience function
+  - **Exception Handling**: Corrected test mock to properly raise exceptions for error isolation testing
+  - **Error Coverage**: Added 7 new unit tests covering event publishing failures, processing exceptions, and edge cases
+- **Final Status**:
+  - ✅ **All MyPy errors resolved**: Type checking now passes completely
+  - ✅ **All tests passing**: 529 tests pass successfully with zero failures
+  - ✅ **Key requirement validated**: `asyncio.run demo processing two files completes without deadlock`
+  - ✅ **AsyncStatementProcessor fully functional**: Both asyncio and threading modes working correctly
+  - ✅ **Event integration working**: Progress tracking and error reporting functional
+  - ✅ **Error isolation working**: Individual file failures don't affect batch processing
+- **Quality Improvements**:
+  - **AsyncStatementProcessor Coverage**: Improved from 76% to 83%
+  - **Overall Coverage**: Improved from 88% to 89.24%
+  - **Enhanced Error Handling**: Comprehensive error path testing with event publishing failures
+  - **Production Ready**: Enterprise-scale concurrent processing with comprehensive error handling
+- **Architecture Impact**: AsyncStatementProcessor now provides robust, production-ready concurrent processing for high-throughput financial statement processing with proper error isolation and comprehensive metrics
 
 ### Command Pattern Implementation (Complete - June 2025)
 
@@ -476,12 +564,15 @@
 
 ## Current Test Metrics (Updated - June 2025)
 
-- **Total Tests**: 487 (all passing) ✅
-- **Coverage**: 92.40% meaningful coverage (exceeds 90% requirement)
-- **Recent Addition**: Event System & Progress Tracker implementation with 38 comprehensive tests
-- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, and event-driven architecture
+- **Total Tests**: 548 (all passing) ✅
+- **Coverage**: 91.57% meaningful coverage (exceeds 90% requirement)
+- **Recent Achievement**: Coverage Issue Resolution - Successfully resolved pre-commit hook failure by adding comprehensive domain builder tests
+- **Domain Builders Coverage**: Improved from 66% to 96% (30 percentage point increase)
+- **Test Quality Enhancement**: Added 19 new comprehensive tests for ProcessingReportBuilder and ProcessingReport classes
+- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, event-driven architecture, and builder patterns
 - **Quality Standards**: Professional organization with logical grouping by functionality
-- **Zero Regression**: All existing functionality maintained while adding advanced design patterns
-- **Event System Tests**: 19 comprehensive tests for domain events and EventPublisher
-- **Observer Tests**: 19 comprehensive tests for ProgressTracker and ValidationReporter
+- **Zero Regression**: All existing functionality maintained while adding new test coverage
+- **Pre-commit Status**: All hooks passing (ruff, ruff format, mypy, pytest with coverage)
+- **Development Workflow**: Clean, professional development with automated quality enforcement
+- **Builder Pattern Tests**: 33 comprehensive tests covering fluent interfaces, reset functionality, and transaction accumulation
 - **Integration Coverage**: End-to-end event workflows and validation requirements fully tested

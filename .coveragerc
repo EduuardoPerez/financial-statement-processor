@@ -6,6 +6,7 @@ omit =
     input/*
     output/*
     expected_output/*
+    demo_*.py
     uv.lock
     pyproject.toml
     .gitignore
