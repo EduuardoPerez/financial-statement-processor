@@ -128,8 +128,8 @@ class TestAsyncProcessingIntegration:
 
         # Test files that would typically cause issues if deadlocks occurred
         test_files = [
-            Path("input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
-            Path("input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
+            Path("tests/test_data/input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
+            Path("tests/test_data/input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
         ]
 
         # Process files using asyncio - should complete without deadlock
@@ -152,8 +152,10 @@ class TestAsyncProcessingIntegration:
         )
 
         test_files = [
-            Path("input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"),
-            Path("input/mercadopago.xlsx"),
+            Path(
+                "tests/test_data/input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"
+            ),
+            Path("tests/test_data/input/mercadopago.xlsx"),
         ]
 
         # Process files using threading
@@ -176,9 +178,9 @@ class TestAsyncProcessingIntegration:
         )
 
         test_files = [
-            Path("input/BBVA-Visa-Autorizaciones.csv"),
-            Path("input/BBVA-Visa-Movimientos.csv"),
-            Path("input/MACRO-Visa-Autorizaciones.csv"),
+            Path("tests/test_data/input/BBVA-Visa-Autorizaciones.csv"),
+            Path("tests/test_data/input/BBVA-Visa-Movimientos.csv"),
+            Path("tests/test_data/input/MACRO-Visa-Autorizaciones.csv"),
         ]
 
         # Test complete batch processing
@@ -204,8 +206,8 @@ class TestAsyncProcessingIntegration:
         )
 
         test_files = [
-            Path("input/MACRO-movimientos-de-cuenta.xls"),
-            Path("input/BBVA-Mastercard-2025-04.pdf"),
+            Path("tests/test_data/input/MACRO-movimientos-de-cuenta.xls"),
+            Path("tests/test_data/input/BBVA-Mastercard-2025-04.pdf"),
         ]
 
         batch_result = await processor.process_batch_complete(
@@ -230,7 +232,9 @@ class TestAsyncProcessingIntegration:
             event_publisher=event_system["event_publisher"],
         )
 
-        test_files = [Path("input/BBVA-VISA-resumen_cuenta_visa_May_2025.pdf")]
+        test_files = [
+            Path("tests/test_data/input/BBVA-VISA-resumen_cuenta_visa_May_2025.pdf")
+        ]
 
         # Process with event tracking
         results = []
@@ -246,8 +250,8 @@ class TestAsyncProcessingIntegration:
     ):
         """Test convenience function in asyncio mode."""
         test_files = [
-            Path("input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
-            Path("input/MACRO-VISA-ult-Movimientos.csv"),
+            Path("tests/test_data/input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
+            Path("tests/test_data/input/MACRO-VISA-ult-Movimientos.csv"),
         ]
 
         result = await process_files_async(
@@ -267,7 +271,7 @@ class TestAsyncProcessingIntegration:
         self, mock_dependencies, temp_output_dir
     ):
         """Test convenience function in threading mode."""
-        test_files = [Path("input/mercadopago.xlsx")]
+        test_files = [Path("tests/test_data/input/mercadopago.xlsx")]
 
         result = await process_files_async(
             file_paths=test_files,
@@ -294,12 +298,14 @@ class TestAsyncProcessingIntegration:
 
         # Create multiple test files to stress test concurrency
         test_files = [
-            Path("input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
-            Path("input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
-            Path("input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"),
-            Path("input/mercadopago.xlsx"),
-            Path("input/BBVA-Visa-Autorizaciones.csv"),
-            Path("input/MACRO-Visa-Autorizaciones.csv"),
+            Path("tests/test_data/input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
+            Path("tests/test_data/input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
+            Path(
+                "tests/test_data/input/BBVA-Account-Detalle_mov_cuenta_07_06_2025.xls"
+            ),
+            Path("tests/test_data/input/mercadopago.xlsx"),
+            Path("tests/test_data/input/BBVA-Visa-Autorizaciones.csv"),
+            Path("tests/test_data/input/MACRO-Visa-Autorizaciones.csv"),
         ]
 
         # Process all files concurrently
@@ -332,7 +338,7 @@ class TestAsyncProcessingIntegration:
             max_workers=1,
             use_asyncio=True,
         ) as processor:
-            test_files = [Path("input/BBVA-Visa-Autorizaciones.csv")]
+            test_files = [Path("tests/test_data/input/BBVA-Visa-Autorizaciones.csv")]
 
             results = []
             async for result in processor.process_batch_async(
