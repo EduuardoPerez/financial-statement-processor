@@ -101,11 +101,19 @@ def event_system():
     }
 
 
+@pytest.fixture
+def temp_output_dir(tmp_path):
+    """Create a temporary directory for test outputs."""
+    return tmp_path / "test_output"
+
+
 class TestAsyncProcessingIntegration:
     """Integration tests for AsyncStatementProcessor."""
 
     @pytest.mark.asyncio
-    async def test_asyncio_batch_processing_no_deadlock(self, mock_dependencies):
+    async def test_asyncio_batch_processing_no_deadlock(
+        self, mock_dependencies, temp_output_dir
+    ):
         """
         Test asyncio batch processing without deadlock.
 
@@ -124,11 +132,9 @@ class TestAsyncProcessingIntegration:
             Path("input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
         ]
 
-        output_dir = Path("output")
-
         # Process files using asyncio - should complete without deadlock
         results = []
-        async for result in processor.process_batch_async(test_files, output_dir):
+        async for result in processor.process_batch_async(test_files, temp_output_dir):
             results.append(result)
 
         # Validate successful completion
@@ -137,7 +143,7 @@ class TestAsyncProcessingIntegration:
         assert all(isinstance(result.success, bool) for result in results)
 
     @pytest.mark.asyncio
-    async def test_threading_batch_processing(self, mock_dependencies):
+    async def test_threading_batch_processing(self, mock_dependencies, temp_output_dir):
         """Test threading batch processing."""
         processor = AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -150,10 +156,8 @@ class TestAsyncProcessingIntegration:
             Path("input/mercadopago.xlsx"),
         ]
 
-        output_dir = Path("output")
-
         # Process files using threading
-        results = list(processor.process_batch_threaded(test_files, output_dir))
+        results = list(processor.process_batch_threaded(test_files, temp_output_dir))
 
         assert len(results) == 2
         assert all(isinstance(result.success, bool) for result in results)
@@ -161,7 +165,9 @@ class TestAsyncProcessingIntegration:
         processor.close()
 
     @pytest.mark.asyncio
-    async def test_complete_batch_processing_asyncio(self, mock_dependencies):
+    async def test_complete_batch_processing_asyncio(
+        self, mock_dependencies, temp_output_dir
+    ):
         """Test complete batch processing in asyncio mode."""
         processor = AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -175,10 +181,10 @@ class TestAsyncProcessingIntegration:
             Path("input/MACRO-Visa-Autorizaciones.csv"),
         ]
 
-        output_dir = Path("output")
-
         # Test complete batch processing
-        batch_result = await processor.process_batch_complete(test_files, output_dir)
+        batch_result = await processor.process_batch_complete(
+            test_files, temp_output_dir
+        )
 
         assert isinstance(batch_result, BatchProcessingResult)
         assert batch_result.processing_mode == "asyncio"
@@ -187,7 +193,9 @@ class TestAsyncProcessingIntegration:
         assert batch_result.total_processing_time >= 0.0
 
     @pytest.mark.asyncio
-    async def test_complete_batch_processing_threading(self, mock_dependencies):
+    async def test_complete_batch_processing_threading(
+        self, mock_dependencies, temp_output_dir
+    ):
         """Test complete batch processing in threading mode."""
         processor = AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -200,9 +208,9 @@ class TestAsyncProcessingIntegration:
             Path("input/BBVA-Mastercard-2025-04.pdf"),
         ]
 
-        output_dir = Path("output")
-
-        batch_result = await processor.process_batch_complete(test_files, output_dir)
+        batch_result = await processor.process_batch_complete(
+            test_files, temp_output_dir
+        )
 
         assert isinstance(batch_result, BatchProcessingResult)
         assert batch_result.processing_mode == "threading"
@@ -211,7 +219,9 @@ class TestAsyncProcessingIntegration:
         processor.close()
 
     @pytest.mark.asyncio
-    async def test_event_integration(self, mock_dependencies, event_system):
+    async def test_event_integration(
+        self, mock_dependencies, event_system, temp_output_dir
+    ):
         """Test integration with event system."""
         processor = AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -221,29 +231,28 @@ class TestAsyncProcessingIntegration:
         )
 
         test_files = [Path("input/BBVA-VISA-resumen_cuenta_visa_May_2025.pdf")]
-        output_dir = Path("output")
 
         # Process with event tracking
         results = []
-        async for result in processor.process_batch_async(test_files, output_dir):
+        async for result in processor.process_batch_async(test_files, temp_output_dir):
             results.append(result)
 
         assert len(results) == 1
         # Events should have been published (tracked by progress tracker)
 
     @pytest.mark.asyncio
-    async def test_convenience_function_asyncio(self, mock_dependencies):
+    async def test_convenience_function_asyncio(
+        self, mock_dependencies, temp_output_dir
+    ):
         """Test convenience function in asyncio mode."""
         test_files = [
             Path("input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
             Path("input/MACRO-VISA-ult-Movimientos.csv"),
         ]
 
-        output_dir = Path("output")
-
         result = await process_files_async(
             file_paths=test_files,
-            output_dir=output_dir,
+            output_dir=temp_output_dir,
             processing_service=mock_dependencies["processing_service"],
             max_workers=2,
             use_asyncio=True,
@@ -254,14 +263,15 @@ class TestAsyncProcessingIntegration:
         assert result.total_files == 2
 
     @pytest.mark.asyncio
-    async def test_convenience_function_threading(self, mock_dependencies):
+    async def test_convenience_function_threading(
+        self, mock_dependencies, temp_output_dir
+    ):
         """Test convenience function in threading mode."""
         test_files = [Path("input/mercadopago.xlsx")]
-        output_dir = Path("output")
 
         result = await process_files_async(
             file_paths=test_files,
-            output_dir=output_dir,
+            output_dir=temp_output_dir,
             processing_service=mock_dependencies["processing_service"],
             max_workers=1,
             use_asyncio=False,
@@ -272,7 +282,9 @@ class TestAsyncProcessingIntegration:
         assert result.total_files == 1
 
     @pytest.mark.asyncio
-    async def test_concurrent_processing_stress(self, mock_dependencies):
+    async def test_concurrent_processing_stress(
+        self, mock_dependencies, temp_output_dir
+    ):
         """Test concurrent processing with multiple files to stress test for deadlocks."""
         processor = AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -290,10 +302,10 @@ class TestAsyncProcessingIntegration:
             Path("input/MACRO-Visa-Autorizaciones.csv"),
         ]
 
-        output_dir = Path("output")
-
         # Process all files concurrently
-        batch_result = await processor.process_batch_complete(test_files, output_dir)
+        batch_result = await processor.process_batch_complete(
+            test_files, temp_output_dir
+        )
 
         assert batch_result.total_files == 6
         assert batch_result.processing_mode == "asyncio"
@@ -313,7 +325,7 @@ class TestAsyncProcessingIntegration:
         # Executor should be cleaned up
 
     @pytest.mark.asyncio
-    async def test_async_context_manager(self, mock_dependencies):
+    async def test_async_context_manager(self, mock_dependencies, temp_output_dir):
         """Test async context manager functionality."""
         async with AsyncStatementProcessor(
             processing_service=mock_dependencies["processing_service"],
@@ -321,16 +333,17 @@ class TestAsyncProcessingIntegration:
             use_asyncio=True,
         ) as processor:
             test_files = [Path("input/BBVA-Visa-Autorizaciones.csv")]
-            output_dir = Path("output")
 
             results = []
-            async for result in processor.process_batch_async(test_files, output_dir):
+            async for result in processor.process_batch_async(
+                test_files, temp_output_dir
+            ):
                 results.append(result)
 
             assert len(results) == 1
 
     @pytest.mark.asyncio
-    async def test_error_isolation(self, mock_dependencies):
+    async def test_error_isolation(self, mock_dependencies, temp_output_dir):
         """Test that errors in one file don't affect processing of others."""
         # Create a processing service that fails on specific files
         failing_service = Mock()
@@ -358,10 +371,8 @@ class TestAsyncProcessingIntegration:
             Path("input/success2.csv"),
         ]
 
-        output_dir = Path("output")
-
         results = []
-        async for result in processor.process_batch_async(test_files, output_dir):
+        async for result in processor.process_batch_async(test_files, temp_output_dir):
             results.append(result)
 
         assert len(results) == 3
