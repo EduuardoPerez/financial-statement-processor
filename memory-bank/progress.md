@@ -302,6 +302,7 @@
 - ✅ **v0.3.20**: StatementBuilder Implementation - Complete fluent builder pattern for Statement construction with comprehensive validation ensuring builder-produced statements equal direct constructor results (Prompt 24 from task requirements)
 - ✅ **v0.3.21**: ProcessingReportBuilder Implementation - Complete ProcessingReportBuilder and ProcessingReport dataclass for Phase 3 → 3.3 enabling comprehensive batch processing reports with automatic success rate calculation (Prompt 25 from task requirements)
 - ✅ **v0.4.0**: AsyncStatementProcessor Implementation - Complete async/threaded batch processing for Phase 4 → 4.1 enabling high-throughput concurrent processing with asyncio and ThreadPoolExecutor support (Prompt 26 from task requirements)
+- ✅ **v0.4.1**: Test Path Isolation Fix - Fixed async processing integration tests to use proper test data paths instead of production files, ensuring reliable test execution and professional testing practices
 
 ### Event System & Progress Tracker Implementation (Complete - June 2025)
 

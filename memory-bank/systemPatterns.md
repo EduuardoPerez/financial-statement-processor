@@ -2809,7 +2809,68 @@ class ProcessingReportBuilder:
 
 ## Async Processing Patterns
 
-### 29. AsyncStatementProcessor Error Resolution Pattern (Phase 4 → 4.1 - June 2025)
+### 29. Test Path Isolation Pattern (June 2025)
+
+- **Challenge**: Integration tests using hardcoded production file paths instead of isolated test data, causing file system side effects
+- **Solution**: Systematic update of all test file paths to use dedicated test data directories and temporary output fixtures
+- **Implementation**: Updated async processing integration tests to follow established isolation patterns
+
+#### Test Isolation Strategy
+
+**Problem Identification**
+
+- Async processing tests were using `Path("input/...")` instead of `tests/test_data/input/...`
+- Tests were modifying production files instead of using isolated test data
+- Inconsistent with other integration tests that properly used test data isolation
+
+**Solution Implementation**
+
+```python
+# Before: Hardcoded production paths
+test_files = [
+    Path("input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
+    Path("input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
+]
+
+# After: Proper test data isolation
+test_files = [
+    Path("tests/test_data/input/BBVA-Visa-resumen_cuenta_visa_Apr_2025.pdf"),
+    Path("tests/test_data/input/MACRO-VISA-resumen_cuenta_visa_Dec_2022.pdf"),
+]
+
+# Use temp_output_dir fixture instead of hardcoded output paths
+async def test_asyncio_batch_processing_no_deadlock(
+    self, mock_dependencies, temp_output_dir
+):
+    # Process files using temporary output directory
+    results = []
+    async for result in processor.process_batch_async(test_files, temp_output_dir):
+        results.append(result)
+```
+
+**Test Isolation Benefits**
+
+- **Zero File System Side Effects**: Tests don't modify production files during execution
+- **Reliable CI/CD**: Tests run consistently across different environments
+- **Professional Testing**: Follows established patterns used by other integration tests
+- **Parallel Test Execution**: Tests can run concurrently without interference
+- **Clean Development**: No unexpected file modifications during development
+
+**Pattern Application**
+
+- Updated 15+ file path references across multiple test methods
+- Replaced hardcoded `Path("output")` with `temp_output_dir` fixture
+- Maintained all test functionality while ensuring proper isolation
+- Followed same patterns as existing integration tests
+
+**Quality Impact**
+
+- All pre-commit hooks now pass reliably
+- Tests properly isolated with zero file system side effects
+- Maintains consistency with established testing patterns
+- Enables reliable automated testing and CI/CD pipelines
+
+### 30. AsyncStatementProcessor Error Resolution Pattern (Phase 4 → 4.1 - June 2025)
 
 - **Challenge**: Critical MyPy type errors, test failures, and coverage gaps preventing production deployment
 - **Solution**: Systematic error resolution with variable naming fixes, type annotations, and comprehensive error path testing
