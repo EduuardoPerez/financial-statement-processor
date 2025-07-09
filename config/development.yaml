@@ -1,0 +1,18 @@
+input_directory: "input"
+output_directory: "output"
+log_level: "DEBUG"
+enable_async: false
+
+processing:
+  max_workers: 2
+  chunk_size: 500
+  timeout_seconds: 60
+  retry_attempts: 2
+  enable_validation: true
+  enable_balance_checking: true
+
+output:
+  default_format: "excel"
+  excel_sheet_name: "Transactions"
+  include_index: false
+  date_format: "%Y-%m-%d"

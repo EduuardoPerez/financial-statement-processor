@@ -306,6 +306,28 @@
 - ✅ **v0.4.0**: AsyncStatementProcessor Implementation - Complete async/threaded batch processing for Phase 4 → 4.1 enabling high-throughput concurrent processing with asyncio and ThreadPoolExecutor support (Prompt 26 from task requirements)
 - ✅ **v0.4.1**: Test Path Isolation Fix - Fixed async processing integration tests to use proper test data paths instead of production files, ensuring reliable test execution and professional testing practices
 - ✅ **v0.4.2**: StreamingStatementParser Implementation - Complete memory-efficient CSV/Excel chunk parsers for Phase 4 → 4.1 enabling processing of large financial statement files with configurable chunk sizes and enterprise-scale capabilities
+- ✅ **v0.4.3**: Configuration Management Implementation - Complete ApplicationConfig YAML/env loader for Phase 4 → 4.2 with comprehensive testing and full coverage recovery from 89% to 93%
+
+### Phase 4.2 Configuration Management Implementation (Complete - July 2025)
+
+- **Status**: ✅ COMPLETED - ApplicationConfig YAML/env loader successfully implemented for Phase 4 → 4.2
+- **Achievement**: Complete configuration management infrastructure with comprehensive testing and full coverage recovery
+- **Implementation**: Complete `src/infrastructure/config.py` with all required dataclasses and methods
+- **Key Features**:
+  - **Type Safety**: Modern Python 3.11+ dataclass annotations with proper type conversion
+  - **YAML Configuration Loading**: Implemented `ApplicationConfig.from_yaml()` with proper Path handling and optional database config
+  - **Environment Variable Loading**: Implemented `ApplicationConfig.from_environment()` with FSP_ prefix and sensible defaults
+  - **Comprehensive Testing**: Added 23 unit tests in `tests/unit/infrastructure/test_config.py` covering all functionality
+  - **Coverage Recovery**: Restored coverage from 89% back to 93% by adding comprehensive test coverage
+  - **Error Handling**: Comprehensive error handling for file not found, invalid YAML, and missing required fields
+- **Configuration Classes**:
+  - **`DatabaseConfig`**: Database connection parameters (host, port, database, username, password, pool_size)
+  - **`ProcessingConfig`**: Processing behavior settings (max_workers, chunk_size, timeout_seconds, retry_attempts, validation flags)
+  - **`OutputConfig`**: Output format configuration (default_format, excel_sheet_name, csv_delimiter, date_format)
+  - **`ApplicationConfig`**: Main configuration class combining all sub-configs
+- **Validation Results**: All requirements successfully met with loading `config/development.yaml` showing expected attributes
+- **Quality**: 100% coverage of the new configuration module with comprehensive error scenario testing
+- **Architecture Impact**: Provides foundation for CLI interface development and enterprise deployment scenarios
 
 ### Event System & Progress Tracker Implementation (Complete - June 2025)
 
@@ -568,15 +590,17 @@
 
 ## Current Test Metrics (Updated - July 2025)
 
-- **Total Tests**: 611 (all passing) ✅
-- **Coverage**: Comprehensive meaningful coverage with professional organization
-- **Recent Achievement**: StreamingStatementParser Implementation - Successfully added 63 comprehensive unit tests for memory-efficient chunk processing
-- **Streaming Parser Coverage**: Complete validation of CSV/Excel chunk processing, error handling, and architecture integration
-- **Test Quality Enhancement**: Added comprehensive tests for StreamingStatementParser with 63 new unit tests covering all functionality
-- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, event-driven architecture, builder patterns, and streaming processing
-- **Quality Standards**: Professional organization with logical grouping by functionality
-- **Zero Regression**: All existing functionality maintained while adding new streaming capabilities
+- **Total Tests**: 634 (all passing) ✅
+- **Coverage**: 93% (exceeds 90% requirement) - restored from 89% through comprehensive configuration testing
+- **Recent Achievement**: Phase 4.2 Configuration Management Implementation - Successfully added 23 comprehensive unit tests for ApplicationConfig YAML/env loader
+- **Configuration Management Coverage**: Complete validation of YAML configuration loading, environment variable parsing, and error handling scenarios
+- **Test Quality Enhancement**: Added comprehensive tests for configuration management with 23 new unit tests covering all functionality
+- **Coverage Recovery**: Restored coverage from 89% back to 93% by adding comprehensive test coverage for previously untested configuration module
+- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, event-driven architecture, builder patterns, streaming processing, and configuration management
+- **Quality Standards**: Professional organization with logical grouping by functionality and comprehensive error scenario testing
+- **Zero Regression**: All existing functionality maintained while adding robust configuration management capabilities
 - **Pre-commit Status**: All hooks passing (ruff, ruff format, mypy, pytest with coverage)
 - **Development Workflow**: Clean, professional development with automated quality enforcement
-- **Streaming Tests**: 63 comprehensive tests covering chunk processing, memory efficiency, error handling, and edge cases
-- **Integration Coverage**: End-to-end event workflows, streaming processing, and validation requirements fully tested
+- **Configuration Tests**: 23 comprehensive tests covering YAML loading, environment variables, database config, error handling, and validation scenarios
+- **Integration Coverage**: End-to-end configuration workflows, enterprise deployment scenarios, and comprehensive validation requirements fully tested
+- **Previous Achievement**: StreamingStatementParser Implementation - 63 comprehensive unit tests for memory-efficient chunk processing with complete validation of CSV/Excel processing, error handling, and architecture integration

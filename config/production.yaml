@@ -1,0 +1,26 @@
+input_directory: "/app/data/input"
+output_directory: "/app/data/output"
+log_level: "INFO"
+enable_async: true
+
+processing:
+  max_workers: 8
+  chunk_size: 2000
+  timeout_seconds: 600
+  retry_attempts: 5
+  enable_validation: true
+  enable_balance_checking: true
+
+output:
+  default_format: "excel"
+  excel_sheet_name: "Sheet1"
+  include_index: false
+  date_format: "%Y-%m-%d"
+
+database:
+  host: "postgres.internal"
+  port: 5432
+  database: "financial_statements"
+  username: "fsp_user"
+  password: "${DB_PASSWORD}"
+  pool_size: 10
