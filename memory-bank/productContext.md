@@ -23,7 +23,7 @@
 
 ### What We're Building
 
-A comprehensive multi-format financial statement processor that transforms diverse bank statements (PDF, XLS, CSV, XLSX) into clean, standardized Excel data ready for financial analysis. Supports 10 statement types across 4 file formats from major Argentine banks with intelligent automatic detection and processing.
+A comprehensive multi-format financial statement processor that transforms diverse bank statements (PDF, XLS, CSV, XLSX) into clean, standardized Excel data ready for financial analysis. Supports 10 statement types across 4 file formats from major Argentine banks with intelligent automatic detection, processing, and memory-efficient streaming for large datasets.
 
 ### Core Value Propositions
 

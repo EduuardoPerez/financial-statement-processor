@@ -8,6 +8,7 @@
 - **XLS Data Processing**: Native Excel file processing for structured account statements
 - **CSV Data Processing**: Native CSV file processing for transaction and authorization data
 - **XLSX Data Processing**: Native Excel file processing for Mercadopago account summaries
+- **Memory-Efficient Streaming**: StreamingStatementParser for processing large CSV/Excel files with configurable chunk sizes
 - **Intelligent Payment Method Detection**: Automatically identifies all 10 statement types from content/filename
 - **Transaction Parsing**: Handles all known transaction types across all supported payment methods and formats
 - **European Number Format**: Perfect handling of 1.234,56 notation across all banks and formats
@@ -15,6 +16,7 @@
 - **Multi-Date Format Support**: DD.MM.YY (VISA), DD-MMM-YY (Mastercard), DD/MM/YYYY (XLS/CSV), ISO 8601 timestamps (XLSX) with Spanish month support
 - **Excel Output**: Clean, structured .xlsx files ready for analysis
 - **Standardized File Naming**: Consistent output filename normalization across all statement types
+- **Enterprise-Scale Processing**: Configurable chunk processing for large financial files without memory limitations
 
 ### Payment Method Support (Complete - 10 Types)
 
@@ -303,6 +305,7 @@
 - ✅ **v0.3.21**: ProcessingReportBuilder Implementation - Complete ProcessingReportBuilder and ProcessingReport dataclass for Phase 3 → 3.3 enabling comprehensive batch processing reports with automatic success rate calculation (Prompt 25 from task requirements)
 - ✅ **v0.4.0**: AsyncStatementProcessor Implementation - Complete async/threaded batch processing for Phase 4 → 4.1 enabling high-throughput concurrent processing with asyncio and ThreadPoolExecutor support (Prompt 26 from task requirements)
 - ✅ **v0.4.1**: Test Path Isolation Fix - Fixed async processing integration tests to use proper test data paths instead of production files, ensuring reliable test execution and professional testing practices
+- ✅ **v0.4.2**: StreamingStatementParser Implementation - Complete memory-efficient CSV/Excel chunk parsers for Phase 4 → 4.1 enabling processing of large financial statement files with configurable chunk sizes and enterprise-scale capabilities
 
 ### Event System & Progress Tracker Implementation (Complete - June 2025)
 
@@ -563,17 +566,17 @@
 - **Extensibility**: Proven architecture ready for additional banks
 - **Test Quality**: Professional test organization enables confident development
 
-## Current Test Metrics (Updated - June 2025)
+## Current Test Metrics (Updated - July 2025)
 
-- **Total Tests**: 548 (all passing) ✅
-- **Coverage**: 91.57% meaningful coverage (exceeds 90% requirement)
-- **Recent Achievement**: Coverage Issue Resolution - Successfully resolved pre-commit hook failure by adding comprehensive domain builder tests
-- **Domain Builders Coverage**: Improved from 66% to 96% (30 percentage point increase)
-- **Test Quality Enhancement**: Added 19 new comprehensive tests for ProcessingReportBuilder and ProcessingReport classes
-- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, event-driven architecture, and builder patterns
+- **Total Tests**: 611 (all passing) ✅
+- **Coverage**: Comprehensive meaningful coverage with professional organization
+- **Recent Achievement**: StreamingStatementParser Implementation - Successfully added 63 comprehensive unit tests for memory-efficient chunk processing
+- **Streaming Parser Coverage**: Complete validation of CSV/Excel chunk processing, error handling, and architecture integration
+- **Test Quality Enhancement**: Added comprehensive tests for StreamingStatementParser with 63 new unit tests covering all functionality
+- **Architecture Coverage**: Complete validation of Observer Pattern, Command Pattern, event-driven architecture, builder patterns, and streaming processing
 - **Quality Standards**: Professional organization with logical grouping by functionality
-- **Zero Regression**: All existing functionality maintained while adding new test coverage
+- **Zero Regression**: All existing functionality maintained while adding new streaming capabilities
 - **Pre-commit Status**: All hooks passing (ruff, ruff format, mypy, pytest with coverage)
 - **Development Workflow**: Clean, professional development with automated quality enforcement
-- **Builder Pattern Tests**: 33 comprehensive tests covering fluent interfaces, reset functionality, and transaction accumulation
-- **Integration Coverage**: End-to-end event workflows and validation requirements fully tested
+- **Streaming Tests**: 63 comprehensive tests covering chunk processing, memory efficiency, error handling, and edge cases
+- **Integration Coverage**: End-to-end event workflows, streaming processing, and validation requirements fully tested

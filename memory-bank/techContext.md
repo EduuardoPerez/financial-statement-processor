@@ -8,6 +8,7 @@
 - **pdfplumber**: PDF text extraction library, chosen for robust text extraction capabilities
 - **pandas**: Data manipulation and analysis, essential for transaction data processing and XLS reading
 - **openpyxl**: Excel file generation, provides compatibility with Microsoft Excel
+- **Streaming Processing**: Memory-efficient CSV/Excel chunk processing for large financial datasets
 
 ### Dependency Management
 

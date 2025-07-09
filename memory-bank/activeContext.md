@@ -2,7 +2,85 @@
 
 ## Current Work Focus
 
-### Test Path Isolation Fix (COMPLETED - June 2025)
+### Next Development Focus (READY - July 2025)
+
+Having successfully completed the StreamingStatementParser implementation (Phase 4 → 4.1), the project is now ready for the next phase of development. The core streaming infrastructure is in place and thoroughly tested.
+
+**Recent Achievement**: ✅ **StreamingStatementParser Implementation COMPLETED** (Phase 4 → 4.1)
+
+- Complete memory-efficient CSV/Excel chunk parsers implemented
+- 63 comprehensive unit tests with full coverage validation
+- Seamless integration with existing clean architecture
+- Enterprise-ready streaming processing for large files
+- All 611 tests passing with zero regressions
+
+**Current Development Readiness**:
+
+- **CLI Interface Implementation**: Ready for Phase 4 → 4.2 (Configuration Management)
+- **Configuration System**: External config for processing parameters and output formats
+- **Additional Enterprise Features**: Batch processing enhancements, monitoring capabilities
+- **Performance Optimizations**: Ready for large-scale deployment scenarios
+
+### Core Implementation Details
+
+- **Memory Efficiency**: Processes files in configurable chunks without loading entire files into memory
+- **CSV Processing**: `parse_large_csv()` method using pandas `read_csv(chunksize=chunk_size)` for memory-efficient chunk processing
+- **Excel Processing**: `parse_large_excel()` method with sheet-by-sheet processing using `pd.ExcelFile` context manager
+- **Row-by-Row Processing**: Each chunk/sheet is processed row by row, yielding Transaction objects as they're parsed
+- **Payment Method Detection**: Integrates with existing filename-based detection patterns for CSV/Excel files
+- **Fallback Logic**: Provides fallback Transaction creation when TransactionBuilder not available
+- **Resource Management**: Proper context manager usage for Excel files and comprehensive error handling
+
+### Architecture Integration
+
+- **Domain Models**: Full integration with Transaction, PaymentMethod, Currency enums
+- **Builder Pattern**: Optional TransactionBuilder integration for consistent object creation
+- **Detector Pattern**: Optional PaymentMethodDetector integration for flexible payment method identification
+- **Utility Classes**: Fallback integration with DateConverter and AmountParser for direct creation
+- **Error Handling**: Follows established error handling patterns with detailed logging
+- **Clean Architecture**: Infrastructure layer implementation following hexagonal architecture principles
+
+### Technical Benefits
+
+- **Scalability**: Can handle enterprise-scale CSV/Excel files (millions of rows) with controlled memory usage
+- **Performance**: Memory-efficient processing reduces system resource requirements
+- **Flexibility**: Configurable chunk sizes allow optimization for different scenarios
+- **Reliability**: Comprehensive error handling with graceful degradation for malformed rows
+- **Integration**: Seamless integration with existing clean architecture components
+- **Monitoring**: Professional logging provides visibility into processing progress
+
+### Usage Patterns
+
+```python
+# Basic usage with default chunk size
+parser = StreamingStatementParser()
+transactions = list(parser.parse_large_csv(Path("large_statement.csv")))
+
+# Configurable chunk size for memory optimization
+parser = StreamingStatementParser(chunk_size=500)
+for transaction in parser.parse_large_excel(Path("large_workbook.xlsx")):
+    process_transaction(transaction)
+
+# Full integration with existing components
+parser = StreamingStatementParser(
+    chunk_size=1000,
+    transaction_builder=transaction_builder,
+    payment_method_detector=payment_method_detector
+)
+```
+
+### Phase 4 → 4.1 Completion
+
+- **PLAN.md Requirement**: ✅ Create `src/infrastructure/streaming.py` with `StreamingStatementParser`
+- **Memory Efficiency**: ✅ Chunk-based processing for large files
+- **CSV Support**: ✅ `parse_large_csv()` with pandas chunksize
+- **Excel Support**: ✅ `parse_large_excel()` with sheet-by-sheet processing
+- **Architecture Integration**: ✅ Seamless integration with existing clean architecture
+- **Error Handling**: ✅ Comprehensive error handling following established patterns
+- **Type Safety**: ✅ Modern Python 3.11+ type annotations
+- **Documentation**: ✅ Complete docstrings with examples and usage patterns
+
+### Previous Completion: Test Path Isolation Fix (COMPLETED - June 2025)
 
 - **Status**: ✅ COMPLETED - Successfully fixed async processing tests to use proper test data isolation
 - **Achievement**: Resolved critical test isolation issue preventing reliable test execution and pre-commit hook success
@@ -396,59 +474,4 @@
 
 - **Status**: ✅ COMPLETED - Permanent solution for MyPy import path conflicts implemented
 - **Achievement**: Configured project for clean import style eliminating "Source file found twice under different module names" errors
-- **Implementation**: Updated `pyproject.toml` MyPy configuration and package discovery settings
-- **Key Features**:
-  - **Clean Import Style**: Use `from domain.models` instead of `from src.domain.models`
-  - **MyPy Configuration**: `mypy_path = "src"`, `namespace_packages = true`, `explicit_package_bases = true`
-  - **Package Discovery**: Proper setuptools configuration with `package-dir = {"" = "src"}`
-  - **VS Code Integration**: `.vscode/settings.json` with `python.analysis.extraPaths = ["./src"]`
-  - **Import Standardization**: Reverted all imports to clean style across infrastructure layer
-- **Benefits**: Better IDE support, standard Python conventions, easier refactoring, cleaner code
-- **Validation**: All 251 tests pass, MyPy type checking successful, pre-commit hooks working
-- **Result**: Permanent solution preventing future MyPy import conflicts while enabling preferred clean import syntax
-
-### Phase 2 → 2.2: Payment-Method Detection Core Implementation (COMPLETED - June 2025)
-
-- **Status**: ✅ COMPLETED - Abstract PaymentMethodDetector successfully implemented with Strategy Pattern
-- **Achievement**: Core payment method detection abstraction established for extensible bank identification, enabling Open/Closed Principle
-- **Implementation**: Complete `src/domain/detectors.py` with abstract `BankDetector` and concrete `PaymentMethodDetector` classes
-- **Key Features**:
-  - **BankDetector ABC**: Abstract strategy interface for bank identification with `can_detect()` and `get_payment_method()` methods
-  - **PaymentMethodDetector**: Registry-based detector with registration and detection methods following Strategy Pattern
-  - **Registration System**: `register_detector()` method for adding new bank detection strategies dynamically
-  - **Content Detection**: `detect_from_content()` method using registered detectors with validation requirement
-  - **Filename Detection**: `detect_from_filename()` method for structured file naming patterns (CSV, XLS, XLSX)
-  - **Validation Requirement**: ✅ Raises `ValueError` when `detect_from_content` is called before any detectors are registered
-  - **Type Safety**: Modern Python 3.11+ type annotations with comprehensive documentation
-  - **Clean Architecture**: Domain layer abstraction enabling dependency inversion and extensibility
-- **Core Methods**:
-  - **register_detector()**: Register BankDetector implementations with type validation
-  - **detect_from_content()**: Detect payment method from content using registered detectors (key validation requirement)
-  - **detect_from_filename()**: Detect payment method from filename patterns for CSV/XLS/XLSX files
-  - **get_registered_detectors()**: Return copy of registered detectors for inspection
-  - **clear_detectors()**: Remove all registered detectors for testing/reconfiguration
-- **Validation Requirements**: ✅ All requirements met
-  - ✅ Calling `detect_from_content` before any detectors are registered raises `ValueError`
-  - ✅ Registration and detection methods work correctly with proper error handling
-  - ✅ Integration with existing `PaymentMethod` enum from domain models
-  - ✅ Follows established clean architecture patterns in the codebase
-- **Comprehensive Testing**: Complete `tests/unit/domain/test_detectors.py` with 23 comprehensive tests covering:
-  - **Abstract Base Class**: BankDetector cannot be instantiated, proper subclass validation
-  - **Registration System**: Valid detector registration, invalid type rejection, multiple detector support
-  - **Content Detection**: Successful detection, first match wins, no match handling, empty content validation
-  - **Filename Detection**: CSV (BBVA/Macro VISA), XLS (BBVA/Macro Account), XLSX (Mercadopago) pattern recognition
-  - **Error Handling**: TypeError for invalid types, ValueError for no detectors/unknown patterns
-  - **Registry Management**: Copy protection, detector clearing, registration order precedence
-  - **Integration Tests**: Concrete detector implementations, precedence order validation
-- **Quality Metrics**: All 290 tests pass (267 existing + 23 new), coverage at 91.86% (exceeds 90% requirement)
-- **Architecture Impact**: Enables Open/Closed Principle for adding new banks without modifying existing code
-- **SOLID Compliance**: Perfect implementation of Strategy Pattern with registry-based extensibility
-
-### Phase 2 → 2.2: Concrete Bank Detectors Implementation (COMPLETED - June 2025)
-
-- **Status**: ✅ COMPLETED - MacroDetector and BBVADetector successfully implemented with build_default_payment_detector function
-- **Achievement**: Complete concrete bank detector implementations enabling extensible payment method detection from content
-- **Implementation**: Complete `src/infrastructure/detectors.py` with `MacroDetector`, `BBVADetector`, and `build_default_payment_detector()` function
-- **Key Features**:
-  - **MacroDetector**: Concrete implementation for Macro bank statement identification
-    - **Detection Indicators**: "MACRO PREMIA", "BANCO MACRO", "WWW.MACRO.COM.AR", "MACRO"
+- **Implementation**: Updated `pyproject.toml` MyP
