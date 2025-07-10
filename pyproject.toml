@@ -13,6 +13,9 @@ dependencies = [
     "pandas>=2.3.0",
     "pdfplumber>=0.11.6",
     "xlrd>=2.0.2",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -91,12 +94,10 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
-# Configure for src/ layout with clean imports
+# Configure for src/ layout - simpler approach
 mypy_path = "src"
-explicit_package_bases = true
-namespace_packages = true
 
-# Exclude test files and documentation initially
+# Only exclude documentation and tests
 exclude = [
     "tests/",
     "memory-bank/",
