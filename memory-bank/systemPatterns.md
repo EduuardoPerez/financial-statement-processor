@@ -2987,7 +2987,97 @@ class StreamingStatementParser:
 - **Architecture Impact**: Enables enterprise-scale file processing with memory-efficient streaming for large financial datasets
 - **Phase 4 → 4.1 Completion**: Successfully completes streaming parsers implementation from PLAN.md
 
-### 31. AsyncStatementProcessor Error Resolution Pattern (Phase 4 → 4.1 - June 2025)
+### 31. `__all__` Statements Refactoring Pattern (January 2025)
+
+- **Challenge**: Scattered `__all__` statements throughout individual modules making package APIs unclear and maintenance difficult
+- **Solution**: Consolidate all `__all__` statements into package-level `__init__.py` files following Python best practices
+- **Implementation**: Systematic refactoring of all packages (domain, application, infrastructure, CLI) to centralize export control
+
+#### Package Export Consolidation Strategy
+
+**Problem Identification**
+
+- Individual modules had scattered `__all__` statements making it unclear what each package exports
+- Maintenance required updating multiple files when adding/removing exports
+- No single source of truth for package public APIs
+- Violated Python packaging best practices for clean package organization
+
+**Solution Implementation**
+
+```python
+# Before: Individual module exports
+# src/domain/models.py
+__all__ = [
+    "Currency",
+    "PaymentMethod",
+    "Transaction",
+    "Balance",
+    "Statement",
+]
+
+# src/domain/detectors.py
+__all__ = [
+    "BankDetector",
+    "PaymentMethodDetector",
+]
+
+# After: Centralized package exports
+# src/domain/__init__.py
+from .models import Currency, PaymentMethod, Transaction, Balance, Statement
+from .detectors import BankDetector, PaymentMethodDetector
+from .services import StatementParser
+from .repositories import FileReader, FileWriter, StatementRepository
+# ... all other imports
+
+__all__ = [
+    # Commands
+    "Command",
+    "CommandResult",
+    "ProcessStatementCommand",
+    "BatchProcessCommand",
+
+    # Core Models
+    "Currency",
+    "PaymentMethod",
+    "Transaction",
+    "Balance",
+    "Statement",
+
+    # Services & Builders
+    "StatementParser",
+    "TransactionBuilder",
+    "StatementBuilder",
+
+    # ... organized by category with 43 total exports
+]
+```
+
+**Refactoring Benefits**
+
+- **Single Point of Control**: Each package has one clear location (`__init__.py`) defining its public API
+- **Cleaner Individual Modules**: Module files focused purely on implementation without export concerns
+- **Better Package Organization**: Immediately clear what each package exposes by examining its `__init__.py`
+- **Easier Maintenance**: Adding/removing exports only requires updating package-level `__init__.py`
+- **Python Best Practices**: Follows recommended approach for package organization
+- **Organized Categories**: Exports grouped logically (Commands, Core Models, Services, etc.)
+
+**Implementation Results**
+
+- **Domain Package**: Consolidated 43 exports from 9 modules with logical categorization
+- **Application Package**: Centralized exports for `ProcessingResult` and `StatementProcessingService`
+- **Infrastructure Package**: Created comprehensive exports with 12 organized categories
+- **CLI Package**: Updated to export main `cli` function
+- **Parsers Subpackage**: Consolidated parser exports in infrastructure/parsers `__init__.py`
+
+**Quality Validation**
+
+- ✅ All 674 tests continue to pass with zero regression
+- ✅ Clean package APIs with centralized control
+- ✅ Follows Python packaging best practices
+- ✅ Easier maintenance and better code organization
+- ✅ Clear separation between implementation and public interface
+
+### 32. AsyncStatementProcessor Error Resolution Pattern (Phase 4 → 4.1 - June 2025)
 
 - **Challenge**: Critical MyPy type errors, test failures, and coverage gaps preventing production deployment
 - **Solution**: Systematic error resolution with variable naming fixes, type annotations, and comprehensive error path testing

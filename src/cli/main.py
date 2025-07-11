@@ -44,8 +44,6 @@ from infrastructure.detectors import (
 from infrastructure.factories import DefaultParserFactory
 from infrastructure.repositories import ExcelStatementRepository
 
-__all__ = ["cli"]
-
 # Global console for rich output
 console = Console()
 

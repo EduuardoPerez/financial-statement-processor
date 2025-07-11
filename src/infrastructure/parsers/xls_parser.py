@@ -18,10 +18,6 @@ import pandas as pd
 from domain.models import PaymentMethod, Statement
 from domain.services import StatementParser
 
-__all__ = [
-    "XLSStatementParser",
-]
-
 
 class XLSStatementParser(StatementParser):
     """

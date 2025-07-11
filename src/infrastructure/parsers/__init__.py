@@ -9,7 +9,9 @@ Classes:
 """
 
 from .pdf_parser import PDFStatementParser
+from .xls_parser import XLSStatementParser
 
 __all__ = [
     "PDFStatementParser",
+    "XLSStatementParser",
 ]

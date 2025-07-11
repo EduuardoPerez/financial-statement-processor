@@ -18,10 +18,6 @@ from domain.utils import AmountParser, DateConverter
 from .parsers.pdf_parser import PDFStatementParser
 from .parsers.xls_parser import XLSStatementParser
 
-__all__ = [
-    "DefaultParserFactory",
-]
-
 
 class DefaultParserFactory(ParserFactory):
     """

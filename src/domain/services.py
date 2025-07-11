@@ -14,10 +14,6 @@ from pathlib import Path
 
 from .models import Statement
 
-__all__ = [
-    "StatementParser",
-]
-
 
 class StatementParser(ABC):
     """

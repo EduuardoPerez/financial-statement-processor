@@ -18,12 +18,6 @@ Functions:
 from domain.detectors import BankDetector, PaymentMethodDetector
 from domain.models import PaymentMethod
 
-__all__ = [
-    "MacroDetector",
-    "BBVADetector",
-    "build_default_payment_detector",
-]
-
 
 class MacroDetector(BankDetector):
     """

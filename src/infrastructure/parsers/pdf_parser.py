@@ -19,10 +19,6 @@ from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 from domain.utils import AmountParser
 
-__all__ = [
-    "PDFStatementParser",
-]
-
 
 class PDFStatementParser(StatementParser):
     """

@@ -16,10 +16,6 @@ import pandas as pd
 from domain.models import Statement
 from domain.repositories import FileReader, FileWriter, StatementRepository
 
-__all__ = [
-    "ExcelStatementRepository",
-]
-
 
 class ExcelStatementRepository(StatementRepository):
     """Excel-based statement repository implementation."""

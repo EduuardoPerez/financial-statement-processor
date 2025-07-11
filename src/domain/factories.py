@@ -13,10 +13,6 @@ from pathlib import Path
 
 from .services import StatementParser
 
-__all__ = [
-    "ParserFactory",
-]
-
 
 class ParserFactory:
     """

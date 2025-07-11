@@ -21,11 +21,6 @@ from domain.models import Statement
 from domain.repositories import StatementRepository
 from domain.validation import StatementValidator, ValidationResult
 
-__all__ = [
-    "ProcessingResult",
-    "StatementProcessingService",
-]
-
 
 @dataclass
 class ProcessingResult:
