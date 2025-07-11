@@ -235,7 +235,21 @@ uv run --module pytest -v tests/e2e/test_smoke.py
 - ✅ Coverage restored from 89% to 93% (exceeds 90% requirement)
 - ✅ Zero regression - all existing functionality maintained
 
-### Recent Completion: `__all__` Statements Refactoring (COMPLETED - January 2025)
+### Recent Completion: TYPE_CHECKING Cleanup (COMPLETED - January 2025)
+
+- **Status**: ✅ COMPLETED - Successfully removed unnecessary `TYPE_CHECKING` blocks from 3 files for cleaner code organization
+- **Achievement**: Code quality improvement by eliminating conditional import logic where no circular dependencies existed
+- **Implementation**: Updated `parse_visa_statement.py`, `src/domain/builders.py`, and `src/domain/utils.py`
+- **Key Changes**:
+  - Removed empty `TYPE_CHECKING` import blocks that served no purpose
+  - Converted conditional imports to regular imports (no circular dependencies found)
+  - Updated type annotations to use `pd.DataFrame` instead of `DataFrame`
+  - Cleaned up unnecessary `else` blocks that were just reassigning imports
+- **Result**: Cleaner, more straightforward imports without conditional logic, improved code readability
+- **Testing**: All existing functionality maintained with zero regression
+- **Impact**: Simplified import structure, better code maintainability, follows Python best practices for direct imports when possible
+
+### Previous Completion: `__all__` Statements Refactoring (COMPLETED - January 2025)
 
 - **Status**: ✅ COMPLETED - Successfully consolidated `__all__` statements from individual modules into package-level `__init__.py` files
 - **Achievement**: Major code organization improvement following Python best practices for package structure

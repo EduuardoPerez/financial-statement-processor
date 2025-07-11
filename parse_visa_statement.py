@@ -3,13 +3,9 @@ from __future__ import annotations
 import logging
 import os
 import re
-from typing import TYPE_CHECKING
 
 import pandas as pd
 import pdfplumber
-
-if TYPE_CHECKING:
-    from pandas import DataFrame
 
 # Type aliases for better code readability
 Transaction = dict[str, str | float]
@@ -235,7 +231,7 @@ def validate_balance(
         )
 
 
-def parse_visa_pdf(pdf_path: str, output_path: str) -> DataFrame:
+def parse_visa_pdf(pdf_path: str, output_path: str) -> pd.DataFrame:
     transactions: list[Transaction] = []
 
     with pdfplumber.open(pdf_path) as pdf:
@@ -698,7 +694,7 @@ def parse_visa_pdf(pdf_path: str, output_path: str) -> DataFrame:
     return df
 
 
-def parse_account_xls(xls_path: str, output_path: str) -> DataFrame:
+def parse_account_xls(xls_path: str, output_path: str) -> pd.DataFrame:
     """
     Parse BBVA Account XLS file and generate Excel output
     """

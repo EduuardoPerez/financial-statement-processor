@@ -10,10 +10,6 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
 
 
 class DateConverter:

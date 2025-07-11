@@ -2987,7 +2987,21 @@ class StreamingStatementParser:
 - **Architecture Impact**: Enables enterprise-scale file processing with memory-efficient streaming for large financial datasets
 - **Phase 4 → 4.1 Completion**: Successfully completes streaming parsers implementation from PLAN.md
 
-### 31. `__all__` Statements Refactoring Pattern (January 2025)
+### 31. TYPE_CHECKING Block Cleanup Pattern (January 2025)
+
+- **Challenge**: Unnecessary `TYPE_CHECKING` conditional import blocks cluttering code where no circular dependencies exist
+- **Solution**: Remove unnecessary `TYPE_CHECKING` blocks and convert conditional imports to regular imports when safe
+- **Implementation**: Systematic analysis and cleanup of 3 files (`parse_visa_statement.py`, `src/domain/builders.py`, `src/domain/utils.py`)
+- **Decision Criteria**: Remove TYPE_CHECKING blocks only when no circular imports are detected and imports can be safely made unconditional
+- **Key Changes**:
+  - Removed empty `if TYPE_CHECKING:` blocks that served no purpose
+  - Converted conditional imports to regular imports (e.g., `from pandas import DataFrame` instead of conditional import)
+  - Updated type annotations to use imported types directly (`pd.DataFrame` → `DataFrame`)
+  - Cleaned up unnecessary `else` blocks that were just reassigning the same imports
+- **Benefits**: Cleaner, more readable code with simplified import structure following Python best practices for direct imports when possible
+- **Quality Impact**: Improved code maintainability, reduced cognitive overhead, better adherence to Python conventions
+
+### 32. `__all__` Statements Refactoring Pattern (January 2025)
 
 - **Challenge**: Scattered `__all__` statements throughout individual modules making package APIs unclear and maintenance difficult
 - **Solution**: Consolidate all `__all__` statements into package-level `__init__.py` files following Python best practices
