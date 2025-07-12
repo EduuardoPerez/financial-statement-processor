@@ -15,6 +15,7 @@ from domain.builders import TransactionBuilder
 from domain.factories import ParserFactory
 from domain.utils import AmountParser, DateConverter
 
+from .parsers.csv_parser import CSVStatementParser
 from .parsers.pdf_parser import PDFStatementParser
 from .parsers.xls_parser import XLSStatementParser
 from .parsers.xlsx_parser import XLSXStatementParser
@@ -77,3 +78,4 @@ class DefaultParserFactory(ParserFactory):
         self.register_parser(PDFStatementParser(detector, transaction_builder))
         self.register_parser(XLSStatementParser(detector, transaction_builder))
         self.register_parser(XLSXStatementParser(detector, transaction_builder))
+        self.register_parser(CSVStatementParser(detector, transaction_builder))

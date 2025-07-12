@@ -254,6 +254,95 @@ class TransactionBuilder:
             msg = f"Unexpected error building transaction: {str(e)}"
             raise ValueError(msg) from e
 
+    def build_from_csv_data(
+        self,
+        date_str: str,
+        description: str,
+        amount_str: str,
+        currency: Currency,
+        payment_method: PaymentMethod,
+    ) -> Transaction:
+        """
+        Build Transaction object from CSV data components.
+
+        Takes the individual components extracted from CSV data and constructs
+        a properly validated Transaction domain object. CSV data typically
+        has DD/MM/YYYY date format and amounts that need basic float conversion.
+
+        Args:
+            date_str: Date string in YYYY-MM-DD format (pre-converted)
+            description: Transaction description text
+            amount_str: Amount string (already cleaned of commas)
+            currency: Currency enum value (ARS or USD)
+            payment_method: PaymentMethod enum value
+
+        Returns:
+            Transaction: Properly constructed and validated Transaction object
+
+        Raises:
+            ValueError: If any component cannot be parsed or validation fails
+
+        Example:
+            >>> from domain.models import Currency, PaymentMethod
+            >>> transaction = builder.build_from_csv_data(
+            ...     date_str="2025-02-15",
+            ...     description="COMPRA EN ESTABLECIMIENTO",
+            ...     amount_str="4940.00",
+            ...     currency=Currency.ARS,
+            ...     payment_method=PaymentMethod.BBVA_VISA
+            ... )
+            >>> transaction.date.year
+            2025
+            >>> transaction.amount
+            Decimal('4940.00')
+        """
+        # Import here to avoid circular imports
+        from datetime import datetime
+        from decimal import Decimal
+
+        from .models import Transaction
+
+        if not date_str or not date_str.strip():
+            raise ValueError("Date string cannot be empty")
+
+        if not description or not description.strip():
+            raise ValueError("Description cannot be empty")
+
+        if not amount_str or not amount_str.strip():
+            raise ValueError("Amount string cannot be empty")
+
+        try:
+            # Parse date from YYYY-MM-DD format (already converted from DD/MM/YYYY)
+            date_clean = date_str.strip()
+            parsed_date = datetime.strptime(date_clean, "%Y-%m-%d").date()
+
+            # Parse amount (already cleaned of commas in CSV processing)
+            amount_clean = amount_str.strip()
+            parsed_amount = Decimal(amount_clean)
+
+            # Clean description
+            clean_description = description.strip()
+
+            # Construct Transaction using domain model
+            transaction = Transaction(
+                date=parsed_date,
+                description=clean_description,
+                amount=parsed_amount,
+                currency=currency,
+                payment_method=payment_method,
+            )
+
+            return transaction
+
+        except ValueError as e:
+            # Re-raise with context about which component failed
+            msg = f"Failed to build transaction from CSV data components: {e}"
+            raise ValueError(msg) from e
+        except Exception as e:
+            # Handle unexpected errors
+            msg = f"Unexpected error building transaction: {str(e)}"
+            raise ValueError(msg) from e
+
 
 class StatementBuilder:
     """
