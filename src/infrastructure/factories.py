@@ -17,6 +17,7 @@ from domain.utils import AmountParser, DateConverter
 
 from .parsers.pdf_parser import PDFStatementParser
 from .parsers.xls_parser import XLSStatementParser
+from .parsers.xlsx_parser import XLSXStatementParser
 
 
 class DefaultParserFactory(ParserFactory):
@@ -74,4 +75,5 @@ class DefaultParserFactory(ParserFactory):
 
         # Auto-register standard parsers with injected dependencies
         self.register_parser(PDFStatementParser(detector, transaction_builder))
-        self.register_parser(XLSStatementParser(detector))
+        self.register_parser(XLSStatementParser(detector, transaction_builder))
+        self.register_parser(XLSXStatementParser(detector, transaction_builder))

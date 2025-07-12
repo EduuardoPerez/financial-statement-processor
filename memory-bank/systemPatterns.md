@@ -19,35 +19,52 @@ XLSX Input → Data Reading → Column Mapping → Data Transformation → Excel
 
 ### Format-Specific Processing Pipelines
 
-#### PDF Processing Pipeline
+#### PDF Processing Pipeline (Complete - Enhanced)
 
 ```
 PDF File → pdfplumber → Text Extraction → Line-by-Line Parsing →
-Regex Pattern Matching → Transaction Classification → Amount/Date Conversion →
-Balance Validation → DataFrame Creation → Excel Output
+Regex Pattern Matching → Transaction Classification → Multi-Format Date Conversion →
+Enhanced Amount/Currency Parsing → Balance Validation → DataFrame Creation → Excel Output
 ```
 
-#### XLS Processing Pipeline
+- **Enhanced Date Support**: DD.MM.YY (VISA) and DD-MMM-YY (Mastercard) formats
+- **Spanish Month Support**: "Abr" = April, comprehensive Spanish abbreviations
+- **PaymentMethod Detection**: Fixed enum comparison for proper bank identification
+- **Error Handling**: Graceful degradation with comprehensive exception handling
+
+#### XLS Processing Pipeline (Complete - Production Ready)
 
 ```
-XLS File → pandas.read_excel → Structured Data → Row Iteration →
-Direct Data Access → Date/Amount Conversion → DataFrame Creation → Excel Output
+XLS File → pandas.read_excel → Structured Data Access → Native Type Handling →
+DateTime Object Processing → European Number Format Conversion →
+Payment Method Detection → Transaction Building → Excel Output
 ```
 
-#### CSV Processing Pipeline
+- **Native XLS Support**: Direct pandas processing for structured Excel data
+- **BBVA Account**: 60 transactions (Detalle_mov_cuenta format)
+- **Macro Account**: 36 transactions (movimientos-de-cuenta format)
+- **Date Handling**: Native datetime objects and DD/MM/YYYY string conversion
+- **Filename Detection**: Case-insensitive keyword matching for automatic identification
+
+#### XLSX Processing Pipeline (Complete - Production Ready)
+
+```
+XLSX File → pandas.read_excel → Column Access → ISO 8601 Processing →
+Timestamp Conversion → Amount Validation → Payment Method Detection →
+Transaction Building → Excel Output
+```
+
+- **Mercadopago Support**: 394 transactions successfully processed
+- **ISO 8601 Conversion**: "2025-02-01T17:45:36Z" → "2025-02-01" format
+- **Native Amount Handling**: Direct numeric processing without format conversion
+- **Comprehensive Validation**: Input XLSX total validation against output totals
+
+#### CSV Processing Pipeline (Legacy - Documented)
 
 ```
 CSV File → pandas.read_csv → Column Mapping → Row Iteration →
 Date/Currency Conversion → European Number Parsing → DataFrame Creation →
 CSV Balance Validation → Excel Output
-```
-
-#### XLSX Processing Pipeline
-
-```
-XLSX File → pandas.read_excel → Column Access → Row Iteration →
-ISO 8601 Date Conversion → Direct Amount Access → DataFrame Creation →
-XLSX Balance Validation → Excel Output
 ```
 
 ## Core Design Patterns

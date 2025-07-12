@@ -240,7 +240,7 @@ class PDFStatementParser(StatementParser):
                 continue
 
             # Handle BBVA Mastercard single-line format
-            if payment_method.value == "BBVA Mastercard" and match_mmm:
+            if payment_method == PaymentMethod.BBVA_MASTERCARD and match_mmm:
                 if (
                     len(remaining_line.split()) < 2
                     or "SALDO ACTUAL" in remaining_line

@@ -113,7 +113,29 @@ class TransactionBuilder:
         try:
             # Use injected DateConverter to parse date
             date_clean = date_str.strip()
-            parsed_date = self._date_converter.convert_dd_mm_yy(date_clean)
+            # Handle different date formats
+            if "-" in date_clean and any(
+                month in date_clean
+                for month in [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                ]
+            ):
+                # Handle "05-Apr-25" format
+                parsed_date = self._date_converter.convert_dd_mmm_yy(date_clean)
+            else:
+                # Handle "05.06.25" format
+                parsed_date = self._date_converter.convert_dd_mm_yy(date_clean)
 
             # Use injected AmountParser to parse amount
             parsed_amount = self._amount_parser.parse_european_format(
@@ -137,6 +159,95 @@ class TransactionBuilder:
         except ValueError as e:
             # Re-raise with context about which component failed
             msg = f"Failed to build transaction from PDF line components: {e}"
+            raise ValueError(msg) from e
+        except Exception as e:
+            # Handle unexpected errors
+            msg = f"Unexpected error building transaction: {str(e)}"
+            raise ValueError(msg) from e
+
+    def build_from_xls_data(
+        self,
+        date_str: str,
+        description: str,
+        amount_str: str,
+        currency: Currency,
+        payment_method: PaymentMethod,
+    ) -> Transaction:
+        """
+        Build Transaction object from XLS data components.
+
+        Takes the individual components extracted from XLS data and constructs
+        a properly validated Transaction domain object. Unlike PDF parsing,
+        XLS data often has different date formats and amount formats.
+
+        Args:
+            date_str: Date string in YYYY-MM-DD format (e.g., "2025-06-07")
+            description: Transaction description text
+            amount_str: Amount string (European format or already parsed)
+            currency: Currency enum value (ARS or USD)
+            payment_method: PaymentMethod enum value
+
+        Returns:
+            Transaction: Properly constructed and validated Transaction object
+
+        Raises:
+            ValueError: If any component cannot be parsed or validation fails
+
+        Example:
+            >>> from domain.models import Currency, PaymentMethod
+            >>> transaction = builder.build_from_xls_data(
+            ...     date_str="2025-06-07",
+            ...     description="TRANSFERENCIA",
+            ...     amount_str="-28.820,00",
+            ...     currency=Currency.ARS,
+            ...     payment_method=PaymentMethod.BBVA_ACCOUNT
+            ... )
+            >>> transaction.date.year
+            2025
+            >>> transaction.amount
+            Decimal('-28820.00')
+        """
+        # Import here to avoid circular imports
+        from datetime import datetime
+
+        from .models import Transaction
+
+        if not date_str or not date_str.strip():
+            raise ValueError("Date string cannot be empty")
+
+        if not description or not description.strip():
+            raise ValueError("Description cannot be empty")
+
+        if not amount_str or not amount_str.strip():
+            raise ValueError("Amount string cannot be empty")
+
+        try:
+            # Parse date from YYYY-MM-DD format
+            date_clean = date_str.strip()
+            parsed_date = datetime.strptime(date_clean, "%Y-%m-%d").date()
+
+            # Use injected AmountParser to parse amount (handles European format)
+            parsed_amount = self._amount_parser.parse_european_format(
+                amount_str.strip()
+            )
+
+            # Clean description
+            clean_description = description.strip()
+
+            # Construct Transaction using domain model
+            transaction = Transaction(
+                date=parsed_date,
+                description=clean_description,
+                amount=parsed_amount,
+                currency=currency,
+                payment_method=payment_method,
+            )
+
+            return transaction
+
+        except ValueError as e:
+            # Re-raise with context about which component failed
+            msg = f"Failed to build transaction from XLS data components: {e}"
             raise ValueError(msg) from e
         except Exception as e:
             # Handle unexpected errors

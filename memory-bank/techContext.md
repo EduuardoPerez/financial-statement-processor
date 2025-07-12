@@ -6,8 +6,10 @@
 
 - **Python 3.11+**: Modern Python with latest features and performance improvements
 - **pdfplumber**: PDF text extraction library, chosen for robust text extraction capabilities
-- **pandas**: Data manipulation and analysis, essential for transaction data processing and XLS reading
-- **openpyxl**: Excel file generation, provides compatibility with Microsoft Excel
+- **pandas**: Data manipulation and analysis, essential for transaction data processing and native XLS/XLSX reading
+- **openpyxl**: Excel file generation and reading, provides full compatibility with Microsoft Excel
+- **Clean Architecture**: Complete hexagonal architecture with domain/application/infrastructure layers
+- **CLI Interface**: Production-ready command-line interface with 100% file processing success rate
 - **Streaming Processing**: Memory-efficient CSV/Excel chunk processing for large financial datasets
 
 ### Dependency Management

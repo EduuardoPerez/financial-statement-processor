@@ -15,7 +15,8 @@ from typing import Any
 
 import pandas as pd
 
-from domain.models import PaymentMethod, Statement
+from domain.builders import TransactionBuilder
+from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 
 
@@ -42,15 +43,18 @@ class XLSStatementParser(StatementParser):
         >>> assert isinstance(statement, Statement)
     """
 
-    def __init__(self, detector: Any) -> None:
+    def __init__(self, detector: Any, transaction_builder: TransactionBuilder) -> None:
         """
-        Initialize XLS parser with payment method detector.
+        Initialize XLS parser with payment method detector and transaction builder.
 
         Args:
             detector: Payment method detector for identifying bank/card type
                      from Excel content or filename
+            transaction_builder: TransactionBuilder for constructing Transaction
+                                objects from parsed XLS data
         """
         self._detector = detector
+        self._transaction_builder = transaction_builder
 
     def can_parse(self, file_path: Path) -> bool:
         """
@@ -71,22 +75,21 @@ class XLSStatementParser(StatementParser):
             >>> assert parser.can_parse(Path("statement.XLSX")) is True
             >>> assert parser.can_parse(Path("statement.pdf")) is False
         """
-        return file_path.suffix.lower() in {".xls", ".xlsx"}
+        return file_path.suffix.lower() == ".xls"
 
     def parse(self, file_path: Path) -> Statement:
         """
-        Parse the XLS/XLSX file and return a Statement object.
+        Parse the XLS/XLSX file and return a Statement object with transactions.
 
         Loads structured data from the Excel file using pandas and creates a
-        Statement object with the detected payment method. This skeleton
-        implementation returns a statement with zero transactions.
+        Statement object with the detected payment method and parsed transactions.
+        Supports both BBVA Account and Macro Account XLS formats.
 
         Args:
             file_path: Path to the XLS/XLSX file to parse
 
         Returns:
-            Statement object with detected payment method and empty
-            transactions
+            Statement object with detected payment method and parsed transactions
 
         Raises:
             FileNotFoundError: If the input file does not exist
@@ -95,25 +98,31 @@ class XLSStatementParser(StatementParser):
             OSError: If there's an I/O error during file processing
 
         Example:
-            >>> parser = XLSStatementParser(detector)
-            >>> statement = parser.parse(Path("statement.xlsx"))
+            >>> parser = XLSStatementParser(detector, transaction_builder)
+            >>> statement = parser.parse(Path("statement.xls"))
             >>> assert isinstance(statement, Statement)
-            >>> assert len(statement.transactions) == 0  # Skeleton impl
+            >>> assert len(statement.transactions) > 0
         """
         if not file_path.exists():
             raise FileNotFoundError(f"Excel file not found: {file_path}")
 
         try:
-            # Load Excel data using pandas (skeleton: not used yet)
-            # df = self._load_excel_data(file_path)
+            # Detect payment method from filename
+            payment_method = self._detector.detect_from_filename(file_path)
 
-            # Detect payment method from content/filename
-            # For skeleton implementation, default to BBVA_VISA
-            # In full implementation, this would use the detector
-            payment_method = PaymentMethod.BBVA_VISA
+            # Load Excel data
+            df = self._load_excel_data(file_path)
 
-            # Create and return Statement with zero transactions (skeleton)
+            # Create statement
             statement = Statement(payment_method=payment_method)
+
+            # Parse transactions based on payment method
+            transactions = self._parse_transactions(df, payment_method)
+
+            # Add transactions to statement
+            for transaction in transactions:
+                statement.add_transaction(transaction)
+
             return statement
 
         except PermissionError as e:
@@ -135,7 +144,7 @@ class XLSStatementParser(StatementParser):
             >>> extensions = parser.get_supported_extensions()
             >>> assert extensions == {'.xls', '.xlsx'}
         """
-        return {".xls", ".xlsx"}
+        return {".xls"}
 
     def _load_excel_data(self, file_path: Path) -> pd.DataFrame:
         """
@@ -173,3 +182,119 @@ class XLSStatementParser(StatementParser):
             raise ValueError(
                 f"Failed to load data from Excel file {file_path}: {str(e)}"
             ) from e
+
+    def _parse_transactions(
+        self, df: pd.DataFrame, payment_method: PaymentMethod
+    ) -> list[Transaction]:
+        """
+        Parse transaction data from Excel DataFrame based on payment method.
+
+        Handles both BBVA Account and Macro Account XLS formats with different
+        row structures and data layouts.
+
+        Args:
+            df: DataFrame containing Excel data
+            payment_method: Detected payment method (BBVA Account or Macro Account)
+
+        Returns:
+            List of parsed Transaction objects
+
+        Example:
+            >>> transactions = parser._parse_transactions(df, PaymentMethod.BBVA_ACCOUNT)
+            >>> assert len(transactions) > 0
+        """
+        transactions = []
+
+        if payment_method == PaymentMethod.BBVA_ACCOUNT:
+            transactions = self._parse_bbva_account_transactions(df)
+        elif payment_method == PaymentMethod.MACRO_ACCOUNT:
+            transactions = self._parse_macro_account_transactions(df)
+
+        return transactions
+
+    def _parse_bbva_account_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+        """
+        Parse BBVA Account XLS transactions.
+
+        BBVA Account format:
+        - Skip header rows (row 0 is title, row 1 is column headers)
+        - Start from row 2 (third row)
+        - Columns: Date (0), Description (1), Amount (3)
+        - Date format: DD/MM/YYYY
+        - Amount format: European (1.234,56)
+        """
+        transactions = []
+
+        # Skip header rows and get actual data (start from row 2)
+        data_rows = df.iloc[2:]
+
+        for _, row in data_rows.iterrows():
+            # Check if Date and Amount are not null
+            if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
+                fecha_str = str(row.iloc[0]).strip()
+                concepto_str = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+                importe_str = str(row.iloc[3]).strip()
+
+                if fecha_str and importe_str and importe_str != "nan":
+                    try:
+                        # Convert date from DD/MM/YYYY to YYYY-MM-DD
+                        day, month, year = fecha_str.split("/")
+                        formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+
+                        # Build transaction using TransactionBuilder
+                        transaction = self._transaction_builder.build_from_xls_data(
+                            date_str=formatted_date,
+                            description=concepto_str,
+                            amount_str=importe_str,
+                            currency=Currency.ARS,
+                            payment_method=PaymentMethod.BBVA_ACCOUNT,
+                        )
+                        transactions.append(transaction)
+
+                    except (ValueError, IndexError):
+                        continue  # Skip invalid rows
+
+        return transactions
+
+    def _parse_macro_account_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+        """
+        Parse Macro Account XLS transactions.
+
+        Macro Account format:
+        - Skip header rows (row 0 is title, row 1 is account number, row 2 is column headers)
+        - Start from row 3 (fourth row)
+        - Columns: Date (0), Description (2), Amount (3)
+        - Date: Already datetime objects
+        - Amount: Already numeric format
+        """
+        transactions = []
+
+        # Skip header rows and get actual data (start from row 3)
+        data_rows = df.iloc[3:]
+
+        for _, row in data_rows.iterrows():
+            # Check if Date and Amount are not null
+            if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
+                fecha = row.iloc[0]  # Already a datetime object
+                descripcion = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
+                importe = row.iloc[3]  # Already a number
+
+                if fecha and pd.notna(importe):
+                    try:
+                        # Convert datetime to YYYY-MM-DD format
+                        formatted_date = fecha.strftime("%Y-%m-%d")
+
+                        # Build transaction using TransactionBuilder
+                        transaction = self._transaction_builder.build_from_xls_data(
+                            date_str=formatted_date,
+                            description=descripcion,
+                            amount_str=str(float(importe)),
+                            currency=Currency.ARS,
+                            payment_method=PaymentMethod.MACRO_ACCOUNT,
+                        )
+                        transactions.append(transaction)
+
+                    except (ValueError, AttributeError):
+                        continue  # Skip invalid rows
+
+        return transactions
