@@ -77,7 +77,8 @@ class Transaction:
 
         # Validate that description is not just whitespace
         if not self.description.strip():
-            raise ValueError("Transaction description cannot be only whitespace")
+            msg = "Transaction description cannot be only whitespace"
+            raise ValueError(msg)
 
     def is_credit(self) -> bool:
         """Check if transaction is a credit (positive amount)."""
@@ -127,7 +128,8 @@ class Balance:
 
     def is_zero(self) -> bool:
         """Check if both currency balances are zero."""
-        return self.ars_amount == Decimal("0") and self.usd_amount == Decimal("0")
+        zero = Decimal("0")
+        return self.ars_amount == zero and self.usd_amount == zero
 
     def has_positive_balance(self) -> bool:
         """Check if any currency has a positive balance."""
@@ -296,3 +298,111 @@ class Statement:
         usd_diff = abs(calculated_balance.usd_amount - self.reported_balance.usd_amount)
 
         return ars_diff <= tolerance and usd_diff <= tolerance
+
+
+@dataclass
+class ConsolidatedStatement:
+    """
+    Consolidated statement containing transactions from multiple sources.
+
+    Represents a consolidated view of financial transactions from multiple
+    statement sources, providing aggregate functionality and duplicate tracking.
+
+    Attributes:
+        transactions: All transactions sorted chronologically
+        source_statements: Original statements that were consolidated
+        consolidation_date: When consolidation was performed
+        duplicate_count: Number of duplicate transactions found and marked
+    """
+
+    transactions: list[Transaction] = field(default_factory=list)
+    source_statements: list[Statement] = field(default_factory=list)
+    consolidation_date: date = field(default_factory=date.today)
+    duplicate_count: int = 0
+
+    def add_statement(self, statement: Statement) -> None:
+        """
+        Add a statement to the consolidation.
+
+        Args:
+            statement: The statement to add to consolidation
+        """
+        if statement not in self.source_statements:
+            self.source_statements.append(statement)
+
+    def get_consolidated_balance(self) -> Balance:
+        """
+        Calculate total balance across all transactions.
+
+        Returns:
+            Balance object with totals for each currency
+        """
+        ars_total = Decimal("0")
+        usd_total = Decimal("0")
+
+        for transaction in self.transactions:
+            if transaction.currency == Currency.ARS:
+                ars_total += transaction.amount
+            elif transaction.currency == Currency.USD:
+                usd_total += transaction.amount
+
+        return Balance(ars_amount=ars_total, usd_amount=usd_total)
+
+    def get_transaction_count_by_payment_method(self) -> dict[PaymentMethod, int]:
+        """
+        Get transaction counts grouped by payment method.
+
+        Returns:
+            Dictionary mapping payment methods to transaction counts
+        """
+        counts: dict[PaymentMethod, int] = {}
+        for transaction in self.transactions:
+            method = transaction.payment_method
+            counts[method] = counts.get(method, 0) + 1
+        return counts
+
+    def get_date_range(self) -> tuple[date, date] | None:
+        """
+        Get overall date range of all transactions.
+
+        Returns:
+            Tuple of (earliest_date, latest_date) or None if no transactions
+        """
+        if not self.transactions:
+            return None
+
+        dates = [t.date for t in self.transactions]
+        return (min(dates), max(dates))
+
+    def get_source_count(self) -> int:
+        """
+        Get number of source statements.
+
+        Returns:
+            Number of original statements that were consolidated
+        """
+        return len(self.source_statements)
+
+    def get_transaction_count(self) -> int:
+        """
+        Get total number of transactions.
+
+        Returns:
+            Total number of transactions in consolidation
+        """
+        return len(self.transactions)
+
+    def get_latest_transaction_date(self) -> date | None:
+        """
+        Get the most recent transaction date.
+
+        Returns:
+            Latest transaction date or None if no transactions
+        """
+        if not self.transactions:
+            return None
+        return max(t.date for t in self.transactions)
+
+    def is_empty(self) -> bool:
+        """Check if the consolidation has no transactions."""
+        return len(self.transactions) == 0

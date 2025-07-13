@@ -2,12 +2,10 @@
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import TYPE_CHECKING, Optional
+
+from infrastructure.extractors import BalanceExtractionService
 
 from .models import Currency, Statement
-
-if TYPE_CHECKING:
-    from infrastructure.extractors import BalanceExtractionService
 
 
 @dataclass
@@ -85,7 +83,7 @@ class StatementValidator:
     def __init__(
         self,
         balance_tolerance: Decimal = Decimal("0.01"),
-        balance_extraction_service: Optional["BalanceExtractionService"] = None,
+        balance_extraction_service: BalanceExtractionService | None = None,
     ):
         """
         Initialize validator with configurable balance tolerance.

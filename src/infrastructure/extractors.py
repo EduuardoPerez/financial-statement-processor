@@ -90,7 +90,7 @@ class PDFBalanceExtractor(BalanceExtractor):
             elif "," in amount_str:
                 amount_str = amount_str.replace(",", ".")
             return Decimal(amount_str)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, Exception):
             return Decimal("0.0")
 
 
@@ -117,7 +117,7 @@ class CSVBalanceExtractor(BalanceExtractor):
                         amount_str = importe_str.replace(",", "")
                         amount = Decimal(amount_str)
                         total += amount
-                    except (ValueError, TypeError):
+                    except (ValueError, TypeError, Exception):
                         continue
 
             # CSV files are typically ARS only
@@ -152,7 +152,7 @@ class XLSXBalanceExtractor(BalanceExtractor):
                 try:
                     amount = Decimal(str(importe))
                     total += amount
-                except (ValueError, TypeError):
+                except (ValueError, TypeError, Exception):
                     continue
 
             # XLSX files (Mercadopago) are typically ARS only

@@ -76,3 +76,46 @@ class FilenameGenerator:
         return mapping.get(
             payment_method, payment_method.value.upper().replace(" ", "_")
         )
+
+    def generate_consolidated(self, transactions: list) -> str:
+        """
+        Generate filename for consolidated statement.
+
+        Args:
+            transactions: All transactions in consolidated statement
+
+        Returns:
+            Filename in format CONSOLIDATED_YYYYMMDD.xlsx
+
+        Raises:
+            ValueError: If transactions list is empty
+
+        Uses the latest (most recent) transaction date for the suffix.
+
+        Example:
+            >>> generator = FilenameGenerator()
+            >>> filename = generator.generate_consolidated(transactions)
+            >>> print(filename)  # "CONSOLIDATED_20250613.xlsx"
+        """
+        if not transactions:
+            raise ValueError(
+                "Cannot generate consolidated filename with no transactions"
+            )
+
+        # Get the latest transaction date
+        latest_date = self._get_latest_transaction_date(transactions)
+        date_suffix = latest_date.strftime("%Y%m%d")
+
+        return f"CONSOLIDATED_{date_suffix}.xlsx"
+
+    def _get_latest_transaction_date(self, transactions: list):
+        """
+        Get the most recent transaction date.
+
+        Args:
+            transactions: List of transactions
+
+        Returns:
+            Latest transaction date
+        """
+        return max(t.date for t in transactions)

@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from decimal import Decimal
 from pathlib import Path
 
-from .models import PaymentMethod, Statement
+from .models import PaymentMethod, Statement, Transaction
 
 
 class StatementParser(ABC):
@@ -146,7 +146,7 @@ class StatementParser(ABC):
 
 
 class BalanceExtractor(ABC):
-    """Abstract service for extracting reported balances from statement content."""
+    """Abstract service for extracting reported balances from statements."""
 
     @abstractmethod
     def extract_balance(
@@ -168,6 +168,95 @@ class BalanceExtractor(ABC):
             ValueError: If content is invalid or extraction fails
         """
         pass
+
+    @abstractmethod
+    def can_extract(self, payment_method: PaymentMethod) -> bool:
+        """
+        Check if extractor supports the payment method.
+
+        Args:
+            payment_method: Payment method to check
+
+        Returns:
+            True if this extractor can handle the payment method
+        """
+        pass
+
+
+class DuplicateDetector:
+    """
+    Service for detecting and marking duplicate transactions.
+
+    A transaction is considered duplicate if it has the same date and amount
+    as another transaction, regardless of payment method or description.
+    Duplicates are marked with "DUPLICATED: " prefix in the description.
+    """
+
+    def mark_duplicates(
+        self, transactions: list[Transaction]
+    ) -> tuple[list[Transaction], int]:
+        """
+        Mark duplicate transactions with 'DUPLICATED: ' prefix.
+
+        Args:
+            transactions: List of transactions to process
+
+        Returns:
+            Tuple of (marked_transactions, duplicate_count)
+
+        Algorithm:
+            1. Group transactions by (date, amount) tuple
+            2. For groups with multiple transactions, mark all but first as
+               duplicated
+            3. Return new transaction list with modified descriptions and count
+        """
+        from collections import defaultdict
+
+        if not transactions:
+            return transactions, 0
+
+        # Group transactions by (date, amount)
+        groups = defaultdict(list)
+        for transaction in transactions:
+            key = self._create_duplicate_key(transaction)
+            groups[key].append(transaction)
+
+        # Mark duplicates (all but first in each group)
+        result = []
+        duplicate_count = 0
+
+        for group in groups.values():
+            # First occurrence - keep original
+            result.append(group[0])
+
+            # Mark subsequent as duplicates
+            for duplicate in group[1:]:
+                marked = self._mark_as_duplicate(duplicate)
+                result.append(marked)
+                duplicate_count += 1
+
+        return result, duplicate_count
+
+    def _create_duplicate_key(self, transaction: Transaction) -> tuple:
+        """Create key for duplicate detection (date, amount)."""
+        return (transaction.date, transaction.amount)
+
+    def _mark_as_duplicate(self, transaction: Transaction) -> Transaction:
+        """Create new transaction with DUPLICATED: prefix."""
+        new_description = f"DUPLICATED: {transaction.description}"
+
+        return Transaction(
+            date=transaction.date,
+            description=new_description,
+            amount=transaction.amount,
+            currency=transaction.currency,
+            payment_method=transaction.payment_method,
+            reference=transaction.reference,
+        )
+
+
+class BalanceExtractorExtended(BalanceExtractor):
+    """Extended balance extractor with additional functionality."""
 
     @abstractmethod
     def can_extract(self, payment_method: PaymentMethod) -> bool:

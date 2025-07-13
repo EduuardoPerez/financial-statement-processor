@@ -42,7 +42,7 @@ graph TB
 
         FILE_FORMATS["4 File Processors<br/>✅ pdf_parser.py<br/>✅ xls_parser.py<br/>✅ csv_parser.py<br/>✅ xlsx_parser.py"]
 
-        CLI_COMMANDS["4 CLI Commands<br/>✅ info: System information<br/>✅ process: Single file<br/>✅ validate: Check-only<br/>✅ batch: Multiple files"]
+        CLI_COMMANDS["5 CLI Commands<br/>✅ info: System information<br/>✅ process: Single file<br/>✅ validate: Check-only<br/>✅ batch: Multiple files<br/>✅ consolidate: Multi-file consolidation"]
     end
 
     CLI_LAYER --> APP_LAYER

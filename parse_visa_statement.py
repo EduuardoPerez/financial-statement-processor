@@ -1,3 +1,5 @@
+"""Legacy code for parsing Visa statements from PDF, XLSX, and CSV files."""
+
 from __future__ import annotations
 
 import logging

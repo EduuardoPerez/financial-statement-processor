@@ -33,7 +33,11 @@ from rich.progress import (
 )
 from rich.table import Table
 
-from application.services import ProcessingResult, StatementProcessingService
+from application.services import (
+    ConsolidationResult,
+    ProcessingResult,
+    StatementProcessingService,
+)
 from domain.detectors import PaymentMethodDetector
 from domain.filename import FilenameGenerator
 from domain.models import PaymentMethod
@@ -649,6 +653,156 @@ def batch(
     except Exception as e:
         output_error(
             f"Batch processing failed: {str(e)}",
+            verbose=ctx.obj["verbose"],
+            exception=e,
+        )
+        sys.exit(1)
+
+
+@cli.command()
+@click.argument(
+    "input_directory", type=click.Path(exists=True, file_okay=False, path_type=Path)
+)
+@click.option(
+    "--output-dir", "-o", type=click.Path(path_type=Path), help="Output directory"
+)
+@click.option(
+    "--json", "output_json_flag", is_flag=True, help="Output result in JSON format"
+)
+@click.option(
+    "--quiet", "-q", is_flag=True, help="Suppress progress bars and detailed output"
+)
+@click.pass_context
+def consolidate(
+    ctx: click.Context,
+    input_directory: Path,
+    output_dir: Path | None,
+    output_json_flag: bool,
+    quiet: bool,
+) -> None:
+    """Process multiple statement files and create a single consolidated output.
+
+    This command processes all supported files in the input directory,
+    validates each statement individually, and creates a single Excel file
+    containing all transactions sorted chronologically. Duplicate transactions
+    (same date and amount) are marked with 'DUPLICATED: ' prefix.
+
+    Examples:
+        uv run python -m cli consolidate input/
+        uv run python -m cli consolidate input/ --output-dir output/
+        uv run python -m cli consolidate input/ --json
+    """
+    try:
+        config: ApplicationConfig = ctx.obj["config"]
+
+        # Create components
+        processing_service, _ = create_components(config)
+
+        # Determine output directory
+        if output_dir:
+            output_path = output_dir
+        else:
+            output_path = config.output_directory
+
+        # Ensure output directory exists
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Show initial progress if not quiet
+        if not quiet:
+            console.print(f"[blue]🔍 Discovering files in {input_directory}...[/blue]")
+
+        # Process with detailed progress reporting
+        with Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            "[progress.percentage]{task.percentage:>3.0f}%",
+            TimeElapsedColumn(),
+            console=console,
+            disable=quiet,
+        ) as progress:
+            # Add main consolidation task
+            main_task = progress.add_task("Consolidating statements...", total=None)
+
+            # Call consolidation service
+            result: ConsolidationResult = processing_service.consolidate_statements(
+                input_directory, output_path
+            )
+
+            progress.update(main_task, completed=True)
+
+        # Prepare output data
+        consolidation_data = {
+            "success": result.success,
+            "input_directory": str(result.input_directory),
+            "output_file": str(result.output_path) if result.output_path else None,
+            "total_files_found": len(result.successful_files)
+            + len(result.failed_files),
+            "successful_files": len(result.successful_files),
+            "failed_files": len(result.failed_files),
+            "total_transactions": result.total_transactions,
+            "duplicate_count": result.duplicate_count,
+            "processing_time": result.processing_time,
+            "successful_file_details": result.successful_files,
+            "failed_file_details": result.failed_files,
+            "errors": result.errors,
+        }
+
+        if output_json_flag:
+            output_json(consolidation_data)
+        else:
+            # Rich formatted output
+            if result.success:
+                console.print("\n[bold green]✅ Consolidation Complete[/bold green]")
+                console.print(f"   📁 Input: {result.input_directory}")
+                console.print(f"   📄 Output: {result.output_path}")
+                console.print(
+                    f"   ✅ Success: {len(result.successful_files)}/{len(result.successful_files) + len(result.failed_files)} files"
+                )
+                console.print(f"   📈 Transactions: {result.total_transactions}")
+                if result.duplicate_count > 0:
+                    console.print(f"   🔄 Duplicates Found: {result.duplicate_count}")
+                console.print(f"   ⏱️  Time: {result.processing_time:.1f} seconds")
+
+                # Show successful files details if not quiet
+                if not quiet and result.successful_files:
+                    console.print("\n[green]Successfully Processed Files:[/green]")
+                    for file_info in result.successful_files:
+                        console.print(
+                            f"   • {Path(file_info['file']).name}: {file_info['transactions']} transactions ({file_info['payment_method']})"
+                        )
+
+            else:
+                console.print("\n[bold red]❌ Consolidation Failed[/bold red]")
+                if result.errors:
+                    for error in result.errors:
+                        console.print(f"   • {error}")
+
+            # Show failed files with comprehensive alerts
+            if result.failed_files:
+                console.print(
+                    "\n[bold yellow]⚠️  FAILED FILES - ATTENTION REQUIRED:[/bold yellow]"
+                )
+                for failed in result.failed_files:
+                    file_name = Path(failed["file"]).name
+                    errors = failed["errors"]
+                    if isinstance(errors, list):
+                        error_msg = "; ".join(str(e) for e in errors)
+                    else:
+                        error_msg = str(errors)
+                    console.print(f"   • [red]{file_name}[/red]: {error_msg}")
+
+        # Exit with error code if consolidation failed or had file failures
+        if not result.success:
+            sys.exit(1)
+        elif result.failed_files and not quiet:
+            # Show warning but don't exit with error since consolidation succeeded
+            console.print(
+                f"\n[yellow]⚠️  Warning: {len(result.failed_files)} file(s) could not be processed.[/yellow]"
+            )
+
+    except Exception as e:
+        output_error(
+            f"Consolidation failed: {str(e)}",
             verbose=ctx.obj["verbose"],
             exception=e,
         )

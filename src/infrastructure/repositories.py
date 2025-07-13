@@ -13,7 +13,7 @@ from typing import Any
 
 import pandas as pd
 
-from domain.models import Statement
+from domain.models import ConsolidatedStatement, Statement
 from domain.repositories import FileReader, FileWriter, StatementRepository
 
 
@@ -106,6 +106,79 @@ class ExcelStatementRepository(StatementRepository):
         data: list[dict[str, Any]] = []
 
         for transaction in statement.transactions:
+            data.append(
+                {
+                    "Date": transaction.date.strftime("%Y-%m-%d"),
+                    "Description": transaction.description,
+                    "Currency": transaction.currency.value,
+                    "Amount": float(transaction.amount),
+                    "Payment Method": transaction.payment_method.value,
+                }
+            )
+
+        return pd.DataFrame(data)
+
+    def save_consolidated_statement(
+        self, consolidated: "ConsolidatedStatement", output_path: Path
+    ) -> None:
+        """
+        Save consolidated statement to Excel file.
+
+        Args:
+            consolidated: Consolidated statement to save
+            output_path: Path for output Excel file
+
+        Excel Structure:
+        - All transactions in single sheet
+        - Columns: Date, Description, Currency, Amount, Payment Method
+        - Sorted by date ascending
+        - Duplicates marked with "DUPLICATED: " prefix
+
+        Raises:
+            ValueError: If the consolidated statement is invalid
+            OSError: If there's an error writing the file
+        """
+        if not consolidated.transactions:
+            raise ValueError("Cannot save consolidated statement with no transactions")
+
+        # Ensure output directory exists
+        self._file_writer.ensure_directory(output_path.parent)
+
+        # Convert consolidated statement to DataFrame
+        df = self._consolidated_to_dataframe(consolidated)
+
+        # Save as Excel file using pandas with openpyxl engine
+        try:
+            df.to_excel(
+                output_path, index=False, sheet_name="Sheet1", engine="openpyxl"
+            )
+        except Exception as e:
+            raise OSError(
+                f"Failed to save consolidated Excel file to {output_path}: {str(e)}"
+            ) from e
+
+    def _consolidated_to_dataframe(
+        self, consolidated: "ConsolidatedStatement"
+    ) -> pd.DataFrame:
+        """
+        Convert ConsolidatedStatement to DataFrame.
+
+        Args:
+            consolidated: ConsolidatedStatement to convert
+
+        Returns:
+            DataFrame with all transactions sorted chronologically
+
+        Note:
+            Creates DataFrame with columns: Date, Description, Currency,
+            Amount, Payment Method. Transactions are already sorted and
+            duplicates are already marked in the ConsolidatedStatement.
+        """
+        from typing import Any
+
+        data: list[dict[str, Any]] = []
+
+        for transaction in consolidated.transactions:
             data.append(
                 {
                     "Date": transaction.date.strftime("%Y-%m-%d"),

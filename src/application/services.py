@@ -14,16 +14,15 @@ Classes:
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import Any
 
 from domain.factories import ParserFactory
 from domain.filename import FilenameGenerator
-from domain.models import Statement
+from domain.models import ConsolidatedStatement, Statement, Transaction
 from domain.repositories import StatementRepository
+from domain.services import DuplicateDetector
 from domain.validation import StatementValidator, ValidationResult
-
-if TYPE_CHECKING:
-    from infrastructure.extractors import BalanceExtractionService
+from infrastructure.extractors import BalanceExtractionService
 
 
 @dataclass
@@ -50,6 +49,36 @@ class ProcessingResult:
     processing_time: float = 0.0
 
 
+@dataclass
+class ConsolidationResult:
+    """
+    Result of consolidation operation.
+
+    Attributes:
+        input_directory: Directory containing input statement files
+        output_path: Path to the generated consolidated file (None if failed)
+        consolidated_statement: Consolidated statement object (None if failed)
+        successful_files: List of successfully processed files with details
+        failed_files: List of failed files with comprehensive error information
+        total_transactions: Total number of transactions in consolidation
+        duplicate_count: Number of duplicate transactions found and marked
+        processing_time: Time taken to complete consolidation in seconds
+        success: Whether the consolidation completed successfully
+        errors: List of general error messages encountered during consolidation
+    """
+
+    input_directory: Path
+    output_path: Path | None
+    consolidated_statement: ConsolidatedStatement | None
+    successful_files: list[dict[str, Any]] = field(default_factory=list)
+    failed_files: list[dict[str, Any]] = field(default_factory=list)
+    total_transactions: int = 0
+    duplicate_count: int = 0
+    processing_time: float = 0.0
+    success: bool = False
+    errors: list[str] = field(default_factory=list)
+
+
 class StatementProcessingService:
     """
     Main orchestrator service for statement processing.
@@ -74,7 +103,7 @@ class StatementProcessingService:
         repository: StatementRepository,
         validator: StatementValidator,
         filename_generator: FilenameGenerator,
-        balance_extraction_service: Optional["BalanceExtractionService"] = None,
+        balance_extraction_service: BalanceExtractionService | None = None,
     ):
         """
         Initialize the processing service.
@@ -257,3 +286,184 @@ class StatementProcessingService:
             errors=errors,
             processing_time=processing_time,
         )
+
+    def consolidate_statements(
+        self, input_dir: Path, output_dir: Path
+    ) -> ConsolidationResult:
+        """
+        Consolidate multiple statement files into single output.
+
+        Workflow:
+        1. Discover all supported files in input directory
+        2. Parse and validate each file individually
+        3. Collect all transactions from successful parses
+        4. Sort transactions chronologically (oldest to newest)
+        5. Detect and mark duplicates
+        6. Create consolidated statement
+        7. Generate consolidated filename
+        8. Save consolidated Excel file
+
+        Args:
+            input_dir: Directory containing statement files
+            output_dir: Directory for consolidated output
+
+        Returns:
+            ConsolidationResult with processing details
+        """
+        start_time = time.time()
+
+        # Discover supported files
+        files = self._discover_statement_files(input_dir)
+
+        if not files:
+            return ConsolidationResult(
+                input_directory=input_dir,
+                output_path=None,
+                consolidated_statement=None,
+                success=False,
+                processing_time=time.time() - start_time,
+                errors=["No supported files found in directory"],
+            )
+
+        # Process each file individually
+        successful_statements: list[Statement] = []
+        successful_files: list[dict[str, Any]] = []
+        failed_files: list[dict[str, Any]] = []
+
+        for file_path in files:
+            statement, errors = self._process_individual_file(file_path)
+            if statement:
+                successful_statements.append(statement)
+                successful_files.append(
+                    {
+                        "file": str(file_path),
+                        "transactions": len(statement.transactions),
+                        "payment_method": statement.payment_method.value,
+                    }
+                )
+            else:
+                failed_files.append(
+                    {
+                        "file": str(file_path),
+                        "errors": errors,
+                    }
+                )
+
+        # Check if we have any successful statements
+        if not successful_statements:
+            return ConsolidationResult(
+                input_directory=input_dir,
+                output_path=None,
+                consolidated_statement=None,
+                successful_files=successful_files,
+                failed_files=failed_files,
+                success=False,
+                processing_time=time.time() - start_time,
+                errors=["No valid statements could be processed"],
+            )
+
+        # Collect and sort all transactions
+        all_transactions = self._collect_all_transactions(successful_statements)
+        sorted_transactions = self._sort_transactions_chronologically(all_transactions)
+
+        # Detect and mark duplicates
+        detector = DuplicateDetector()
+        processed_transactions, duplicate_count = detector.mark_duplicates(
+            sorted_transactions
+        )
+
+        # Create consolidated statement
+        consolidated = ConsolidatedStatement(
+            transactions=processed_transactions,
+            source_statements=successful_statements,
+            duplicate_count=duplicate_count,
+        )
+
+        # Add source statements to consolidated
+        for statement in successful_statements:
+            consolidated.add_statement(statement)
+
+        # Generate consolidated filename and save
+        try:
+            filename = self._filename_generator.generate_consolidated(
+                processed_transactions
+            )
+            output_path = output_dir / filename
+
+            # Save consolidated statement (need to enhance repository)
+            if hasattr(self._repository, "save_consolidated_statement"):
+                self._repository.save_consolidated_statement(consolidated, output_path)
+            else:
+                # Fallback: create a regular statement for now
+                dummy_statement = Statement(
+                    payment_method=(
+                        processed_transactions[0].payment_method
+                        if processed_transactions
+                        else successful_statements[0].payment_method
+                    ),
+                    transactions=processed_transactions,
+                )
+                self._repository.save_statement(dummy_statement, output_path)
+
+            return ConsolidationResult(
+                input_directory=input_dir,
+                output_path=output_path,
+                consolidated_statement=consolidated,
+                successful_files=successful_files,
+                failed_files=failed_files,
+                total_transactions=len(processed_transactions),
+                duplicate_count=duplicate_count,
+                processing_time=time.time() - start_time,
+                success=True,
+            )
+
+        except Exception as e:
+            return ConsolidationResult(
+                input_directory=input_dir,
+                output_path=None,
+                consolidated_statement=consolidated,
+                successful_files=successful_files,
+                failed_files=failed_files,
+                total_transactions=len(processed_transactions),
+                duplicate_count=duplicate_count,
+                processing_time=time.time() - start_time,
+                success=False,
+                errors=[f"Failed to save consolidated file: {str(e)}"],
+            )
+
+    def _discover_statement_files(self, input_dir: Path) -> list[Path]:
+        """Find all supported statement files in directory."""
+        supported_extensions = self._parser_factory.get_supported_extensions()
+        files: list[Path] = []
+        for ext in supported_extensions:
+            files.extend(input_dir.glob(f"*{ext}"))
+            files.extend(input_dir.glob(f"*{ext.upper()}"))
+        return sorted(set(files))  # Remove duplicates and sort
+
+    def _process_individual_file(
+        self, file_path: Path
+    ) -> tuple[Statement | None, list[str]]:
+        """Process single file and return statement or errors."""
+        try:
+            result = self.process_statement(file_path, Path("temp"))
+            if result.success and result.statement:
+                return result.statement, []
+            else:
+                return None, result.errors
+        except Exception as e:
+            return None, [str(e)]
+
+    def _collect_all_transactions(
+        self, statements: list[Statement]
+    ) -> list[Transaction]:
+        """Collect and sort all transactions chronologically."""
+        all_transactions: list[Transaction] = []
+        for statement in statements:
+            all_transactions.extend(statement.transactions)
+        return all_transactions
+
+    def _sort_transactions_chronologically(
+        self, transactions: list[Transaction]
+    ) -> list[Transaction]:
+        """Sort transactions by date ascending (oldest first)."""
+        return sorted(transactions, key=lambda t: t.date)

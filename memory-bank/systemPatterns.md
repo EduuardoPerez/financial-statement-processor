@@ -22,7 +22,7 @@ flowchart TB
 ```mermaid
 graph TB
     subgraph "🎯 Presentation Layer (cli/ - 3 files verified)"
-        CLI_MAIN["main.py (673 lines)<br/>🎨 Rich UI Framework<br/>4 Professional Commands<br/>Click decorators + context management"]
+        CLI_MAIN["main.py (673 lines)<br/>🎨 Rich UI Framework<br/>5 Professional Commands<br/>Click decorators + context management"]
 
         CLI_INIT["__init__.py<br/>Module initialization<br/>Package definition"]
 
