@@ -6,7 +6,11 @@ from decimal import Decimal
 import pytest
 
 from domain.models import Balance, Currency, PaymentMethod, Statement, Transaction
-from domain.validation import StatementValidator, ValidationResult
+from domain.validation import (
+    EnhancedValidationResult,
+    StatementValidator,
+    ValidationResult,
+)
 
 
 class TestValidationResult:
@@ -101,7 +105,9 @@ class TestStatementValidator:
 
     def test_validate_statement_without_payment_method(self, validator):
         """Test validation of statement without payment method."""
-        statement = Statement(payment_method=None)
+        statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+        # Set payment_method to None after creation to test validation
+        statement.payment_method = None
 
         result = validator.validate(statement)
 
@@ -155,6 +161,76 @@ class TestStatementValidator:
 
         assert result.is_valid is False
         assert any("ARS balance mismatch" in error for error in result.errors)
+
+    def test_validate_with_content_no_service(self, validator):
+        """Test validate_with_content without balance extraction service."""
+        # Create statement without reported balance
+        statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+        transaction = Transaction(
+            date=date(2025, 1, 15),
+            description="Test Purchase",
+            amount=Decimal("100.50"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+        )
+        statement.add_transaction(transaction)
+
+        result = validator.validate_with_content(statement, "raw content")
+
+        assert result.is_valid is True
+        assert "No reported balance available for validation" in result.warnings
+
+    def test_validate_with_content_with_service(self, valid_transaction):
+        """Test validate_with_content with balance extraction service."""
+        from unittest.mock import Mock
+
+        mock_service = Mock()
+        mock_service.extract_balance.return_value = {
+            "ars": Decimal("100.50"),
+            "usd": Decimal("0.00"),
+        }
+
+        validator = StatementValidator(balance_extraction_service=mock_service)
+        statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+        statement.add_transaction(valid_transaction)
+
+        result = validator.validate_with_content(statement, "raw content")
+
+        assert result.is_valid is True
+        mock_service.extract_balance.assert_called_once_with(
+            "raw content", PaymentMethod.BBVA_VISA
+        )
+
+    def test_validate_balance_excluding_payments(self, validator):
+        """Test balance calculation excluding payment transactions."""
+        # Create transactions including payment transactions
+        regular_transaction = Transaction(
+            date=date(2025, 1, 15),
+            description="Regular Purchase",
+            amount=Decimal("100.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+        )
+        payment_transaction = Transaction(
+            date=date(2025, 1, 16),
+            description="SU PAGO EN PESOS",  # Payment transaction
+            amount=Decimal("-50.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+        )
+
+        statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+        statement.add_transaction(regular_transaction)
+        statement.add_transaction(payment_transaction)
+        statement.reported_balance = Balance(
+            ars_amount=Decimal("100.00"),  # Should match only regular transaction
+            usd_amount=Decimal("0.00"),
+        )
+
+        result = validator.validate(statement)
+
+        # Should be valid because payment transaction is excluded
+        assert result.is_valid is True
 
     def test_validate_balance_consistency_usd_mismatch(self, validator):
         """Test validation with USD balance mismatch."""
@@ -310,3 +386,79 @@ class TestStatementValidator:
 
         assert result.is_valid is False
         assert any("ARS balance mismatch" in error for error in result.errors)
+
+
+class TestEnhancedValidationResult:
+    """Unit tests for EnhancedValidationResult class."""
+
+    def test_print_detailed_summary_with_balance(self, capsys):
+        """Test printing detailed summary with balance information."""
+        result = EnhancedValidationResult(
+            is_valid=True,
+            errors=[],
+            warnings=["Test warning"],
+            reported_ars=Decimal("1000.50"),
+            reported_usd=Decimal("100.25"),
+            computed_ars=Decimal("1000.50"),
+            computed_usd=Decimal("100.25"),
+            ars_difference=Decimal("0.00"),
+            usd_difference=Decimal("0.00"),
+            transaction_count=5,
+            payment_method="BBVA VISA",
+        )
+
+        result.print_detailed_summary("test_file.pdf")
+
+        captured = capsys.readouterr()
+        assert "VALIDATION SUMMARY: test_file.pdf" in captured.out
+        assert "Transactions Processed: 5" in captured.out
+        assert "Payment Method: BBVA VISA" in captured.out
+        assert "Reported ARS: 1,000.50" in captured.out
+        assert "Computed ARS: 1,000.50" in captured.out
+        assert "✅ YES" in captured.out
+        assert "⚠️  VALIDATION WARNINGS:" in captured.out
+        assert "Test warning" in captured.out
+
+    def test_print_detailed_summary_with_errors(self, capsys):
+        """Test printing detailed summary with validation errors."""
+        result = EnhancedValidationResult(
+            is_valid=False,
+            errors=["Balance mismatch", "Invalid data"],
+            warnings=[],
+            reported_ars=Decimal("1000.00"),
+            reported_usd=Decimal("100.00"),
+            computed_ars=Decimal("1005.00"),
+            computed_usd=Decimal("105.00"),
+            ars_difference=Decimal("5.00"),
+            usd_difference=Decimal("5.00"),
+            transaction_count=3,
+            payment_method="MACRO VISA",
+        )
+
+        result.print_detailed_summary("error_file.pdf")
+
+        captured = capsys.readouterr()
+        assert "VALIDATION SUMMARY: error_file.pdf" in captured.out
+        assert "❌ NO" in captured.out  # Balance mismatch indication
+        assert "❌ VALIDATION ERRORS:" in captured.out
+        assert "Balance mismatch" in captured.out
+        assert "Invalid data" in captured.out
+
+    def test_print_detailed_summary_no_balance_data(self, capsys):
+        """Test printing summary without balance data."""
+        result = EnhancedValidationResult(
+            is_valid=True,
+            errors=[],
+            warnings=[],
+            transaction_count=2,
+            payment_method="BBVA ACCOUNT",
+        )
+
+        result.print_detailed_summary("no_balance.pdf")
+
+        captured = capsys.readouterr()
+        assert "VALIDATION SUMMARY: no_balance.pdf" in captured.out
+        assert "Transactions Processed: 2" in captured.out
+        assert "Payment Method: BBVA ACCOUNT" in captured.out
+        # Balance section should not appear
+        assert "BALANCE VALIDATION:" not in captured.out

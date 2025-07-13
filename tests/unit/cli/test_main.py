@@ -205,12 +205,18 @@ class TestCreateComponents:
         assert mock_detector.register_detector.call_count == 2
 
         # Verify service creation with proper dependencies
-        mock_service_class.assert_called_once_with(
-            parser_factory=mock_factory,
-            repository=mock_repository,
-            validator=mock_validator,
-            filename_generator=mock_filename_gen,
-        )
+        # Extract the actual call to check parameters
+        actual_call = mock_service_class.call_args
+        assert actual_call is not None
+
+        # Check required parameters are present
+        kwargs = actual_call.kwargs
+        assert kwargs["parser_factory"] == mock_factory
+        assert kwargs["repository"] == mock_repository
+        assert kwargs["validator"] == mock_validator
+        assert kwargs["filename_generator"] == mock_filename_gen
+        # balance_extraction_service is also passed but we don't need to verify its exact value
+        assert "balance_extraction_service" in kwargs
 
     @patch("cli.main.PaymentMethodDetector", side_effect=Exception("Component error"))
     def test_create_components_failure(self, mock_detector):

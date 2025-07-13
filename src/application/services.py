@@ -14,12 +14,16 @@ Classes:
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import TYPE_CHECKING, Optional
 
 from domain.factories import ParserFactory
 from domain.filename import FilenameGenerator
 from domain.models import Statement
 from domain.repositories import StatementRepository
 from domain.validation import StatementValidator, ValidationResult
+
+if TYPE_CHECKING:
+    from infrastructure.extractors import BalanceExtractionService
 
 
 @dataclass
@@ -70,6 +74,7 @@ class StatementProcessingService:
         repository: StatementRepository,
         validator: StatementValidator,
         filename_generator: FilenameGenerator,
+        balance_extraction_service: Optional["BalanceExtractionService"] = None,
     ):
         """
         Initialize the processing service.
@@ -79,11 +84,13 @@ class StatementProcessingService:
             repository: Repository for saving statements
             validator: Validator for statement validation
             filename_generator: Generator for output filenames
+            balance_extraction_service: Optional service for balance extraction
         """
         self._parser_factory = parser_factory
         self._repository = repository
         self._validator = validator
         self._filename_generator = filename_generator
+        self._balance_extraction_service = balance_extraction_service
 
     def process_statement(self, input_path: Path, output_dir: Path) -> ProcessingResult:
         """
@@ -122,23 +129,25 @@ class StatementProcessingService:
                     validation_result,
                 )
 
-            # Step 2: Parse the statement
+            # Step 2: Parse the statement (with enhanced validation if available)
             try:
-                statement = parser.parse(input_path)
-            except Exception as e:
-                errors.append(f"Parsing failed: {str(e)}")
-                return self._create_error_result(
-                    input_path,
-                    start_time,
-                    errors,
-                    statement,
-                    output_path,
-                    validation_result,
-                )
+                # Try enhanced parsing with content if parser supports it
+                if hasattr(parser, "parse_with_content") and hasattr(
+                    self._validator, "validate_with_content"
+                ):
+                    statement, raw_content = parser.parse_with_content(input_path)
 
-            # Step 3: Validate the statement
-            try:
-                validation_result = self._validator.validate(statement)
+                    # Step 3: Enhanced validation with content
+                    validation_result = self._validator.validate_with_content(
+                        statement, raw_content
+                    )
+                else:
+                    # Fall back to regular parsing
+                    statement = parser.parse(input_path)
+
+                    # Step 3: Regular validation
+                    validation_result = self._validator.validate(statement)
+
                 if not validation_result.is_valid:
                     errors.extend(validation_result.errors)
                     return self._create_error_result(
@@ -150,7 +159,7 @@ class StatementProcessingService:
                         validation_result,
                     )
             except Exception as e:
-                errors.append(f"Validation failed: {str(e)}")
+                errors.append(f"Parsing/validation failed: {str(e)}")
                 val_result = ValidationResult(is_valid=False, errors=[str(e)])
                 validation_result = val_result
                 return self._create_error_result(

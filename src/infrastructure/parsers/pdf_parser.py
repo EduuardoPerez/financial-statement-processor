@@ -104,6 +104,35 @@ class PDFStatementParser(StatementParser):
             >>> assert isinstance(statement, Statement)
             >>> assert len(statement.transactions) > 0
         """
+        statement, _ = self.parse_with_content(file_path)
+        return statement
+
+    def parse_with_content(self, file_path: Path) -> tuple[Statement, str]:
+        """
+        Parse the PDF file and return Statement with raw content.
+
+        This method extracts raw text from the PDF and returns both the
+        parsed Statement object and the raw text content for enhanced
+        validation with balance extraction.
+
+        Args:
+            file_path: Path to the PDF file to parse
+
+        Returns:
+            Tuple of (Statement object, raw text content)
+
+        Raises:
+            FileNotFoundError: If the input file does not exist
+            ValueError: If the file format is invalid or cannot be parsed
+            PermissionError: If the file cannot be read
+            OSError: If there's an I/O error during file processing
+
+        Example:
+            >>> parser = PDFStatementParser(detector, transaction_builder)
+            >>> statement, content = parser.parse_with_content(Path("stmt.pdf"))
+            >>> assert isinstance(statement, Statement)
+            >>> assert len(content) > 0
+        """
         if not file_path.exists():
             raise FileNotFoundError(f"PDF file not found: {file_path}")
 
@@ -124,7 +153,7 @@ class PDFStatementParser(StatementParser):
             for transaction in transactions:
                 statement.add_transaction(transaction)
 
-            return statement
+            return statement, raw_text
 
         except PermissionError as e:
             raise PermissionError(

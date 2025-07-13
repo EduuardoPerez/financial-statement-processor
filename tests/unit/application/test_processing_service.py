@@ -34,6 +34,7 @@ class TestStatementProcessingService:
             "repository": Mock(spec=StatementRepository),
             "validator": Mock(spec=StatementValidator),
             "filename_generator": Mock(spec=FilenameGenerator),
+            "balance_extraction_service": Mock(),
         }
 
     @pytest.fixture
@@ -82,7 +83,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies[
             "filename_generator"
         ].generate.return_value = "BBVA-VISA_20250622.xlsx"
@@ -109,9 +115,10 @@ class TestStatementProcessingService:
         mock_dependencies["parser_factory"].create_parser.assert_called_once_with(
             input_path
         )
-        mock_parser.parse.assert_called_once_with(input_path)
-        mock_dependencies["validator"].validate.assert_called_once_with(
-            sample_statement
+        # Enhanced parsing path uses parse_with_content instead of parse
+        mock_parser.parse_with_content.assert_called_once_with(input_path)
+        mock_dependencies["validator"].validate_with_content.assert_called_once_with(
+            sample_statement, "mock content"
         )
         mock_dependencies["filename_generator"].generate.assert_called_once_with(
             sample_statement
@@ -135,7 +142,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies[
             "filename_generator"
         ].generate.return_value = "test-transactions.xlsx"
@@ -162,7 +174,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies[
             "filename_generator"
         ].generate.return_value = "MACRO-VISA-transactions.xlsx"
@@ -171,8 +188,10 @@ class TestStatementProcessingService:
         result = service.process_statement(input_path, output_dir)
 
         # Assert - Specific Prompt 18 requirement
-        assert result.output_path.suffix == ".xlsx"
-        assert result.output_path.name == "MACRO-VISA-transactions.xlsx"
+        assert result.output_path is not None
+        output_path = result.output_path  # Type narrowing for MyPy
+        assert output_path.suffix == ".xlsx"
+        assert output_path.name == "MACRO-VISA-transactions.xlsx"
         assert result.success is True
 
     def test_process_statement_parser_creation_fails(self, mock_dependencies):
@@ -207,6 +226,9 @@ class TestStatementProcessingService:
         mock_parser = Mock(spec=StatementParser)
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.side_effect = Exception("Failed to extract text from PDF")
+        mock_parser.parse_with_content.side_effect = Exception(
+            "Failed to extract text from PDF"
+        )
 
         # Act
         result = service.process_statement(input_path, output_dir)
@@ -216,7 +238,7 @@ class TestStatementProcessingService:
         assert result.statement is None
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Parsing failed" in result.errors[0]
+        assert "Parsing/validation failed" in result.errors[0]
         assert "Failed to extract text from PDF" in result.errors[0]
 
     def test_process_statement_validation_fails(
@@ -235,7 +257,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
 
         # Act
         result = service.process_statement(input_path, output_dir)
@@ -263,7 +290,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies["filename_generator"].generate.side_effect = Exception(
             "Failed to generate filename"
         )
@@ -291,7 +323,12 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies[
             "filename_generator"
         ].generate.return_value = "test-transactions.xlsx"
@@ -350,7 +387,15 @@ class TestStatementProcessingService:
 
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.side_effect = slow_parse
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.side_effect = lambda path: (
+            slow_parse(path),
+            "mock content",
+        )
         mock_dependencies["validator"].validate.return_value = mock_validation_result
+        mock_dependencies[
+            "validator"
+        ].validate_with_content.return_value = mock_validation_result
         mock_dependencies[
             "filename_generator"
         ].generate.return_value = "test-transactions.xlsx"
@@ -375,7 +420,12 @@ class TestStatementProcessingService:
         mock_parser = Mock(spec=StatementParser)
         mock_dependencies["parser_factory"].create_parser.return_value = mock_parser
         mock_parser.parse.return_value = sample_statement
+        # Set up parse_with_content to return tuple (statement, content)
+        mock_parser.parse_with_content.return_value = (sample_statement, "mock content")
         mock_dependencies["validator"].validate.side_effect = Exception(
+            "Validation system error"
+        )
+        mock_dependencies["validator"].validate_with_content.side_effect = Exception(
             "Validation system error"
         )
 
@@ -387,7 +437,7 @@ class TestStatementProcessingService:
         assert result.statement == sample_statement
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Validation failed" in result.errors[0]
+        assert "Parsing/validation failed" in result.errors[0]
         assert "Validation system error" in result.errors[0]
         assert result.validation_result.is_valid is False
         assert "Validation system error" in result.validation_result.errors

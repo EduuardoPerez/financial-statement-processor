@@ -41,6 +41,7 @@ from infrastructure.detectors import (
     BBVADetector,
     MacroDetector,
 )
+from infrastructure.extractors import build_default_balance_service
 from infrastructure.factories import DefaultParserFactory
 from infrastructure.repositories import ExcelStatementRepository
 
@@ -106,8 +107,11 @@ def create_components(
         file_reader = SimpleFileReader()
         file_writer = SimpleFileWriter()
 
-        # Create other components
-        validator = StatementValidator()
+        # Create balance extraction service
+        balance_service = build_default_balance_service()
+
+        # Create other components with balance service
+        validator = StatementValidator(balance_extraction_service=balance_service)
         filename_generator = FilenameGenerator()
         repository = ExcelStatementRepository(file_reader, file_writer)
 
@@ -117,6 +121,7 @@ def create_components(
             repository=repository,
             validator=validator,
             filename_generator=filename_generator,
+            balance_extraction_service=balance_service,
         )
 
         return processing_service, parser_factory
