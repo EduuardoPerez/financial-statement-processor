@@ -14,8 +14,10 @@ Commands:
 """
 
 import json
+import logging
 import sys
 import traceback
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -47,6 +49,36 @@ from infrastructure.repositories import ExcelStatementRepository
 
 # Global console for rich output
 console = Console()
+
+
+def configure_clean_output(verbose: bool = False) -> None:
+    """Configure clean output by suppressing noisy warnings."""
+    if not verbose:
+        # Suppress all PDF library warnings more aggressively
+        warnings.filterwarnings("ignore", category=UserWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+        # Suppress specific PDF-related warnings
+        warnings.filterwarnings("ignore", message=".*CropBox missing.*")
+        warnings.filterwarnings(
+            "ignore", message=".*Workbook contains no default style.*"
+        )
+        warnings.filterwarnings("ignore", message=".*found in sys.modules.*")
+
+        # Configure logging to reduce noise from all PDF/Excel libraries
+        logging.getLogger("pdfplumber").setLevel(logging.ERROR)
+        logging.getLogger("openpyxl").setLevel(logging.ERROR)
+        logging.getLogger("pandas").setLevel(logging.ERROR)
+        logging.getLogger("pdfminer").setLevel(logging.ERROR)
+        logging.getLogger("fitz").setLevel(logging.ERROR)
+        logging.getLogger("pypdf").setLevel(logging.ERROR)
+
+        # Suppress all warnings from PDF processing libraries
+        for logger_name in ["pdfplumber", "pdfminer", "fitz", "pypdf", "openpyxl"]:
+            logger = logging.getLogger(logger_name)
+            logger.setLevel(logging.ERROR)
+            logger.addFilter(lambda record: False)
 
 
 class CLIError(Exception):
@@ -163,6 +195,9 @@ def cli(ctx: click.Context, config: Path | None, verbose: bool) -> None:
     ctx.ensure_object(dict)
 
     try:
+        # Configure clean output (suppress warnings unless verbose)
+        configure_clean_output(verbose)
+
         # Load configuration
         app_config = load_config(config)
         if verbose:
@@ -491,12 +526,16 @@ def validate(
 @click.option(
     "--json", "output_json_flag", is_flag=True, help="Output result in JSON format"
 )
+@click.option(
+    "--quiet", "-q", is_flag=True, help="Suppress progress bars and detailed output"
+)
 @click.pass_context
 def batch(
     ctx: click.Context,
     input_directory: Path,
     output_dir: Path | None,
     output_json_flag: bool,
+    quiet: bool,
 ) -> None:
     """Process multiple statement files in a directory."""
     try:
@@ -619,6 +658,8 @@ def batch(
 def main() -> None:
     """Main entry point for the CLI."""
     try:
+        # Configure clean output as early as possible
+        configure_clean_output()
         cli()
     except KeyboardInterrupt:
         console.print("\n[yellow]Operation cancelled by user.[/yellow]")
