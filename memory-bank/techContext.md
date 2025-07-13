@@ -1,579 +1,257 @@
 # Tech Context - Financial Statement Processor
 
-## 🚨 CRITICAL: Legacy Script Technology Elimination
-
-```mermaid
-flowchart TB
-    LEGACY["❌ parse_visa_statement.py<br/>📊 1,532 lines MONOLITHIC<br/>🏗️ Single-file technology<br/>⛔ LEGACY TECH - ELIMINATED"]
-
-    MODERN["✅ Modern Tech Stack: src/<br/>🎯 31 files, enterprise technologies<br/>🚀 Production stack active<br/>✅ CODE-VERIFIED EXCELLENCE"]
-
-    LEGACY -.->|"TECHNOLOGY TRANSFORMATION"| MODERN
-
-    style LEGACY fill:#ffcccc,stroke:#ff0000,stroke-width:4px,stroke-dasharray: 5 5
-    style MODERN fill:#ccffcc,stroke:#00aa00,stroke-width:3px
-```
-
-**⚠️ LEGACY STATUS**: Monolithic single-file approach completely replaced by modern enterprise stack
-**✅ PRODUCTION STACK**: Python 3.11+ with enterprise frameworks verified active
-**✅ PRODUCTION COMMANDS**: `PYTHONPATH=src uv run python -m cli.main batch input/` | `PYTHONPATH=src uv run python -m cli.main consolidate input/`
-
-## Modern Technology Architecture (Code-Verified Active)
+## Modern Technology Stack (pyproject.toml Verified)
 
 ```mermaid
 graph TB
-    subgraph "🏗️ Foundation Technologies (Production Active)"
-        PYTHON_MODERN["Python 3.11+<br/>✅ Modern type system verified<br/>🔧 Union types (X | None) active<br/>⚡ Enhanced performance<br/>🎯 Generic collections operational"]
+    subgraph "Foundation Technologies (Code-Verified)"
+        PYTHON_MODERN["Python 3.11+<br/>requires-python = '>=3.11'<br/>Modern type system<br/>Enhanced performance"]
 
-        TYPE_SYSTEM["Advanced Type System<br/>✅ 100% MyPy compliance verified<br/>🛡️ Runtime safety active<br/>📊 @dataclass(frozen=True)<br/>🔍 Protocol definitions"]
+        CORE_DEPENDENCIES["Core Dependencies<br/>click>=8.1.0 (CLI framework)<br/>rich>=13.0.0 (Terminal UI)<br/>pandas>=2.3.0 (Data processing)<br/>pdfplumber>=0.11.6 (PDF extraction)<br/>openpyxl>=3.1.5 (Excel generation)"]
 
-        ASYNC_FOUNDATION["Asyncio Foundation<br/>✅ async_processing.py verified<br/>🔄 Event loops active<br/>⚡ Performance optimization<br/>🎛️ Resource management"]
+        ADDITIONAL_DEPS["Additional Dependencies<br/>xlrd>=2.0.2 (Legacy Excel)<br/>pyyaml>=6.0.0 (Configuration)"]
     end
 
-    subgraph "🎯 Core Processing Stack (Active)"
-        PDF_TECH["pdfplumber<br/>✅ pdf_parser.py verified<br/>📑 Layout analysis<br/>📄 Multi-page support<br/>🔍 Pattern recognition"]
+    subgraph "Development Excellence (dependency-groups.dev)"
+        DEV_DEPENDENCIES["Development Tools<br/>pytest>=8.4.0 (Testing)<br/>ruff>=0.12.0 (Code quality)<br/>mypy>=1.8.0 (Type checking)<br/>pre-commit>=3.6.0 (Quality gates)"]
 
-        DATA_TECH["pandas<br/>✅ xls_parser.py verified<br/>📊 Multi-format I/O<br/>🌍 European format: 1.234,56<br/>🔢 Excel integration"]
-
-        EXCEL_TECH["openpyxl<br/>✅ xlsx_parser.py verified<br/>🎨 Professional formatting<br/>📈 repositories.py integration<br/>📊 Analysis-ready output"]
-
-        PRECISION_TECH["decimal<br/>✅ models.py verified<br/>💰 Financial precision<br/>💱 Currency handling<br/>⚖️ Balance validation"]
+        QUALITY_SUPPORT["Quality Support<br/>pytest-cov>=5.0.0 (Coverage)<br/>pytest-asyncio>=0.23.0 (Async testing)<br/>pandas-stubs>=2.1.0 (Type stubs)<br/>types-openpyxl>=3.1.0 (Type support)<br/>python-dotenv>=1.0.0 (Environment)<br/>types-pyyaml>=6.0.12.20250516 (YAML types)"]
     end
 
-    subgraph "🎨 User Interface Stack (Active)"
-        CLI_FRAMEWORK["Click<br/>✅ main.py verified (673 lines)<br/>⚙️ @click.group() decorators<br/>📋 5 commands operational<br/>🎯 Professional interface<br/>★ Consolidation validated"]
-
-        UI_FRAMEWORK["Rich<br/>✅ main.py integration verified<br/>📊 Progress() components<br/>🎨 Console() styling<br/>📋 Table() formatting"]
-
-        CONSOLE_TECH["Advanced Console<br/>✅ Real-time updates<br/>📈 Progress tracking<br/>❌ Error formatting<br/>📊 Status indication"]
-    end
-
-    subgraph "🔧 Development Stack (Active)"
-        PACKAGE_MGR["uv<br/>✅ pyproject.toml verified<br/>⚡ Lightning dependency resolution<br/>🔧 uv.lock active<br/>📦 Virtual environments"]
-
-        CODE_QUALITY["ruff<br/>✅ .pre-commit-config.yaml verified<br/>📝 Import organization<br/>🎨 Code formatting<br/>⚡ 10-100x faster than flake8"]
-
-        TYPE_CHECKER["mypy<br/>✅ 100% compliance verified<br/>🛡️ Static analysis<br/>🔍 Runtime safety<br/>📊 Error prevention"]
-
-        TESTING["pytest<br/>✅ 680+ tests verified<br/>📊 tests/ structure confirmed<br/>🔧 Integration support<br/>🧪 Quality assurance"]
-    end
-
-    PYTHON_MODERN --> PDF_TECH
-    TYPE_SYSTEM --> DATA_TECH
-    ASYNC_FOUNDATION --> EXCEL_TECH
-
-    PDF_TECH --> CLI_FRAMEWORK
-    DATA_TECH --> UI_FRAMEWORK
-    EXCEL_TECH --> CONSOLE_TECH
-    PRECISION_TECH --> PACKAGE_MGR
-
-    CLI_FRAMEWORK --> CODE_QUALITY
-    UI_FRAMEWORK --> TYPE_CHECKER
-    CONSOLE_TECH --> TESTING
+    PYTHON_MODERN --> CORE_DEPENDENCIES
+    CORE_DEPENDENCIES --> ADDITIONAL_DEPS
+    ADDITIONAL_DEPS --> DEV_DEPENDENCIES
+    DEV_DEPENDENCIES --> QUALITY_SUPPORT
 ```
 
-## File Processing Technology Matrix (Code-Verified)
+## File Processing Technology Implementation (Code-Verified)
 
-```mermaid
-flowchart TD
-    INPUT["Multi-Format Input Files"] --> ROUTING["Technology Routing<br/>infrastructure/detectors.py"]
+**PDF Processing Engine**:
 
-    subgraph "📄 PDF Processing Technology (pdf_parser.py verified)"
-        PDF_LIB["pdfplumber Library<br/>✅ Pure Python processing<br/>📊 Layout-aware parsing<br/>🔍 Text extraction engine<br/>🎯 Multi-page iteration"]
+- **pdfplumber>=0.11.6**: Advanced PDF text extraction with layout awareness
+- **Implementation**: PDFStatementParser in infrastructure/parsers/pdf_parser.py (200+ lines)
+- **Capabilities**: Multi-page support, sophisticated transaction parsing, regex pattern matching
+- **Integration**: TransactionBuilder.build_from_pdf_line() with DateConverter + AmountParser injection
 
-        REGEX_ENGINE["Regex Processing Engine<br/>✅ Transaction patterns<br/>🔢 European format: 1.234,56<br/>💰 Currency detection ARS/USD<br/>📋 Pattern matching"]
+**Excel Processing Stack**:
 
-        BALANCE_EXTRACT["Balance Extraction<br/>✅ SALDO ACTUAL patterns<br/>⚖️ Multi-currency support<br/>🎯 Validation logic<br/>📊 European number handling"]
-    end
+- **pandas>=2.3.0**: Efficient structured data processing with multi-format I/O
+- **openpyxl>=3.1.5**: Modern XLSX processing with professional formatting via ExcelStatementRepository
+- **xlrd>=2.0.2**: Legacy XLS support for bank account statements
+- **Implementation**: XLSStatementParser and XLSXStatementParser in DefaultParserFactory auto-registration
 
-    subgraph "📊 Excel Processing Technology (infrastructure/parsers/)"
-        PANDAS_ENGINE["pandas Excel Engine<br/>✅ xls_parser.py verified<br/>📊 read_excel() integration<br/>🔢 Structured data handling<br/>📋 Column processing"]
+**CSV Processing**:
 
-        OPENPYXL_ENGINE["openpyxl Engine<br/>✅ xlsx_parser.py verified<br/>📈 Modern XLSX support<br/>🎨 Advanced formatting<br/>📊 Professional output"]
+- **pandas>=2.3.0**: Intelligent delimiter detection and European format handling
+- **Implementation**: CSVStatementParser with TransactionBuilder.build_from_csv_data()
+- **Capabilities**: Encoding detection, format adaptation, validation
 
-        FORMULA_EVAL["Formula Evaluation<br/>✅ Balance calculations<br/>🔢 Excel formulas<br/>💰 Account totals<br/>⚖️ Validation logic"]
-    end
+**Professional Output**:
 
-    subgraph "📋 CSV Processing Technology (csv_parser.py verified)"
-        CSV_ENGINE["pandas CSV Engine<br/>✅ read_csv() verified<br/>🔧 Semicolon delimiters<br/>📊 European standards<br/>📋 Format validation"]
+- **openpyxl>=3.1.5**: Analysis-ready Excel generation via ExcelStatementRepository
+- **pandas>=2.3.0**: Data transformation and structured output
+- **Implementation**: Professional formatting with business intelligence ready structure
 
-        ENCODING_ENGINE["Encoding Engine<br/>✅ UTF-8 and Latin-1<br/>🌐 International support<br/>🔧 Character processing<br/>📄 Safe reading"]
+## Professional CLI Technology Stack (Code-Verified)
 
-        STREAMING_ENGINE["Streaming Engine<br/>✅ Large file processing<br/>💾 Memory efficiency<br/>⚡ Performance optimization<br/>🔄 Resource management"]
-    end
+**CLI Foundation**:
 
-    subgraph "🎯 Unified Output Technology (repositories.py verified)"
-        EXCEL_WRITER["Excel Writer<br/>✅ openpyxl integration<br/>🎨 Professional formatting<br/>📊 Analysis-ready output<br/>📋 Standardized columns"]
+- **click>=8.1.0**: Enterprise CLI framework with decorator-based commands
+- **Implementation**: 5 commands (@cli.command() decorators) in cli/main.py
+- **Features**: Professional parameter validation, help generation, context management
 
-        VALIDATION_TECH["Data Validation<br/>✅ Type checking active<br/>⚖️ Business rules<br/>🛡️ Integrity assurance<br/>📊 Quality metrics"]
+**Rich Terminal UI**:
 
-        METADATA_GEN["Metadata Generation<br/>✅ Processing information<br/>📊 Performance metrics<br/>🎯 Success tracking<br/>⏱️ Timing data"]
-    end
+- **rich>=13.0.0**: Professional terminal interface with real-time components
+- **Implementation**: Progress bars, tables, panels, color-coded output in cli/main.py
+- **Capabilities**: Cross-platform support, professional styling, JSON output support
 
-    ROUTING --> PDF_LIB
-    ROUTING --> PANDAS_ENGINE
-    ROUTING --> CSV_ENGINE
+**Command Architecture (Code-Verified)**:
 
-    PDF_LIB --> REGEX_ENGINE
-    REGEX_ENGINE --> BALANCE_EXTRACT
+- **info**: System information via ApplicationConfig display with Rich tables
+- **process**: Single file processing with ProcessingResult and progress tracking
+- **validate**: Validation-only mode with ValidationResult detailed reporting
+- **batch**: Multi-file processing with concurrent execution and Rich progress bars
+- **consolidate**: Multi-source analysis with ConsolidationResult and duplicate detection
 
-    PANDAS_ENGINE --> OPENPYXL_ENGINE
-    OPENPYXL_ENGINE --> FORMULA_EVAL
+## European Number Format Technology (Implementation Verified)
 
-    CSV_ENGINE --> ENCODING_ENGINE
-    ENCODING_ENGINE --> STREAMING_ENGINE
+**Pattern Recognition Engine**:
 
-    BALANCE_EXTRACT --> EXCEL_WRITER
-    FORMULA_EVAL --> VALIDATION_TECH
-    STREAMING_ENGINE --> METADATA_GEN
-```
+- **Implementation**: AmountParser.parse_european_format() in domain/utils.py
+- **Capabilities**: European (1.234,56) vs US (1,234.56) format detection
+- **Features**: String analysis with Decimal conversion for financial precision
 
-## Professional CLI Technology Stack (Code-Verified from cli/main.py)
+**Conversion Technology**:
 
-```mermaid
-graph TB
-    subgraph "🎯 CLI Foundation (main.py 673 lines verified)"
-        CLICK_CORE["Click Framework<br/>✅ @click.group() verified<br/>⚙️ Parameter validation<br/>🎯 Context management<br/>📋 Help generation"]
+- **European Converter**: 1.234,56 → 1234.56 with precision preservation via string replacement
+- **Decimal Precision**: Python decimal.Decimal module for financial accuracy
+- **Currency Detection**: ARS/USD identification with Currency enum assignment
 
-        RICH_CORE["Rich Framework<br/>✅ Console() integration<br/>🎨 Professional output<br/>📊 Real-time updates<br/>🖥️ Cross-platform support"]
-    end
+**Validation Framework**:
 
-    subgraph "🎨 UI Component Technology (Active)"
-        PROGRESS_COMP["Progress Components<br/>✅ Progress() verified<br/>📊 Real-time bars<br/>⏱️ Time estimation<br/>🎯 File-by-file status"]
+- **Format Validation**: Consistency checking via AmountParser error handling
+- **Business Rules**: Transaction.**post_init**() validation with ValueError exceptions
+- **Error Recovery**: Graceful degradation with comprehensive error messages
 
-        TABLE_COMP["Table Components<br/>✅ Table() integration<br/>📋 Column alignment<br/>📊 Data organization<br/>🎨 Professional styling"]
+## Configuration Management Technology (Code-Verified)
 
-        PANEL_COMP["Panel Components<br/>✅ Panel.fit() usage<br/>📦 Information grouping<br/>🎯 Contextual display<br/>📋 Organized presentation"]
+**Configuration Sources**:
 
-        CONSOLE_COMP["Console Components<br/>✅ Color-coded output<br/>❌ Error formatting<br/>📊 Status indication<br/>🎨 Rich styling"]
-    end
+- **YAML Configuration**: Hierarchical settings via pyyaml>=6.0.0 integration
+- **Environment Variables**: FSP_ prefixed runtime overrides via python-dotenv
+- **CLI Arguments**: Dynamic parameter control via Click integration
+- **Smart Defaults**: Zero-configuration operation via ApplicationConfig.from_environment()
 
-    subgraph "⚙️ Processing Integration (Active)"
-        COMMAND_EXEC["Command Execution<br/>✅ 5 commands verified<br/>🔧 Validation logic<br/>❌ Error handling<br/>📊 Result formatting<br/>★ Consolidation feature validated"]
+**Configuration Categories (ApplicationConfig)**:
 
-        PROGRESS_TRACK["Progress Tracking<br/>✅ Event-driven updates<br/>📊 File-by-file status<br/>📈 Completion metrics<br/>⏱️ Real-time feedback"]
+- **Processing Settings**: Worker configuration, timeout handling, performance tuning
+- **Output Settings**: Format preferences, directory paths, styling options
+- **Logging Configuration**: Level control, format settings, output routing
+- **Validation Settings**: Balance checking, tolerance levels, quality standards
 
-        OUTPUT_FORMAT["Output Formatting<br/>✅ JSON support verified<br/>📋 Table display<br/>❌ Error presentation<br/>🎨 Professional styling"]
+## Quality Assurance Technology Stack (pyproject.toml Verified)
 
-        CONTEXT_MGMT["Context Management<br/>✅ Configuration passing<br/>🔧 State maintenance<br/>🧹 Resource cleanup<br/>⚙️ Settings control"]
-    end
+**Code Quality Tools**:
 
-    CLICK_CORE --> PROGRESS_COMP
-    RICH_CORE --> TABLE_COMP
-    CLICK_CORE --> PANEL_COMP
-    RICH_CORE --> CONSOLE_COMP
+- **ruff>=0.12.0**: Lightning-fast linting with professional standards
+- **Configuration**: Line length 88, Python 3.11+ target, modern syntax enforcement
+- **Features**: Code formatting, import organization, error detection
 
-    PROGRESS_COMP --> COMMAND_EXEC
-    TABLE_COMP --> PROGRESS_TRACK
-    PANEL_COMP --> OUTPUT_FORMAT
-    CONSOLE_COMP --> CONTEXT_MGMT
-```
+**Type Safety**:
 
-## European Number Format Technology (Code-Verified from domain/)
+- **mypy>=1.8.0**: Static type analysis with comprehensive coverage
+- **Configuration**: Strict equality, unused ignores, return type validation
+- **Integration**: Type stubs (pandas-stubs, types-openpyxl, types-pyyaml) for external dependencies
 
-```mermaid
-flowchart TD
-    RAW_INPUT["Raw Number Strings<br/>Bank-specific formats"] --> ANALYZER["Format Analyzer<br/>builders.py + utils.py"]
+**Testing Framework**:
 
-    subgraph "🔍 Detection Technology (Active)"
-        PATTERN_MATCH["Pattern Matching<br/>✅ Regex-based detection<br/>🔢 1.234,56 recognition<br/>💱 Currency identification<br/>🎯 Context analysis"]
+- **pytest>=8.4.0**: Comprehensive testing with coverage analysis
+- **Configuration**: Automatic module loading, async support, clean warnings
+- **Features**: pytest-cov for coverage, pytest-asyncio for async testing
 
-        FORMAT_CLASS["Format Classification<br/>✅ European vs US detection<br/>🌍 1.234,56 vs 1,234.56<br/>🔧 Confidence scoring<br/>📊 Validation rules"]
+**Development Automation**:
 
-        NEGATIVE_DETECT["Negative Detection<br/>✅ Suffix: 123,45-<br/>⬅️ Prefix: -123,45<br/>🎯 Context-aware processing<br/>🔍 Pattern validation"]
+- **pre-commit>=3.6.0**: Automated quality gates with hook integration
+- **hatchling**: Modern build backend with wheel packaging
+- **Configuration**: Professional development workflow with validation
 
-        VALIDATION_TECH["Format Validation<br/>✅ Consistency checking<br/>🔍 Pattern verification<br/>⚖️ Business rule validation<br/>📊 Quality assurance"]
-    end
+## Security & Privacy Technology (Implementation Verified)
 
-    subgraph "⚙️ Conversion Technology (builders.py verified)"
-        EUR_CONVERTER["European Converter<br/>✅ 1.234,56 → 1234.56<br/>🔧 Dot removal logic<br/>💰 Comma to decimal<br/>📊 Precision handling"]
+**Local Processing Architecture**:
 
-        US_CONVERTER["US Converter<br/>✅ 1,234.56 → 1234.56<br/>🔧 Comma removal logic<br/>📊 Standard processing<br/>💰 Decimal preservation"]
+- **No Network Dependencies**: Complete offline operation capability
+- **Data Sovereignty**: Financial data never leaves local environment via local file processing
+- **Input Validation**: Path sanitization, file type checking via Click path validation
 
-        DECIMAL_HANDLER["Decimal Handler<br/>✅ Python decimal module<br/>💰 Financial precision<br/>🎯 Currency-safe arithmetic<br/>⚖️ Exact calculations"]
-    end
+**Secure File Handling**:
 
-    subgraph "✅ Validation Technology (Active)"
-        DECIMAL_LIB["Python decimal Module<br/>✅ Financial precision<br/>💰 Exact calculations<br/>⚖️ Currency handling<br/>📊 Type safety"]
+- **Safe Parsing**: pdfplumber buffer overflow protection, pandas malformed data handling
+- **Temporary Processing**: Memory-only storage with automatic cleanup
+- **Error Management**: Information disclosure protection via comprehensive error handling
 
-        BUSINESS_RULES["Business Rule Engine<br/>✅ Non-zero validation<br/>📊 Range checking<br/>🎯 Consistency verification<br/>⚖️ Data integrity"]
+**Privacy-First Design**:
 
-        TYPE_SAFETY["Type Safety<br/>✅ @dataclass(frozen=True)<br/>🛡️ Runtime protection<br/>📊 Validated transactions<br/>🔍 Immutable objects"]
+- **Local-Only Processing**: No cloud transmission or external services
+- **Minimal Dependencies**: Reduced attack surface with trusted sources
+- **Version Pinning**: Supply chain protection with locked dependencies (uv.lock)
 
-        ERROR_HANDLING["Error Handling<br/>✅ Invalid format recovery<br/>🔧 Graceful degradation<br/>📋 Clear error messages<br/>🛡️ Safe processing"]
-    end
+## Performance Optimization Technology (Implementation Details)
 
-    ANALYZER --> PATTERN_MATCH
-    PATTERN_MATCH --> FORMAT_CLASS
-    FORMAT_CLASS --> NEGATIVE_DETECT
-    NEGATIVE_DETECT --> VALIDATION_TECH
+**Memory Optimization**:
 
-    VALIDATION_TECH --> EUR_CONVERTER
-    VALIDATION_TECH --> US_CONVERTER
-    VALIDATION_TECH --> DECIMAL_HANDLER
+- **Streaming Processing**: pandas chunking capability for large file support
+- **Lazy Loading**: On-demand resource allocation via factory pattern
+- **Garbage Collection**: Automatic memory cleanup via context managers
 
-    EUR_CONVERTER --> DECIMAL_LIB
-    US_CONVERTER --> BUSINESS_RULES
-    DECIMAL_HANDLER --> TYPE_SAFETY
-    DECIMAL_LIB --> ERROR_HANDLING
-```
+**CPU Optimization**:
 
-## Quality Assurance Technology Stack (Code-Verified Active)
+- **Vectorized Operations**: pandas optimizations for bulk processing
+- **Algorithm Efficiency**: O(n) parser detection with early exit optimization
+- **Smart Caching**: Result objects (ProcessingResult, ConsolidationResult) with metrics
 
-```mermaid
-graph TB
-    subgraph "📊 Static Analysis Technology (Active)"
-        MYPY_TECH["mypy<br/>✅ 100% compliance verified<br/>🛡️ Static type checker<br/>🔍 Runtime safety<br/>📊 Error prevention"]
+**I/O Optimization**:
 
-        RUFF_TECH["ruff<br/>✅ .pre-commit-config.yaml verified<br/>⚡ Lightning-fast linter<br/>📝 Import organization<br/>🎨 Code formatting"]
-
-        TYPE_ANNOTATIONS["Type Annotations<br/>✅ models.py verified<br/>🔧 Union types (X | None)<br/>📊 Generic collections<br/>🎯 Protocol definitions"]
-    end
-
-    subgraph "🧪 Testing Technology (Active)"
-        PYTEST_CORE["pytest<br/>✅ tests/ structure verified<br/>🧪 680+ tests confirmed<br/>🔧 Fixture support<br/>📊 Comprehensive coverage"]
-
-        COVERAGE_TECH["Coverage Analysis<br/>✅ .coveragerc verified<br/>📊 90%+ meaningful coverage<br/>🌿 Branch tracking<br/>🎯 Quality metrics"]
-
-        PARAMETRIZE_TECH["Parametrization<br/>✅ Multiple input testing<br/>🔧 Edge case coverage<br/>📊 Data-driven tests<br/>🎯 Comprehensive validation"]
-    end
-
-    subgraph "🔄 Automation Technology (Active)"
-        PRECOMMIT_TECH["Pre-commit<br/>✅ .pre-commit-config.yaml verified<br/>🛡️ Quality gates<br/>❌ Failure prevention<br/>🔧 Automated validation"]
-
-        UV_TECH["uv Package Manager<br/>✅ uv.lock verified<br/>⚡ Fast dependency resolution<br/>🔧 Virtual environments<br/>📦 Lock files"]
-
-        PYPROJECT_TECH["pyproject.toml<br/>✅ Modern standards<br/>🔧 Tool configuration<br/>📋 Project metadata<br/>🚀 Build system"]
-    end
-
-    subgraph "📈 Quality Metrics Technology (Active)"
-        COMPLEXITY_TECH["Code Quality<br/>✅ ruff integration<br/>📊 Professional standards<br/>🔧 Maintainability<br/>🎯 Clean code"]
-
-        PERFORMANCE_TECH["Performance Testing<br/>✅ async_processing.py<br/>💾 Memory profiling<br/>🔄 Concurrency testing<br/>⚡ Optimization tracking"]
-
-        REGRESSION_TECH["Regression Testing<br/>✅ Integration tests<br/>🔄 Backward compatibility<br/>🛡️ API stability<br/>📊 Continuous verification"]
-    end
-
-    MYPY_TECH --> PYTEST_CORE
-    RUFF_TECH --> COVERAGE_TECH
-    TYPE_ANNOTATIONS --> PARAMETRIZE_TECH
-
-    PYTEST_CORE --> PRECOMMIT_TECH
-    COVERAGE_TECH --> UV_TECH
-    PARAMETRIZE_TECH --> PYPROJECT_TECH
-
-    PRECOMMIT_TECH --> COMPLEXITY_TECH
-    UV_TECH --> PERFORMANCE_TECH
-    PYPROJECT_TECH --> REGRESSION_TECH
-```
-
-## Concurrent Processing Technology (Code-Verified from infrastructure/)
-
-```mermaid
-flowchart TD
-    CONCURRENCY["Concurrent Processing<br/>async_processing.py verified"] --> STRATEGY["Strategy Selection<br/>⚡ Workload analysis"]
-
-    subgraph "⚡ Execution Technologies (Active)"
-        ASYNCIO_TECH["asyncio<br/>✅ Event loop-based processing<br/>🔄 I/O bound operations<br/>🤝 Cooperative multitasking<br/>📊 Non-blocking execution"]
-
-        THREADING_TECH["threading<br/>✅ Thread-based execution<br/>🔧 CPU bound operations<br/>⚡ Preemptive multitasking<br/>🎛️ Resource management"]
-
-        SEMAPHORE_TECH["Semaphore Control<br/>✅ Concurrent limits<br/>🛡️ Resource protection<br/>🔒 Deadlock prevention<br/>⚙️ Access control"]
-    end
-
-    subgraph "🎛️ Resource Management Technology (Active)"
-        QUEUE_TECH["Queue Management<br/>✅ Task distribution<br/>⚖️ Work balancing<br/>🎯 Priority handling<br/>📊 Load distribution"]
-
-        MEMORY_TECH["Memory Monitoring<br/>✅ Usage tracking<br/>🔍 Leak detection<br/>⚡ Optimization<br/>🧹 Cleanup automation"]
-
-        ERROR_ISOLATION["Error Isolation<br/>✅ Individual failures<br/>🛡️ Graceful degradation<br/>🔧 Recovery mechanisms<br/>📊 Success tracking"]
-    end
-
-    subgraph "📊 Performance Technology (Active)"
-        METRICS_TECH["Metrics Collection<br/>✅ Performance data<br/>📈 Throughput tracking<br/>⏱️ Latency measurement<br/>📊 Success rates"]
-
-        REAL_TIME_UI["Real-time UI Updates<br/>✅ Progress broadcasting<br/>🔄 Status synchronization<br/>📡 Event-driven updates<br/>🎨 Rich integration"]
-
-        PROFILING_TECH["Performance Profiling<br/>✅ Bottleneck identification<br/>🔍 Optimization guidance<br/>📊 Resource analysis<br/>⚡ Performance tuning"]
-    end
-
-    STRATEGY --> ASYNCIO_TECH
-    STRATEGY --> THREADING_TECH
-    STRATEGY --> SEMAPHORE_TECH
-
-    ASYNCIO_TECH --> QUEUE_TECH
-    THREADING_TECH --> MEMORY_TECH
-    SEMAPHORE_TECH --> ERROR_ISOLATION
-
-    QUEUE_TECH --> METRICS_TECH
-    MEMORY_TECH --> REAL_TIME_UI
-    ERROR_ISOLATION --> PROFILING_TECH
-```
+- **File Processing**: Direct file access via SimpleFileReader/SimpleFileWriter
+- **Batch Operations**: Multi-file processing via batch command
+- **Buffer Management**: openpyxl optimal buffer sizes with Excel generation
 
 ## Development Infrastructure Technology (Code-Verified)
 
-```mermaid
-graph TD
-    subgraph "📦 Package Management Technology (Active)"
-        UV_ACTIVE["uv<br/>✅ uv.lock verified<br/>⚡ Ultra-fast resolver<br/>🔧 Dependency resolution<br/>📦 Lock file generation"]
+**Package Management**:
 
-        PYPROJECT_ACTIVE["pyproject.toml<br/>✅ PEP 518/621 compliance<br/>📊 Modern standards<br/>🔧 Tool configuration<br/>📋 Project metadata"]
+- **uv**: Ultra-fast dependency resolution with uv.lock file generation
+- **pyproject.toml**: Modern PEP 518/621 compliance with tool configuration
+- **hatchling**: Modern build backend with src/ layout support
 
-        VIRTUAL_ENV["Virtual Environments<br/>✅ Isolated dependencies<br/>📦 Project separation<br/>🛡️ Conflict prevention<br/>🔧 Clean environments"]
-    end
+**Debugging Technology**:
 
-    subgraph "🔧 Configuration Technology (Active)"
-        YAML_CONFIG["YAML Configuration<br/>✅ config/ directory verified<br/>🔧 development.yaml<br/>📊 production.yaml<br/>⚙️ Settings management"]
+- **Rich Tracebacks**: Enhanced error display via Rich framework integration
+- **Structured Logging**: Level-based filtering via ApplicationConfig
+- **Performance Profiler**: Processing time tracking via ProcessingResult metrics
 
-        ENV_VARS["Environment Variables<br/>✅ FSP_ prefixed<br/>🔧 Runtime configuration<br/>🛡️ Security separation<br/>🎯 Context control"]
+**Build System**:
 
-        CLI_OVERRIDES["CLI Overrides<br/>✅ Click integration<br/>⚙️ Runtime parameters<br/>🎯 Dynamic behavior<br/>👤 User preferences"]
-    end
+- **hatchling**: Modern build backend with wheel packaging
+- **Source Layout**: Professional src/ organization with clean imports
+- **Entry Points**: Module execution support (`python -m cli.main`) with CLI integration
 
-    subgraph "🔍 Debugging Technology (Active)"
-        RICH_TRACEBACK["Rich Tracebacks<br/>✅ Enhanced error display<br/>🎨 Syntax highlighting<br/>📊 Context information<br/>🔍 Debug assistance"]
+## Technology Selection Rationale (Implementation Validated)
 
-        LOGGING_TECH["Structured Logging<br/>✅ Level-based filtering<br/>🎨 Format customization<br/>📊 Output routing<br/>🔍 Audit trail"]
+**Reliability Criteria**:
 
-        PROFILER_TECH["Performance Profiler<br/>✅ Code bottlenecks<br/>💾 Memory usage<br/>⏱️ Execution timing<br/>📊 Optimization guidance"]
-    end
+- **Battle-tested Libraries**: pdfplumber, pandas, openpyxl with mature ecosystems
+- **Stable APIs**: Consistent interfaces with backward compatibility
+- **Community Backing**: Active development with security maintenance
 
-    UV_ACTIVE --> YAML_CONFIG
-    PYPROJECT_ACTIVE --> ENV_VARS
-    VIRTUAL_ENV --> CLI_OVERRIDES
+**Performance Considerations**:
 
-    YAML_CONFIG --> RICH_TRACEBACK
-    ENV_VARS --> LOGGING_TECH
-    CLI_OVERRIDES --> PROFILER_TECH
-```
+- **Optimized Execution**: pandas vectorization for speed and efficiency
+- **Memory Efficiency**: Streaming capabilities and resource management
+- **Scalable Architecture**: Factory pattern with concurrent processing support
 
-## Security & Data Privacy Technology (Code-Verified)
+**Maintainability Focus**:
 
-```mermaid
-flowchart TD
-    SECURITY["Security Architecture<br/>🛡️ Privacy-first design"] --> LOCAL["Local Processing<br/>🔒 No external dependencies"]
+- **Clean Abstractions**: Abstract base classes with clear interfaces
+- **Standard Practices**: Click, Rich, pytest industry-standard tools
+- **Documentation Quality**: Comprehensive docstrings with example usage
 
-    subgraph "🔒 Security Technologies (Active)"
-        LOCAL_ONLY["Local-Only Processing<br/>✅ No network calls<br/>🔒 Offline operation<br/>🛡️ Data isolation<br/>🏠 On-premise security"]
+**Security Requirements**:
 
-        INPUT_VALIDATION["Input Validation<br/>✅ pathlib security<br/>📄 File type checking<br/>🔍 Path sanitization<br/>🛡️ Injection prevention"]
+- **Minimal Attack Surface**: Local processing with trusted dependencies
+- **Trusted Sources**: Well-maintained libraries with security track records
+- **Privacy Protection**: Local-only operation with data sovereignty
 
-        DEPENDENCY_SECURITY["Dependency Security<br/>✅ Minimal attack surface<br/>🔍 Trusted sources only<br/>📌 Version pinning<br/>🛡️ Supply chain protection"]
-    end
+## Current Technology Status (Implementation Verified)
 
-    subgraph "🛡️ Data Protection Technology (Active)"
-        NO_PERSISTENCE["No Data Persistence<br/>✅ Temporary processing<br/>💾 Memory-only storage<br/>🧹 Automatic cleanup<br/>🔒 Data sovereignty"]
+**Production Ready Stack**:
 
-        SECURE_PARSING["Secure Parsing<br/>✅ Safe file handling<br/>🛡️ Buffer overflow protection<br/>🔍 Malformed data handling<br/>❌ Exception management"]
+- **Modern Foundation**: Python 3.11+ with enterprise frameworks operational
+- **Quality Infrastructure**: Type safety (mypy), code quality (ruff), testing (pytest) configured
+- **Professional Interface**: Rich CLI with real-time progress and comprehensive error handling
+- **Legacy Compatibility**: Original implementation (parse_visa_statement.py) preserved
 
-        PRIVACY_FIRST["Privacy-First Design<br/>✅ Local processing only<br/>🚫 No cloud transmission<br/>👤 User data control<br/>🔒 Financial privacy"]
-    end
+**Extension Technology Readiness (Architectural Preparation)**:
 
-    subgraph "📋 Audit Technology (Active)"
-        STRUCTURED_LOGGING["Structured Logging<br/>✅ Audit trail creation<br/>📊 Operation tracking<br/>🔍 Security events<br/>📋 Compliance support"]
+- **Database Integration**: Repository pattern ready for ORM integration
+- **API Development**: Domain models prepared for REST framework integration
+- **Web Interface**: Business logic separated for frontend consumption
+- **Advanced Analytics**: Processing pipeline prepared for ML framework integration
 
-        ERROR_HANDLING["Secure Error Handling<br/>✅ Information disclosure protection<br/>🛡️ Safe error messages<br/>🔧 Debug mode control<br/>📊 Sanitized output"]
+### Production Commands (Code-Verified)
 
-        COMPLIANCE_TECH["Compliance Features<br/>✅ Data handling transparency<br/>📋 Processing documentation<br/>🔒 Privacy compliance<br/>🎯 Regulatory alignment"]
-    end
+**Modern Technology**: `PYTHONPATH=src uv run python -m cli.main batch input/`
+**Legacy Technology**: `python parse_visa_statement.py`
 
-    LOCAL --> LOCAL_ONLY
-    LOCAL --> INPUT_VALIDATION
-    LOCAL --> DEPENDENCY_SECURITY
+## Technology Evolution Path (Architectural Assessment)
 
-    LOCAL_ONLY --> NO_PERSISTENCE
-    INPUT_VALIDATION --> SECURE_PARSING
-    DEPENDENCY_SECURITY --> PRIVACY_FIRST
+**Current Capabilities**: Professional automation with enterprise frameworks verified in source
+**Near-term Extensions**: Enhanced configuration, performance optimization, additional format support
+**Platform Evolution**: Database integration, API development, web interface development
+**Advanced Features**: ML integration potential, cloud deployment capability, microservices architecture
 
-    NO_PERSISTENCE --> STRUCTURED_LOGGING
-    SECURE_PARSING --> ERROR_HANDLING
-    PRIVACY_FIRST --> COMPLIANCE_TECH
-```
+## Summary
 
-## Performance Optimization Technology (Code-Verified Active)
+The financial statement processor implements a modern, enterprise-grade technology stack focused on reliability, performance, and maintainability verified through comprehensive source code analysis. The technology choices support both immediate business automation needs and future architectural evolution while maintaining security through local-only processing and preserving legacy compatibility for smooth migration paths.
 
-```mermaid
-graph TB
-    subgraph "💾 Memory Optimization Technology (Active)"
-        STREAMING_TECH["Streaming Processing<br/>✅ pandas chunking<br/>🔄 Iterator patterns<br/>💾 Memory-efficient iteration<br/>📊 Large file support"]
-
-        LAZY_LOAD_TECH["Lazy Loading<br/>✅ On-demand resources<br/>⏱️ Deferred computation<br/>💾 Resource conservation<br/>⚡ Performance optimization"]
-
-        GARBAGE_TECH["Garbage Collection<br/>✅ Memory cleanup<br/>🔗 Reference management<br/>🔍 Leak prevention<br/>🧹 Automatic cleanup"]
-    end
-
-    subgraph "⚡ CPU Optimization Technology (Active)"
-        VECTORIZATION_TECH["Vectorized Operations<br/>✅ pandas optimizations<br/>🔢 NumPy acceleration<br/>📊 Bulk processing<br/>⚡ Mathematical operations"]
-
-        ALGORITHM_TECH["Algorithm Optimization<br/>✅ Efficient data structures<br/>📊 Complexity reduction<br/>🎯 Performance patterns<br/>🔧 Optimized implementations"]
-
-        CACHING_TECH["Smart Caching<br/>✅ Result memoization<br/>🔄 Computation avoidance<br/>💾 Memory trade-offs<br/>⚡ Response optimization"]
-    end
-
-    subgraph "🔄 I/O Optimization Technology (Active)"
-        ASYNC_IO_TECH["Async I/O<br/>✅ Non-blocking operations<br/>🔄 Concurrent file access<br/>📡 Event-driven processing<br/>⚡ Performance scaling"]
-
-        BATCH_TECH["Batch Operations<br/>✅ Reduced system calls<br/>📊 Bulk file processing<br/>⚡ Efficiency gains<br/>🎯 Optimized throughput"]
-
-        BUFFER_TECH["Buffer Management<br/>✅ Optimal buffer sizes<br/>📖 Read-ahead strategies<br/>✍️ Write batching<br/>💾 Memory efficiency"]
-    end
-
-    STREAMING_TECH --> VECTORIZATION_TECH
-    LAZY_LOAD_TECH --> ALGORITHM_TECH
-    GARBAGE_TECH --> CACHING_TECH
-
-    VECTORIZATION_TECH --> ASYNC_IO_TECH
-    ALGORITHM_TECH --> BATCH_TECH
-    CACHING_TECH --> BUFFER_TECH
-```
-
-## Technology Evolution Roadmap (Architecture-Ready)
-
-```mermaid
-timeline
-    title Technology Stack Evolution Path
-
-    section Current (Production Excellence)
-        Python 3.11+ : Modern type system operational
-        Enterprise Stack : pdfplumber, pandas, openpyxl, Rich, Click
-        Quality Tools : mypy, pytest, ruff, uv active
-        Architecture : 32 files, 4 layers, 6 patterns
-
-    section Phase 1 (Next Quarter)
-        Enhanced Configuration : Advanced YAML features
-        Performance Tuning : Memory and CPU optimization
-        Additional Formats : New file type support
-        Metrics Enhancement : Advanced analytics integration
-
-    section Phase 2 (6 months)
-        Database Technology : SQLAlchemy, PostgreSQL
-        API Technology : FastAPI, Pydantic validation
-        Caching Layer : Redis integration
-        Monitoring : Prometheus metrics
-
-    section Phase 3 (1 year)
-        Cloud Technologies : Docker, Kubernetes
-        ML Integration : scikit-learn, transformers
-        Real-time Processing : Streaming architectures
-        Microservices : Service decomposition
-```
-
-## Technology Selection Criteria (Production Verified)
-
-```mermaid
-graph LR
-    subgraph "🎯 Selection Criteria (Validated)"
-        RELIABILITY["Reliability<br/>✅ Battle-tested libraries<br/>🏭 Mature ecosystems<br/>📈 Long-term support<br/>🛡️ Stable APIs"]
-
-        PERFORMANCE["Performance<br/>✅ Optimized execution<br/>📈 Scalable architecture<br/>💾 Memory efficiency<br/>⚡ Speed optimization"]
-
-        MAINTAINABILITY["Maintainability<br/>✅ Clean abstractions<br/>📊 Standard practices<br/>👥 Developer experience<br/>📋 Documentation quality"]
-
-        SECURITY["Security<br/>✅ Minimal attack surface<br/>🔍 Trusted dependencies<br/>🔒 Local processing<br/>🛡️ Privacy protection"]
-    end
-
-    subgraph "✅ Technology Benefits (Achieved)"
-        MODERN_PYTHON["Modern Python 3.11+<br/>✅ Latest language features<br/>⚡ Enhanced performance<br/>🔧 Type safety<br/>📊 Developer productivity"]
-
-        ENTERPRISE_FRAMEWORKS["Enterprise Frameworks<br/>✅ Rich UI professional<br/>🎯 Click CLI robust<br/>📊 pandas data processing<br/>🔧 openpyxl Excel generation"]
-
-        QUALITY_TOOLING["Quality Tooling<br/>✅ ruff lightning linting<br/>🛡️ mypy type safety<br/>🧪 pytest testing<br/>⚡ uv package management"]
-
-        ARCHITECTURE_PATTERNS["Architecture Patterns<br/>✅ Clean architecture<br/>🏗️ Enterprise patterns<br/>🔧 Extensible design<br/>📈 Scalable foundation"]
-    end
-
-    RELIABILITY --> MODERN_PYTHON
-    PERFORMANCE --> ENTERPRISE_FRAMEWORKS
-    MAINTAINABILITY --> QUALITY_TOOLING
-    SECURITY --> ARCHITECTURE_PATTERNS
-```
-
-## Current Status: ✅ TECHNOLOGY EXCELLENCE ACHIEVED
-
-```mermaid
-graph TB
-    subgraph "🎯 Technology Achievement (Code-Verified)"
-        MODERN_STACK["✅ Modern Stack Active<br/>Python 3.11+ operational<br/>Enterprise frameworks live<br/>Production technologies"]
-
-        LEGACY_ELIMINATED["✅ Legacy Tech Eliminated<br/>1,532 lines removed<br/>Single-file approach replaced<br/>Modern architecture active"]
-
-        QUALITY_EXCELLENCE["✅ Quality Excellence<br/>680+ tests verified<br/>100% MyPy compliance<br/>ruff standards active"]
-
-        PERFORMANCE_OPTIMIZED["✅ Performance Optimized<br/>Concurrent processing<br/>Memory efficient<br/>Resource optimized"]
-    end
-
-    subgraph "🚀 Active Technology Capabilities"
-        ENTERPRISE_PROCESSING["Enterprise Processing<br/>✅ Multi-format support<br/>⚡ Concurrent execution<br/>📊 Professional output<br/>🔧 Extensible architecture"]
-
-        PROFESSIONAL_UX["Professional UX<br/>✅ Rich CLI framework<br/>🎨 Real-time progress<br/>📋 Professional styling<br/>👥 Enterprise experience"]
-
-        QUALITY_ASSURANCE["Quality Assurance<br/>✅ Automated validation<br/>🛡️ Type safety<br/>🧪 Comprehensive testing<br/>📊 Continuous quality"]
-
-        FUTURE_READY["Future Ready<br/>✅ Extensible design<br/>🔧 Plugin architecture<br/>📈 Scalable foundation<br/>🚀 Growth support"]
-    end
-
-    MODERN_STACK --> ENTERPRISE_PROCESSING
-    LEGACY_ELIMINATED --> PROFESSIONAL_UX
-    QUALITY_EXCELLENCE --> QUALITY_ASSURANCE
-    PERFORMANCE_OPTIMIZED --> FUTURE_READY
-```
-
-### Production Command Reference
-
-**✅ Batch Processing**: `PYTHONPATH=src uv run python -m cli.main batch input/`
-**✅ Consolidation Processing**: `PYTHONPATH=src uv run python -m cli.main consolidate input/` ★ **VALIDATED**
-**❌ Legacy Technology**: `parse_visa_statement.py` - **DEPRECATED (DO NOT USE)**
-
-## Latest Technology Milestone: ✅ CONSOLIDATION FEATURE VALIDATION
-
-**Date**: July 13, 2025
-**Achievement**: Real-world validation of consolidation technology implementation
-
-### **🎯 Consolidation Technology Stack (Validated)**
-
-```mermaid
-graph TB
-    subgraph "🚀 Consolidation Technologies (Production Tested)"
-        DUPLICATE_TECH["Duplicate Detection Engine<br/>✅ DuplicateDetector service<br/>🎯 Date + amount algorithm<br/>📊 50 duplicates identified<br/>⚡ O(n) performance"]
-
-        SORTING_TECH["Chronological Sorting<br/>✅ Python sort algorithm<br/>📅 Date-based ordering<br/>🔄 3+ years processed (2022-2025)<br/>⚡ Efficient execution"]
-
-        CONSOLIDATION_TECH["Multi-Source Processing<br/>✅ ConsolidatedStatement model<br/>📊 6 payment methods unified<br/>💾 705 transactions processed<br/>🎯 Single output file"]
-
-        FILENAME_TECH["Smart Filename Generation<br/>✅ Latest date algorithm<br/>📁 CONSOLIDATED_YYYYMMDD.xlsx<br/>🎯 Analysis-ready naming<br/>📊 Temporal organization"]
-    end
-
-    subgraph "📊 Performance Validation (Real-World)"
-        SPEED_VALIDATED["Speed Excellence<br/>✅ 1.5-1.7 seconds<br/>📊 705 transactions<br/>⚡ Outstanding performance<br/>🚀 Exceeds expectations"]
-
-        ACCURACY_VALIDATED["Data Accuracy<br/>✅ 100% success rate<br/>🎯 Perfect consolidation<br/>📊 Zero data loss<br/>✅ Integrity maintained"]
-
-        USABILITY_VALIDATED["User Experience<br/>✅ Rich CLI integration<br/>🎨 Professional progress bars<br/>📋 Clear output format<br/>👥 Enterprise quality"]
-    end
-
-    DUPLICATE_TECH --> SPEED_VALIDATED
-    SORTING_TECH --> ACCURACY_VALIDATED
-    CONSOLIDATION_TECH --> USABILITY_VALIDATED
-    FILENAME_TECH --> SPEED_VALIDATED
-```
-
-### **✅ Technology Validation Results**
-
-- **Multi-Format Processing**: 4 PDF, 2 XLS, 4 CSV, 1 XLSX files unified successfully
-- **Intelligent Duplicate Detection**: 50 duplicates identified using optimized algorithm
-- **Perfect Data Integrity**: 705 transactions from 6 payment methods consolidated without loss
-- **Outstanding Performance**: 1.7 seconds for complete multi-source consolidation
-- **Professional Output**: Analysis-ready Excel format with standardized structure
-
-## Summary: Technology Excellence + Major Feature Milestone
-
-The financial statement processor successfully leverages modern enterprise technology with validated consolidation capabilities:
-
-- **✅ Modern Foundation**: Python 3.11+ with advanced type system and performance
-- **✅ Enterprise Stack**: pdfplumber, pandas, openpyxl, Rich, Click frameworks
-- **✅ Quality Tools**: mypy, pytest, ruff, uv providing continuous quality assurance
-- **✅ Architecture Excellence**: 32 files across 4 clean layers with 6 enterprise patterns
-- **✅ Performance Optimization**: Concurrent processing, memory efficiency, resource management
-- **✅ ★ Consolidation Technology**: Multi-source processing with duplicate detection validated
-
-The technology stack provides a robust, scalable, and maintainable foundation for enterprise-grade financial statement processing with comprehensive extensibility for future enhancements. The consolidation feature represents a significant technological advancement in multi-source financial data processing.
+**Technology Achievement**: Professional financial automation with modern Python ecosystem, enterprise patterns, and quality infrastructure supporting business growth and operational excellence, all capabilities verified through pyproject.toml analysis and source code implementation validation.

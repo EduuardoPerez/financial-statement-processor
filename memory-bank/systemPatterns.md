@@ -1,495 +1,325 @@
 # System Patterns - Financial Statement Processor
 
-## 🚨 CRITICAL: Legacy Script Architecture Elimination
-
-```mermaid
-flowchart TB
-    LEGACY["❌ parse_visa_statement.py<br/>📊 1,532 lines MONOLITHIC<br/>🏗️ All logic in single file<br/>⛔ LEGACY ARCHITECTURE - ELIMINATED"]
-
-    MODERN["✅ Clean Architecture: src/<br/>🎯 31 files, 4 layers VERIFIED<br/>🚀 6 Enterprise Patterns ACTIVE<br/>✅ PRODUCTION EXCELLENCE"]
-
-    LEGACY -.->|"ARCHITECTURAL TRANSFORMATION"| MODERN
-
-    style LEGACY fill:#ffcccc,stroke:#ff0000,stroke-width:4px,stroke-dasharray: 5 5
-    style MODERN fill:#ccffcc,stroke:#00aa00,stroke-width:3px
-```
-
-**⚠️ LEGACY STATUS**: Monolithic architecture completely replaced by enterprise patterns
-**✅ PRODUCTION COMMAND**: `uv run python -m cli batch input/`
-
-## Clean Architecture Implementation (Code-Verified Structure)
+## Clean Architecture Implementation (Code-Verified)
 
 ```mermaid
 graph TB
-    subgraph "🎯 Presentation Layer (cli/ - 3 files verified)"
-        CLI_MAIN["main.py (673 lines)<br/>🎨 Rich UI Framework<br/>5 Professional Commands<br/>Click decorators + context management"]
+    subgraph "CLI Layer - User Interface"
+        CLI_INTERFACE["cli/main.py<br/>Click framework with Rich UI<br/>5 commands with @click decorators<br/>Professional error handling + JSON output"]
 
-        CLI_INIT["__init__.py<br/>Module initialization<br/>Package definition"]
-
-        CLI_ENTRY["__main__.py<br/>Entry point definition<br/>Module execution"]
+        CLI_OPERATIONS["CLI Operations<br/>info: ApplicationConfig display<br/>process: Single file ProcessingResult<br/>validate: ValidationResult reporting<br/>batch: Multi-file with progress<br/>consolidate: ConsolidationResult"]
     end
 
-    subgraph "🏗️ Application Layer (application/ - 2 files verified)"
-        APP_SERVICES["services.py<br/>🔄 StatementProcessingService<br/>Business orchestration<br/>Workflow management"]
+    subgraph "Application Layer - Business Orchestration"
+        APP_SERVICES["application/services.py<br/>StatementProcessingService<br/>ProcessingResult + ConsolidationResult dataclasses<br/>End-to-end workflow coordination"]
 
-        APP_INIT["__init__.py<br/>Application layer exports<br/>Service definitions"]
+        SERVICE_COMPOSITION["Service Composition<br/>ParserFactory + Repository + Validator<br/>FilenameGenerator + BalanceExtractionService<br/>Dependency injection via constructor"]
     end
 
-    subgraph "🧠 Domain Layer (domain/ - 10 files verified)"
-        DOMAIN_MODELS["models.py (161 lines)<br/>📊 6 PaymentMethod enum values<br/>2 Currency enum values<br/>Transaction, Balance, Statement classes"]
+    subgraph "Domain Layer - Core Business Logic"
+        DOMAIN_MODELS["domain/models.py<br/>PaymentMethod enum (6 values)<br/>Currency enum (ARS, USD)<br/>Transaction + Statement dataclasses<br/>ConsolidatedStatement aggregate"]
 
-        DOMAIN_BUILDERS["builders.py<br/>🏗️ TransactionBuilder pattern<br/>European format handling<br/>Object construction logic"]
+        DOMAIN_SERVICES["domain/builders.py + detectors.py + validation.py<br/>TransactionBuilder with injected utilities<br/>PaymentMethodDetector interface<br/>StatementValidator + DuplicateDetector"]
 
-        DOMAIN_EVENTS["events.py<br/>📡 Domain event definitions<br/>Observer pattern support<br/>Progress broadcasting"]
-
-        DOMAIN_FACTORIES["factories.py<br/>🏭 DefaultParserFactory<br/>Dynamic creation logic<br/>Auto-detection engine"]
-
-        DOMAIN_VALIDATION["validation.py<br/>✅ StatementValidator<br/>Business rule enforcement<br/>Balance verification"]
-
-        DOMAIN_OTHER["+ 5 more domain files<br/>repositories.py, services.py<br/>commands.py, detectors.py<br/>filename.py, utils.py"]
+        PATTERNS["Domain Patterns<br/>Builder: TransactionBuilder + StatementBuilder<br/>Factory: ParserFactory interface<br/>Strategy: StatementParser interface"]
     end
 
-    subgraph "🔧 Infrastructure Layer (infrastructure/ - 17 files verified)"
-        INFRA_PARSERS["parsers/ (4 files)<br/>📄 pdf_parser.py<br/>📊 xls_parser.py<br/>📋 csv_parser.py<br/>📈 xlsx_parser.py"]
+    subgraph "Infrastructure Layer - External Dependencies"
+        FORMAT_PROCESSORS["infrastructure/parsers/<br/>PDFStatementParser (pdfplumber)<br/>XLS/XLSX StatementParser (pandas)<br/>CSVStatementParser (pandas)<br/>Strategy implementations"]
 
-        INFRA_REPOS["repositories.py<br/>📊 ExcelStatementRepository<br/>Data persistence abstraction<br/>Professional output formatting"]
-
-        INFRA_CONFIG["config.py<br/>⚙️ ApplicationConfig<br/>Environment management<br/>Settings control"]
-
-        INFRA_OTHER["+ 10 more infrastructure files<br/>async_processing.py, detectors.py<br/>extractors.py, factories.py<br/>observers.py, streaming.py"]
+        DATA_ACCESS["infrastructure/<br/>ExcelStatementRepository<br/>MacroDetector + BBVADetector<br/>DefaultParserFactory<br/>Configuration management"]
     end
 
-    CLI_MAIN --> APP_SERVICES
-    CLI_INIT --> APP_INIT
-    CLI_ENTRY --> APP_SERVICES
+    CLI_INTERFACE --> APP_SERVICES
+    CLI_OPERATIONS --> SERVICE_COMPOSITION
 
     APP_SERVICES --> DOMAIN_MODELS
-    APP_SERVICES --> DOMAIN_BUILDERS
+    SERVICE_COMPOSITION --> DOMAIN_SERVICES
 
-    DOMAIN_MODELS --> INFRA_PARSERS
-    DOMAIN_BUILDERS --> INFRA_REPOS
-    DOMAIN_EVENTS --> INFRA_CONFIG
-    DOMAIN_FACTORIES --> INFRA_PARSERS
-    DOMAIN_VALIDATION --> INFRA_REPOS
-    DOMAIN_OTHER --> INFRA_OTHER
+    DOMAIN_MODELS --> FORMAT_PROCESSORS
+    DOMAIN_SERVICES --> DATA_ACCESS
+    PATTERNS --> FORMAT_PROCESSORS
 ```
 
-## Enterprise Design Patterns (Code-Verified Implementation)
+## Enterprise Design Patterns Implementation (Code-Verified)
+
+### Strategy Pattern - Format Processing
+
+**Implementation**: Four concrete parsers in infrastructure/parsers/ with StatementParser interface
 
 ```mermaid
 graph TB
-    subgraph "🎯 Strategy Pattern (4 Implementations Verified)"
-        STRATEGY_INTERFACE["Parser Interface<br/>Abstract strategy definition<br/>Unified contract"]
+    PARSER_INTERFACE["StatementParser Interface<br/>domain/services.py<br/>parse(), can_parse(), get_supported_extensions()"]
 
-        PDF_STRATEGY["PDFStatementParser<br/>pdf_parser.py<br/>pdfplumber + regex patterns<br/>Multi-page PDF processing"]
+    PDF_STRATEGY["PDFStatementParser<br/>infrastructure/parsers/pdf_parser.py<br/>pdfplumber integration<br/>200+ lines of transaction parsing"]
 
-        XLS_STRATEGY["XLSStatementParser<br/>xls_parser.py<br/>pandas Excel integration<br/>Structured data extraction"]
+    XLS_STRATEGY["XLSStatementParser<br/>infrastructure/parsers/xls_parser.py<br/>pandas + xlrd integration<br/>TransactionBuilder.build_from_xls_data()"]
 
-        CSV_STRATEGY["CSVStatementParser<br/>csv_parser.py<br/>Delimiter processing<br/>European number formats"]
+    CSV_STRATEGY["CSVStatementParser<br/>infrastructure/parsers/csv_parser.py<br/>pandas delimiter detection<br/>TransactionBuilder.build_from_csv_data()"]
 
-        XLSX_STRATEGY["XLSXStatementParser<br/>xlsx_parser.py<br/>openpyxl modern Excel<br/>Advanced features"]
-    end
+    XLSX_STRATEGY["XLSXStatementParser<br/>infrastructure/parsers/xlsx_parser.py<br/>pandas + openpyxl integration<br/>TransactionBuilder.build_from_xls_data()"]
 
-    subgraph "🏭 Factory Pattern (Code-Verified)"
-        FACTORY_INTERFACE["ParserFactory<br/>Creation abstraction<br/>Dynamic selection"]
+    PARSER_INTERFACE --> PDF_STRATEGY
+    PARSER_INTERFACE --> XLS_STRATEGY
+    PARSER_INTERFACE --> CSV_STRATEGY
+    PARSER_INTERFACE --> XLSX_STRATEGY
+```
 
-        DEFAULT_FACTORY["DefaultParserFactory<br/>factories.py implementation<br/>Auto-detection logic<br/>Extension-based routing"]
+**Code Verification**:
 
-        DETECTION_ENGINE["Detection Engine<br/>File analysis<br/>Content validation<br/>Bank identification"]
-    end
+- **Interface**: `StatementParser` abstract base class in domain/services.py
+- **Concrete Implementations**: 4 parsers auto-registered in DefaultParserFactory.**init**()
+- **Extension Detection**: `.pdf`, `.xls`, `.xlsx`, `.csv` via get_supported_extensions()
+- **Strategy Selection**: `ParserFactory.create_parser()` based on file extension analysis
 
-    subgraph "🏗️ Builder Pattern (Code-Verified)"
-        BUILDER_INTERFACE["Builder Interface<br/>Construction abstraction<br/>Step-by-step assembly"]
+### Factory Pattern - Dynamic Parser Creation
 
-        TRANSACTION_BUILDER["TransactionBuilder<br/>builders.py implementation<br/>European format conversion<br/>Immutable object creation"]
+**Implementation**: DefaultParserFactory with auto-registration in infrastructure/factories.py
 
-        VALIDATION_BUILDER["Validation Integration<br/>Business rule enforcement<br/>Data integrity checks<br/>Error handling"]
-    end
+```mermaid
+graph TB
+    FACTORY_INTERFACE["ParserFactory Interface<br/>domain/factories.py<br/>create_parser(), get_supported_extensions()"]
 
-    STRATEGY_INTERFACE --> PDF_STRATEGY
-    STRATEGY_INTERFACE --> XLS_STRATEGY
-    STRATEGY_INTERFACE --> CSV_STRATEGY
-    STRATEGY_INTERFACE --> XLSX_STRATEGY
+    DEFAULT_FACTORY["DefaultParserFactory<br/>infrastructure/factories.py<br/>Auto-registers 4 parsers in __init__<br/>Extension-based routing"]
+
+    DETECTION_ENGINE["Detection Logic<br/>File extension analysis<br/>can_parse() validation<br/>ValueError on no match"]
+
+    STRATEGY_CREATION["Strategy Creation<br/>Parser instantiation with<br/>detector + TransactionBuilder injection<br/>DateConverter + AmountParser dependencies"]
 
     FACTORY_INTERFACE --> DEFAULT_FACTORY
     DEFAULT_FACTORY --> DETECTION_ENGINE
-    DETECTION_ENGINE --> STRATEGY_INTERFACE
-
-    BUILDER_INTERFACE --> TRANSACTION_BUILDER
-    TRANSACTION_BUILDER --> VALIDATION_BUILDER
-    VALIDATION_BUILDER --> STRATEGY_INTERFACE
+    DETECTION_ENGINE --> STRATEGY_CREATION
+    STRATEGY_CREATION --> PARSER_INTERFACE
 ```
 
-## Observer Pattern: Event-Driven Architecture (Code-Verified)
+**Code Verification**:
 
-```mermaid
-graph TD
-    EVENT_SOURCE["Domain Events<br/>events.py"] --> EVENT_TYPES["Event Type Definitions"]
+- **Auto-Registration**: DefaultParserFactory.**init**() registers PDFStatementParser, XLSStatementParser, XLSXStatementParser, CSVStatementParser
+- **Dependency Injection**: Each parser receives detector + TransactionBuilder(DateConverter, AmountParser)
+- **Factory Method**: `create_parser(file_path)` iterates registered parsers with can_parse() validation
 
-    subgraph "📡 Event Types (Domain Layer)"
-        PROCESSING_EVENTS["Processing Events<br/>File detection, parsing progress<br/>Validation completion"]
+### Builder Pattern - Transaction Construction
 
-        ERROR_EVENTS["Error Events<br/>Parse failures, validation errors<br/>System exceptions"]
-
-        SUCCESS_EVENTS["Success Events<br/>Transaction completion<br/>File processing success"]
-
-        PROGRESS_EVENTS["Progress Events<br/>Real-time updates<br/>Status broadcasting"]
-    end
-
-    subgraph "👥 Event Observers (Infrastructure Layer)"
-        PROGRESS_OBSERVER["Progress Observer<br/>🎨 Rich UI integration<br/>Real-time progress bars<br/>Status updates"]
-
-        LOG_OBSERVER["Logging Observer<br/>📝 Structured logging<br/>Audit trail creation<br/>Debug information"]
-
-        METRICS_OBSERVER["Metrics Observer<br/>📊 Performance tracking<br/>Statistics collection<br/>Success rates"]
-
-        VALIDATION_OBSERVER["Validation Observer<br/>⚖️ Balance verification<br/>Error reporting<br/>Quality assurance"]
-    end
-
-    subgraph "🎯 CLI Integration (Code-Verified)"
-        RICH_INTEGRATION["Rich Framework Integration<br/>main.py implementation<br/>Progress bars, tables<br/>Professional output"]
-
-        CONSOLE_OUTPUT["Console Output<br/>Color-coded messages<br/>Formatted results<br/>Error display"]
-
-        USER_FEEDBACK["User Feedback<br/>Real-time status<br/>Completion indicators<br/>Error guidance"]
-    end
-
-    EVENT_TYPES --> PROCESSING_EVENTS
-    EVENT_TYPES --> ERROR_EVENTS
-    EVENT_TYPES --> SUCCESS_EVENTS
-    EVENT_TYPES --> PROGRESS_EVENTS
-
-    PROCESSING_EVENTS --> PROGRESS_OBSERVER
-    ERROR_EVENTS --> LOG_OBSERVER
-    SUCCESS_EVENTS --> METRICS_OBSERVER
-    PROGRESS_EVENTS --> VALIDATION_OBSERVER
-
-    PROGRESS_OBSERVER --> RICH_INTEGRATION
-    LOG_OBSERVER --> CONSOLE_OUTPUT
-    METRICS_OBSERVER --> USER_FEEDBACK
-    VALIDATION_OBSERVER --> RICH_INTEGRATION
-```
-
-## Command Pattern: CLI Operations (Code-Verified from main.py)
+**Implementation**: TransactionBuilder in domain/builders.py with injected utilities
 
 ```mermaid
 graph TB
-    subgraph "🎯 CLI Command Structure (4 Commands Verified)"
-        CLI_GROUP["@click.group()<br/>Main CLI entry point<br/>Context management<br/>Global options"]
+    BUILDER_INTERFACE["TransactionBuilder<br/>domain/builders.py<br/>build_from_pdf_line()<br/>build_from_xls_data()<br/>build_from_csv_data()"]
 
-        INFO_COMMAND["@cli.command() info<br/>System information display<br/>Configuration tables<br/>Supported formats"]
+    TRANSACTION_BUILDER["TransactionBuilder Implementation<br/>Injected DateConverter + AmountParser<br/>Immutable Transaction creation<br/>Multi-format support methods"]
 
-        PROCESS_COMMAND["@cli.command() process<br/>Single file processing<br/>Progress tracking<br/>Result formatting"]
+    AMOUNT_PARSER["AmountParser<br/>domain/utils.py<br/>parse_european_format()<br/>1.234,56 → Decimal conversion"]
 
-        VALIDATE_COMMAND["@cli.command() validate<br/>Validation-only mode<br/>Quick status checks<br/>Pass/fail reporting"]
+    DATE_CONVERTER["DateConverter<br/>domain/utils.py<br/>convert_dd_mm_yy()<br/>convert_dd_mmm_yy()"]
 
-        BATCH_COMMAND["@cli.command() batch<br/>Multiple file processing<br/>Concurrent execution<br/>Batch results"]
-    end
+    VALIDATION_INTEGRATION["Validation Integration<br/>Transaction.__post_init__()<br/>Empty description checks<br/>Zero amount validation"]
 
-    subgraph "⚙️ Command Implementation (Code-Verified)"
-        CLICK_DECORATORS["Click Decorators<br/>@click.argument<br/>@click.option<br/>@click.pass_context"]
-
-        RICH_UI["Rich UI Components<br/>Progress bars<br/>Tables and panels<br/>Color-coded output"]
-
-        ERROR_HANDLING["Error Handling<br/>CLIError exception<br/>Graceful degradation<br/>User-friendly messages"]
-
-        CONTEXT_MGMT["Context Management<br/>Configuration passing<br/>State maintenance<br/>Resource cleanup"]
-    end
-
-    subgraph "🔧 Command Execution Flow"
-        VALIDATION_LAYER["Input Validation<br/>Parameter checking<br/>File existence<br/>Path validation"]
-
-        SERVICE_LAYER["Service Integration<br/>StatementProcessingService<br/>Component creation<br/>Business logic"]
-
-        OUTPUT_LAYER["Output Generation<br/>JSON formatting<br/>Rich display<br/>Error reporting"]
-
-        CLEANUP_LAYER["Cleanup Operations<br/>Resource management<br/>Temporary files<br/>Exit codes"]
-    end
-
-    CLI_GROUP --> INFO_COMMAND
-    CLI_GROUP --> PROCESS_COMMAND
-    CLI_GROUP --> VALIDATE_COMMAND
-    CLI_GROUP --> BATCH_COMMAND
-
-    INFO_COMMAND --> CLICK_DECORATORS
-    PROCESS_COMMAND --> RICH_UI
-    VALIDATE_COMMAND --> ERROR_HANDLING
-    BATCH_COMMAND --> CONTEXT_MGMT
-
-    CLICK_DECORATORS --> VALIDATION_LAYER
-    RICH_UI --> SERVICE_LAYER
-    ERROR_HANDLING --> OUTPUT_LAYER
-    CONTEXT_MGMT --> CLEANUP_LAYER
+    BUILDER_INTERFACE --> TRANSACTION_BUILDER
+    TRANSACTION_BUILDER --> AMOUNT_PARSER
+    TRANSACTION_BUILDER --> DATE_CONVERTER
+    TRANSACTION_BUILDER --> VALIDATION_INTEGRATION
 ```
 
-## Repository Pattern: Data Abstraction (Code-Verified)
+**Code Verification**:
+
+- **Constructor Injection**: `TransactionBuilder(date_converter: DateConverter, amount_parser: AmountParser)`
+- **Format-Specific Methods**: `build_from_pdf_line()`, `build_from_xls_data()`, `build_from_csv_data()`
+- **Immutable Output**: Returns frozen Transaction dataclass instances
+- **Error Handling**: Comprehensive ValueError with context information
+
+### Command Pattern - CLI Operations
+
+**Implementation**: Click decorators with command encapsulation in cli/main.py
 
 ```mermaid
-graph TD
-    DOMAIN_ENTITIES["Domain Entities<br/>Statement, Transaction, Balance<br/>models.py immutable classes"] --> REPOSITORY_INTERFACE["Repository Interface<br/>Data access abstraction"]
+graph TB
+    CLI_GROUP["@click.group()<br/>cli/main.py main entry<br/>Context management<br/>Global options (config, verbose)"]
 
-    subgraph "🔧 Repository Implementation (Code-Verified)"
-        EXCEL_REPOSITORY["ExcelStatementRepository<br/>repositories.py<br/>Excel file generation<br/>Professional formatting"]
+    COMMANDS["CLI Commands<br/>@cli.command() decorators<br/>info, process, validate, batch, consolidate<br/>Parameter validation via Click"]
 
-        FILE_OPERATIONS["File Operations<br/>SimpleFileReader/Writer<br/>Path management<br/>Directory creation"]
+    COMMAND_EXECUTION["Command Execution<br/>create_components() dependency setup<br/>Service integration<br/>ProcessingResult/ConsolidationResult"]
 
-        FORMAT_ENGINE["Formatting Engine<br/>openpyxl integration<br/>Column styling<br/>Analysis-ready output"]
+    RICH_INTEGRATION["Rich Integration<br/>Progress() context managers<br/>console.print() with styling<br/>JSON output support"]
 
-        VALIDATION_INTEGRATION["Validation Integration<br/>Data integrity checks<br/>Business rule enforcement<br/>Error detection"]
-    end
+    CLI_GROUP --> COMMANDS
+    COMMANDS --> COMMAND_EXECUTION
+    COMMAND_EXECUTION --> RICH_INTEGRATION
+```
 
-    subgraph "📊 Output Capabilities (Active)"
-        EXCEL_OUTPUT["Professional Excel<br/>✅ Column headers<br/>✅ Data formatting<br/>✅ Professional styling"]
+**Code Verification**:
 
-        CSV_EXPORT["CSV Export<br/>✅ Standard format<br/>✅ Tool compatibility<br/>✅ Analysis-ready"]
+- **Command Registration**: 5 commands with `@cli.command()` decorators
+- **Dependency Setup**: `create_components()` function wires PaymentMethodDetector, DefaultParserFactory, StatementProcessingService
+- **Error Isolation**: Individual command error handling with CLIError exceptions
+- **Professional Output**: Rich UI with progress bars, tables, panels
 
-        JSON_EXPORT["JSON Output<br/>✅ Structured data<br/>✅ API compatibility<br/>✅ Programmatic access"]
+### Repository Pattern - Data Abstraction
 
-        METADATA_GEN["Metadata Generation<br/>✅ Processing info<br/>✅ Success metrics<br/>✅ Performance data"]
-    end
+**Implementation**: ExcelStatementRepository in infrastructure/repositories.py
 
-    subgraph "🚀 Future Extensibility (Architecture Ready)"
-        DATABASE_REPO["Database Repository<br/>🔄 SQLAlchemy ready<br/>🗄️ Persistent storage<br/>📊 Data management"]
+```mermaid
+graph TB
+    REPOSITORY_INTERFACE["StatementRepository Interface<br/>domain/repositories.py<br/>save_statement() abstract method"]
 
-        API_REPO["API Repository<br/>🔄 REST integration<br/>🌐 External systems<br/>📡 Service calls"]
+    EXCEL_REPOSITORY["ExcelStatementRepository<br/>infrastructure/repositories.py<br/>openpyxl integration<br/>Professional Excel formatting"]
 
-        CLOUD_REPO["Cloud Repository<br/>🔄 S3/Azure ready<br/>☁️ Scalable storage<br/>🔐 Secure access"]
-    end
+    FILE_OPERATIONS["File Operations<br/>SimpleFileReader + SimpleFileWriter<br/>Path management<br/>Directory creation"]
+
+    FORMAT_ENGINE["Format Engine<br/>openpyxl Workbook creation<br/>Column headers + data rows<br/>Professional styling"]
 
     REPOSITORY_INTERFACE --> EXCEL_REPOSITORY
     EXCEL_REPOSITORY --> FILE_OPERATIONS
-    FILE_OPERATIONS --> FORMAT_ENGINE
-    FORMAT_ENGINE --> VALIDATION_INTEGRATION
-
-    VALIDATION_INTEGRATION --> EXCEL_OUTPUT
-    VALIDATION_INTEGRATION --> CSV_EXPORT
-    VALIDATION_INTEGRATION --> JSON_EXPORT
-    VALIDATION_INTEGRATION --> METADATA_GEN
-
-    REPOSITORY_INTERFACE -.-> DATABASE_REPO
-    REPOSITORY_INTERFACE -.-> API_REPO
-    REPOSITORY_INTERFACE -.-> CLOUD_REPO
+    EXCEL_REPOSITORY --> FORMAT_ENGINE
 ```
 
-## European Number Format Processing Pattern (Code-Verified)
+**Code Verification**:
+
+- **Interface**: `StatementRepository` abstract base class in domain/repositories.py
+- **Implementation**: `ExcelStatementRepository` with `save_statement(statement, output_path)`
+- **File Handling**: Injected SimpleFileReader/SimpleFileWriter for dependency inversion
+- **Excel Generation**: openpyxl integration with professional formatting
+
+## Bank Detection Pattern Implementation
+
+**Implementation**: BankDetector interface with concrete implementations
+
+```mermaid
+graph TB
+    DETECTOR_INTERFACE["BankDetector Interface<br/>domain/detectors.py<br/>can_detect(), get_payment_method()"]
+
+    MACRO_DETECTOR["MacroDetector<br/>infrastructure/detectors.py<br/>Macro bank content detection<br/>MACRO_VISA + MACRO_ACCOUNT"]
+
+    BBVA_DETECTOR["BBVADetector<br/>infrastructure/detectors.py<br/>BBVA bank content detection<br/>BBVA_VISA + BBVA_MASTERCARD + BBVA_ACCOUNT"]
+
+    PAYMENT_DETECTOR["PaymentMethodDetector<br/>domain/detectors.py<br/>Composite pattern<br/>detect_from_content() orchestration"]
+
+    DETECTOR_INTERFACE --> MACRO_DETECTOR
+    DETECTOR_INTERFACE --> BBVA_DETECTOR
+    PAYMENT_DETECTOR --> DETECTOR_INTERFACE
+```
+
+**Code Verification**:
+
+- **Abstract Interface**: `BankDetector` in domain/detectors.py with `can_detect()` and `get_payment_method()`
+- **Concrete Implementations**: MacroDetector, BBVADetector with content analysis
+- **Registration**: `PaymentMethodDetector.register_detector()` method for composite pattern
+- **Detection Logic**: Content analysis with bank-specific indicators
+
+## European Number Format Processing Pattern
+
+**Implementation**: AmountParser with pattern recognition in domain/utils.py
 
 ```mermaid
 flowchart TD
-    RAW_INPUT["Raw Number Strings<br/>Bank-specific formats<br/>1.234,56 | 1,234.56 | 123.45"] --> PATTERN_ANALYZER["Pattern Analyzer<br/>utils.py + builders.py"]
+    RAW_INPUT["Raw Number Strings<br/>1.234,56 | 1,234.56 | 123.45"] --> PATTERN_ANALYZER["AmountParser<br/>domain/utils.py<br/>parse_european_format()"]
 
-    subgraph "🔍 Detection Engine (Code-Verified)"
-        REGEX_PATTERNS["Regex Pattern Library<br/>European: r'\\d{1,3}(?:\\.\\d{3})*,\\d{2}'<br/>US: r'\\d{1,3}(?:,\\d{3})*\\.\\d{2}'<br/>Simple: r'\\d+\\.\\d{2}'"]
+    subgraph "Detection Engine"
+        REGEX_PATTERNS["Pattern Detection<br/>European format recognition<br/>Comma as decimal separator<br/>Dot as thousands separator"]
 
-        FORMAT_CLASSIFIER["Format Classification<br/>European vs US detection<br/>Context-aware analysis<br/>Confidence scoring"]
+        FORMAT_CLASSIFIER["Format Classification<br/>String manipulation<br/>Decimal creation<br/>Error handling"]
 
-        NEGATIVE_HANDLER["Negative Number Handling<br/>Suffix detection: 123,45-<br/>Prefix detection: -123,45<br/>Context parsing"]
-
-        VALIDATION_RULES["Format Validation<br/>Consistency checking<br/>Business rule compliance<br/>Error detection"]
+        NEGATIVE_HANDLER["Negative Handling<br/>Prefix detection (-)<br/>Suffix detection<br/>Sign normalization"]
     end
 
-    subgraph "⚙️ Conversion Engine (builders.py verified)"
-        EUROPEAN_CONVERTER["European Converter<br/>1.234,56 → remove dots<br/>Replace comma with dot<br/>Result: 1234.56"]
+    subgraph "Conversion Engine"
+        EUROPEAN_CONVERTER["European Converter<br/>1.234,56 → 1234.56<br/>String replacement logic<br/>Validation checks"]
 
-        US_CONVERTER["US Converter<br/>1,234.56 → remove commas<br/>Keep decimal point<br/>Result: 1234.56"]
+        DECIMAL_HANDLER["Decimal Creation<br/>Python decimal.Decimal<br/>Financial precision<br/>Exact arithmetic"]
 
-        SIMPLE_CONVERTER["Simple Converter<br/>123.45 → direct conversion<br/>No transformation needed<br/>Result: 123.45"]
-
-        DECIMAL_HANDLER["Decimal Object Creation<br/>Python decimal module<br/>Financial precision<br/>Exact arithmetic"]
-    end
-
-    subgraph "✅ Output Generation (Code-Verified)"
-        IMMUTABLE_TRANSACTION["Immutable Transaction<br/>@dataclass(frozen=True)<br/>Type-safe amounts<br/>Business validation"]
-
-        CURRENCY_ASSIGNMENT["Currency Assignment<br/>Currency.ARS | Currency.USD<br/>Multi-currency support<br/>Separate tracking"]
-
-        VALIDATION_CHECKS["Validation Checks<br/>Non-zero amounts<br/>Range validation<br/>Consistency checks"]
-
-        ERROR_RECOVERY["Error Recovery<br/>Graceful degradation<br/>Clear error messages<br/>Processing continuation"]
+        CURRENCY_ASSIGNMENT["Currency Assignment<br/>Transaction-level Currency enum<br/>ARS/USD detection<br/>Separate tracking via TransactionBuilder"]
     end
 
     PATTERN_ANALYZER --> REGEX_PATTERNS
     REGEX_PATTERNS --> FORMAT_CLASSIFIER
     FORMAT_CLASSIFIER --> NEGATIVE_HANDLER
-    NEGATIVE_HANDLER --> VALIDATION_RULES
 
-    VALIDATION_RULES --> EUROPEAN_CONVERTER
-    VALIDATION_RULES --> US_CONVERTER
-    VALIDATION_RULES --> SIMPLE_CONVERTER
-    VALIDATION_RULES --> DECIMAL_HANDLER
-
-    EUROPEAN_CONVERTER --> IMMUTABLE_TRANSACTION
-    US_CONVERTER --> CURRENCY_ASSIGNMENT
-    SIMPLE_CONVERTER --> VALIDATION_CHECKS
-    DECIMAL_HANDLER --> ERROR_RECOVERY
+    NEGATIVE_HANDLER --> EUROPEAN_CONVERTER
+    EUROPEAN_CONVERTER --> DECIMAL_HANDLER
+    DECIMAL_HANDLER --> CURRENCY_ASSIGNMENT
 ```
 
-## Concurrent Processing Architecture (Code-Verified)
+**Code Verification**:
+
+- **Implementation**: `AmountParser.parse_european_format()` method in domain/utils.py
+- **Pattern Recognition**: String analysis for European format (1.234,56)
+- **Conversion Logic**: Replace dots with empty string, comma with dot, then Decimal()
+- **Integration**: Used by TransactionBuilder for all format-specific methods
+
+## Validation Pattern Implementation
+
+**Implementation**: StatementValidator with ValidationResult in domain/validation.py
 
 ```mermaid
 graph TB
-    subgraph "⚡ Async Processing Engine (async_processing.py verified)"
-        ASYNC_COORDINATOR["AsyncCoordinator<br/>Event loop management<br/>Task orchestration<br/>Resource allocation"]
+    VALIDATOR_INTERFACE["StatementValidator<br/>domain/validation.py<br/>validate() method<br/>ValidationResult return"]
 
-        PROCESSING_STRATEGY["Processing Strategy<br/>Workload analysis<br/>Execution planning<br/>Performance optimization"]
+    VALIDATION_RULES["Validation Rules<br/>Transaction count validation<br/>Balance verification capability<br/>Business rule enforcement"]
 
-        TASK_MANAGER["Task Manager<br/>Queue management<br/>Priority handling<br/>Load balancing"]
+    BALANCE_SERVICE["BalanceExtractionService<br/>infrastructure/extractors.py<br/>PDF balance extraction<br/>Statement comparison"]
 
-        RESULT_AGGREGATOR["Result Aggregator<br/>Output collection<br/>Error consolidation<br/>Success tracking"]
-    end
+    VALIDATION_RESULT["ValidationResult<br/>domain/validation.py<br/>is_valid boolean<br/>errors list"]
 
-    subgraph "🎛️ Resource Management (Code-Verified)"
-        SEMAPHORE_CONTROL["Semaphore Control<br/>Concurrent limits<br/>Resource protection<br/>Deadlock prevention"]
-
-        MEMORY_MONITOR["Memory Monitoring<br/>Usage tracking<br/>Leak detection<br/>Cleanup automation"]
-
-        ERROR_ISOLATION["Error Isolation<br/>Individual failures<br/>Graceful degradation<br/>Recovery mechanisms"]
-
-        PERFORMANCE_TRACKING["Performance Tracking<br/>Metrics collection<br/>Throughput measurement<br/>Optimization feedback"]
-    end
-
-    subgraph "📊 CLI Integration (main.py verified)"
-        PROGRESS_BARS["Progress Bars<br/>Rich Progress component<br/>File-by-file tracking<br/>Real-time updates"]
-
-        STATUS_DISPLAY["Status Display<br/>Success/failure indication<br/>Error summaries<br/>Completion metrics"]
-
-        RESULT_PRESENTATION["Result Presentation<br/>Formatted tables<br/>JSON output option<br/>Professional styling"]
-
-        USER_CONTROL["User Control<br/>Keyboard interrupts<br/>Graceful shutdown<br/>Operation cancellation"]
-    end
-
-    ASYNC_COORDINATOR --> PROCESSING_STRATEGY
-    PROCESSING_STRATEGY --> TASK_MANAGER
-    TASK_MANAGER --> RESULT_AGGREGATOR
-
-    RESULT_AGGREGATOR --> SEMAPHORE_CONTROL
-    SEMAPHORE_CONTROL --> MEMORY_MONITOR
-    MEMORY_MONITOR --> ERROR_ISOLATION
-    ERROR_ISOLATION --> PERFORMANCE_TRACKING
-
-    PERFORMANCE_TRACKING --> PROGRESS_BARS
-    PROGRESS_BARS --> STATUS_DISPLAY
-    STATUS_DISPLAY --> RESULT_PRESENTATION
-    RESULT_PRESENTATION --> USER_CONTROL
+    VALIDATOR_INTERFACE --> VALIDATION_RULES
+    VALIDATION_RULES --> BALANCE_SERVICE
+    VALIDATION_RULES --> VALIDATION_RESULT
 ```
 
-## Pattern Benefits Matrix (Production Verified)
+**Code Verification**:
 
-```mermaid
-graph LR
-    subgraph "🔧 Extensibility Benefits (Code-Verified)"
-        NEW_BANK_ADDITION["New Bank Addition<br/>✅ Implement parser interface<br/>✅ Add to PaymentMethod enum<br/>✅ Register with factory<br/>✅ Follow Strategy pattern"]
+- **Interface**: `StatementValidator` class with `validate(statement)` method
+- **Result Object**: `ValidationResult` dataclass with `is_valid` and `errors` fields
+- **Integration**: Used by StatementProcessingService for validation workflow
+- **Balance Checking**: Optional balance extraction service integration
 
-        NEW_FORMAT_SUPPORT["New Format Support<br/>✅ Create format parser<br/>✅ Implement detection logic<br/>✅ Add to factory routing<br/>✅ Maintain pattern consistency"]
+## Pattern Integration Benefits (Implementation Verified)
 
-        FEATURE_EXTENSION["Feature Extension<br/>✅ Observer pattern ready<br/>✅ Event-driven expansion<br/>✅ Plugin architecture<br/>✅ Minimal core changes"]
-    end
+**Extensibility Benefits**:
 
-    subgraph "🛠️ Maintainability Benefits (Active)"
-        CLEAR_SEPARATION["Clear Separation<br/>✅ 4 distinct layers<br/>✅ Single responsibility<br/>✅ Loose coupling<br/>✅ Interface contracts"]
+- **New Bank Addition**: Implement BankDetector interface, register with PaymentMethodDetector
+- **New Format Support**: Implement StatementParser interface, register with ParserFactory
+- **Enhanced Validation**: Extend StatementValidator with additional business rules
 
-        ISOLATED_TESTING["Isolated Testing<br/>✅ 680+ tests verified<br/>✅ Component boundaries<br/>✅ Mock integration<br/>✅ Unit isolation"]
+**Maintainability Benefits**:
 
-        CODE_REUSABILITY["Code Reusability<br/>✅ Shared domain logic<br/>✅ Common infrastructure<br/>✅ Pattern consistency<br/>✅ Component sharing"]
-    end
+- **Clear Separation**: Each pattern handles specific domain concerns
+- **Isolated Testing**: Components tested independently via dependency injection
+- **Code Reusability**: Shared utilities (AmountParser, DateConverter) across implementations
 
-    subgraph "⚡ Performance Benefits (Active)"
-        CONCURRENT_READY["Concurrent Ready<br/>✅ Strategy pattern scalable<br/>✅ Observer async-compatible<br/>✅ Resource optimization<br/>✅ Parallel processing"]
+**Performance Benefits**:
 
-        MEMORY_EFFICIENT["Memory Efficient<br/>✅ Streaming operations<br/>✅ Repository abstraction<br/>✅ Resource cleanup<br/>✅ Garbage collection"]
+- **Strategy Selection**: O(n) parser detection with early exit on match
+- **Memory Efficiency**: Repository abstraction enables streaming for large files
+- **Optimization Paths**: Clear bottleneck identification through pattern boundaries
 
-        OPTIMIZATION_PATHS["Optimization Paths<br/>✅ Factory caching ready<br/>✅ Builder optimization<br/>✅ Performance profiling<br/>✅ Bottleneck isolation"]
-    end
+## Architecture Quality Achievements (Code-Verified)
 
-    NEW_BANK_ADDITION --> CLEAR_SEPARATION
-    NEW_FORMAT_SUPPORT --> ISOLATED_TESTING
-    FEATURE_EXTENSION --> CODE_REUSABILITY
+**SOLID Principles**:
 
-    CLEAR_SEPARATION --> CONCURRENT_READY
-    ISOLATED_TESTING --> MEMORY_EFFICIENT
-    CODE_REUSABILITY --> OPTIMIZATION_PATHS
-```
+- **Single Responsibility**: TransactionBuilder focuses solely on Transaction creation
+- **Open/Closed**: ParserFactory extensible via registration without modification
+- **Dependency Inversion**: StatementProcessingService depends on abstractions (interfaces)
 
-## Architecture Quality Dashboard (Code-Verified)
+**Clean Architecture**:
 
-```mermaid
-graph TB
-    subgraph "📊 SOLID Principles (Active Implementation)"
-        SINGLE_RESPONSIBILITY["Single Responsibility<br/>✅ Each class focused purpose<br/>✅ models.py: domain entities<br/>✅ parsers/: format handling<br/>✅ Clear boundaries"]
+- **Layer Independence**: Domain models have no infrastructure dependencies
+- **Dependency Flow**: CLI → Application → Domain → Infrastructure (verified in imports)
+- **Framework Independence**: Domain logic isolated from pdfplumber, pandas specifics
 
-        OPEN_CLOSED["Open/Closed Principle<br/>✅ Strategy pattern extensions<br/>✅ Factory pattern growth<br/>✅ New parsers without modification<br/>✅ Interface-based design"]
+**Pattern Consistency**:
 
-        DEPENDENCY_INVERSION["Dependency Inversion<br/>✅ Repository abstractions<br/>✅ Parser interfaces<br/>✅ Service dependencies<br/>✅ Testable architecture"]
-    end
+- **Uniform Implementation**: Constructor injection pattern across all services
+- **Error Handling**: Consistent ValueError usage with descriptive messages
+- **Interface Contracts**: Abstract base classes define clear behavioral contracts
 
-    subgraph "🏗️ Clean Architecture (31 Files Verified)"
-        LAYER_INDEPENDENCE["Layer Independence<br/>✅ Domain isolation<br/>✅ Infrastructure plugins<br/>✅ UI framework separation<br/>✅ Business logic purity"]
+## Current Status: Pattern Implementation Complete (Code-Verified)
 
-        DEPENDENCY_FLOW["Dependency Flow<br/>✅ Inward dependencies only<br/>✅ Domain center<br/>✅ Infrastructure periphery<br/>✅ Clean boundaries"]
+All enterprise patterns successfully implemented and verified in source:
 
-        FRAMEWORK_INDEPENDENCE["Framework Independence<br/>✅ Rich UI replaceable<br/>✅ Click CLI swappable<br/>✅ pandas alternatives<br/>✅ Core logic protected"]
-    end
+- **Strategy Pattern**: StatementParser with 4 concrete implementations auto-registered
+- **Factory Pattern**: DefaultParserFactory with extension-based routing
+- **Builder Pattern**: TransactionBuilder with format-specific methods and utility injection
+- **Command Pattern**: CLI operations with Click decorators and Rich UI integration
+- **Repository Pattern**: ExcelStatementRepository with professional output formatting
+- **Detection Pattern**: BankDetector interface with MacroDetector + BBVADetector implementations
 
-    subgraph "🎯 Pattern Quality (Production Active)"
-        CONSISTENCY["Pattern Consistency<br/>✅ Uniform implementation<br/>✅ Standard practices<br/>✅ Team understanding<br/>✅ Documentation alignment"]
-
-        PERFORMANCE_OPTIMIZED["Performance Optimized<br/>✅ Concurrent processing<br/>✅ Memory efficiency<br/>✅ Resource management<br/>✅ Scalable design"]
-
-        EVOLUTION_READY["Evolution Ready<br/>✅ Extension points<br/>✅ Version compatibility<br/>✅ Migration paths<br/>✅ Future-proof design"]
-    end
-
-    SINGLE_RESPONSIBILITY --> LAYER_INDEPENDENCE
-    OPEN_CLOSED --> DEPENDENCY_FLOW
-    DEPENDENCY_INVERSION --> FRAMEWORK_INDEPENDENCE
-
-    LAYER_INDEPENDENCE --> CONSISTENCY
-    DEPENDENCY_FLOW --> PERFORMANCE_OPTIMIZED
-    FRAMEWORK_INDEPENDENCE --> EVOLUTION_READY
-```
-
-## Current Status: ✅ PRODUCTION PATTERN EXCELLENCE
-
-```mermaid
-graph TB
-    subgraph "🎯 Pattern Achievement (Code-Verified Active)"
-        ENTERPRISE_PATTERNS["✅ Enterprise Patterns<br/>6 patterns implemented<br/>31 files organized<br/>Production verified"]
-
-        CLEAN_ARCHITECTURE["✅ Clean Architecture<br/>4 layers operational<br/>Clear boundaries<br/>Dependency flow correct"]
-
-        EXTENSIBLE_DESIGN["✅ Extensible Design<br/>Plugin architecture<br/>Strategy pattern ready<br/>Future enhancement prepared"]
-
-        QUALITY_ASSURANCE["✅ Quality Assurance<br/>680+ tests validating<br/>Pattern integrity maintained<br/>Continuous verification"]
-    end
-
-    subgraph "🚀 Active Capabilities (Production)"
-        CONCURRENT_PROCESSING["Concurrent Processing<br/>⚡ Multi-file parallel<br/>🎛️ Resource optimized<br/>📊 Performance tracked"]
-
-        ERROR_RESILIENCE["Error Resilience<br/>🛡️ Individual isolation<br/>🔄 Graceful degradation<br/>📋 Recovery guidance"]
-
-        PROFESSIONAL_UX["Professional UX<br/>🎨 Rich UI integration<br/>📊 Real-time feedback<br/>👥 Enterprise experience"]
-
-        UNLIMITED_SCALE["Unlimited Scalability<br/>📈 Architecture ready<br/>🔧 Pattern support<br/>🚀 Growth accommodation"]
-    end
-
-    ENTERPRISE_PATTERNS --> CONCURRENT_PROCESSING
-    CLEAN_ARCHITECTURE --> ERROR_RESILIENCE
-    EXTENSIBLE_DESIGN --> PROFESSIONAL_UX
-    QUALITY_ASSURANCE --> UNLIMITED_SCALE
-```
-
-### Production Command Reference
-
-**✅ Modern Architecture**: `uv run python -m cli batch input/`
-**❌ Legacy Monolith**: `parse_visa_statement.py` - **DEPRECATED (DO NOT USE)**
-
-## Summary: Pattern Excellence Achieved
-
-All enterprise patterns are actively implemented and production-verified:
-
-- **✅ Strategy Pattern**: 4 parser implementations with pluggable architecture
-- **✅ Factory Pattern**: Dynamic parser creation with auto-detection
-- **✅ Builder Pattern**: Transaction construction with European format handling
-- **✅ Observer Pattern**: Real-time progress events with Rich UI integration
-- **✅ Command Pattern**: 4 CLI operations with professional interface
-- **✅ Repository Pattern**: Data abstraction with Excel output excellence
-
-The architecture provides a robust foundation for enterprise-grade financial statement processing with comprehensive extensibility for future enhancements while maintaining clean boundaries, testability, and performance optimization.
+**Architecture Achievement**: Robust enterprise foundation supporting professional financial statement processing with comprehensive extensibility verified through source code analysis, maintaining clean boundaries, testability, and performance optimization through established patterns.

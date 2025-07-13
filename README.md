@@ -1,6 +1,6 @@
 # Financial Statement Processor
 
-A **professional, enterprise-ready** Python tool with **clean hexagonal architecture** for processing financial statements from various Argentine banks. **Successfully transformed from legacy monolithic code (1,532 lines) to modern enterprise architecture (31 files across 4 layers)** with 98% time reduction and 0% error rate. Features a modern CLI interface, async batch processing, and supports 10 different statement types across 4 file formats with intelligent parsing and automatic bank detection.
+A **professional, enterprise-ready** Python tool with **clean hexagonal architecture** for processing financial statements from various Argentine banks. **Successfully transformed from legacy monolithic code (1,532 lines) to modern enterprise architecture (31 files across 4 layers)** with 98% time reduction and 0% error rate. Features a modern CLI interface with **5 comprehensive commands**, multi-source consolidation with duplicate detection, and supports 10 different statement types across 4 file formats with intelligent parsing and automatic bank detection.
 
 ## 🎯 **PRODUCTION EXCELLENCE ACHIEVED**
 
@@ -58,6 +58,9 @@ PYTHONPATH=src uv run python -m cli.main process input/statement.pdf
 
 # Batch process all files
 PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Consolidate multiple sources into single Excel file (KEY FEATURE!)
+PYTHONPATH=src uv run python -m cli.main consolidate input/
 
 # Validate without processing
 PYTHONPATH=src uv run python -m cli.main validate input/statement.pdf
@@ -130,9 +133,6 @@ PYTHONPATH=src uv run python -m cli.main validate input/statement.pdf --verbose
 # Process all files in directory
 PYTHONPATH=src uv run python -m cli.main batch input/
 
-# Process with file pattern
-PYTHONPATH=src uv run python -m cli.main batch input/ --pattern "*.pdf"
-
 # JSON output for automation
 PYTHONPATH=src uv run python -m cli.main batch input/ --json
 
@@ -141,6 +141,29 @@ PYTHONPATH=src uv run python -m cli.main batch input/ --json
 # ✅ 3 successful, ❌ 4 failed, 📊 42.9% success rate
 # 📈 Total transactions: 184
 # ⏱️  Total time: 12.3s
+```
+
+#### `consolidate` - Multi-Source Consolidation
+
+```bash
+# Consolidate all files into single Excel with duplicate detection
+PYTHONPATH=src uv run python -m cli.main consolidate input/
+
+# Custom output directory
+PYTHONPATH=src uv run python -m cli.main consolidate input/ --output-dir output/
+
+# JSON output for automation
+PYTHONPATH=src uv run python -m cli.main consolidate input/ --json
+
+# Example output:
+# 🔍 Discovering files in input/...
+# Consolidating statements... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100%
+# ✅ Consolidation Complete
+#    📁 Input: input/
+#    📄 Output: output/consolidated-statements-20250713.xlsx
+#    ✅ Success: 7/8 files
+#    📈 Transactions: 342 (duplicates: 8 marked)
+#    ⏱️  Time: 15.2 seconds
 ```
 
 ## 💳 Supported Banks & Statement Types (10 Total)
@@ -171,6 +194,7 @@ PYTHONPATH=src uv run python -m cli.main batch input/ --json
 
 ### High-Performance Processing
 
+- **Multi-Source Consolidation** - Combine multiple statements into single Excel file with duplicate detection and chronological sorting
 - **Async Batch Processing** - Concurrent processing of multiple files
 - **Memory-Efficient Streaming** - Handle large CSV/Excel files without memory issues
 - **Configurable Concurrency** - Optimize for your system resources
@@ -192,6 +216,8 @@ PYTHONPATH=src uv run python -m cli.main batch input/ --json
 
 ## 🎯 Smart Processing Features
 
+- **Multi-Source Consolidation** - Combines multiple statement files into single chronologically sorted Excel output
+- **Duplicate Detection** - Automatically identifies and marks duplicate transactions across all sources
 - **Automatic Detection** - Intelligently identifies bank and statement type
 - **Multi-Currency Support** - Handles both ARS (Argentine Peso) and USD transactions
 - **European Number Format** - Properly processes 1.234,56 notation across all formats
