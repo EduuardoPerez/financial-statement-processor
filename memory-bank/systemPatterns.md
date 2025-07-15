@@ -181,7 +181,7 @@ graph TB
 
 ## Bank Detection Pattern Implementation
 
-**Implementation**: BankDetector interface with concrete implementations
+**Implementation**: BankDetector interface with concrete implementations and enhanced detection flexibility
 
 ```mermaid
 graph TB
@@ -191,19 +191,24 @@ graph TB
 
     BBVA_DETECTOR["BBVADetector<br/>infrastructure/detectors.py<br/>BBVA bank content detection<br/>BBVA_VISA + BBVA_MASTERCARD + BBVA_ACCOUNT"]
 
-    PAYMENT_DETECTOR["PaymentMethodDetector<br/>domain/detectors.py<br/>Composite pattern<br/>detect_from_content() orchestration"]
+    PAYMENT_DETECTOR["PaymentMethodDetector<br/>domain/detectors.py<br/>Composite pattern + Enhanced filename detection<br/>detect_from_content() + detect_from_filename()"]
+
+    ENHANCED_DETECTION["Enhanced Detection (July 2025)<br/>Flexible keyword matching<br/>MOVIMIENTOS + ACCOUNT support<br/>Variable file naming conventions"]
 
     DETECTOR_INTERFACE --> MACRO_DETECTOR
     DETECTOR_INTERFACE --> BBVA_DETECTOR
     PAYMENT_DETECTOR --> DETECTOR_INTERFACE
+    PAYMENT_DETECTOR --> ENHANCED_DETECTION
 ```
 
 **Code Verification**:
 
 - **Abstract Interface**: `BankDetector` in domain/detectors.py with `can_detect()` and `get_payment_method()`
-- **Concrete Implementations**: MacroDetector, BBVADetector with content analysis
+- **Concrete Implementations**: MacroDetector, BBVADetector with enhanced content analysis
 - **Registration**: `PaymentMethodDetector.register_detector()` method for composite pattern
-- **Detection Logic**: Content analysis with bank-specific indicators
+- **Enhanced Detection Logic**: Content analysis with bank-specific indicators and flexible keyword matching
+- **Filename Detection**: Improved patterns supporting both "MOVIMIENTOS" and "ACCOUNT" keywords for Macro detection
+- **Resilient Matching**: Variable file naming convention support with backward compatibility
 
 ## European Number Format Processing Pattern
 
