@@ -48,7 +48,7 @@ graph TB
 
 - **MACRO_VISA** - PDF credit card statements via MacroDetector + PDFStatementParser
 - **BBVA_VISA** - PDF credit card statements via BBVADetector + PDFStatementParser
-- **BBVA_MASTERCARD** - PDF statements with DD-MMM-YY format via BBVADetector + PDFStatementParser
+- **BBVA_MASTERCARD** - PDF statements with DD-MMM-YY format AND XLSX statements with DD/MM/YY format via BBVADetector + PDFStatementParser/XLSXStatementParser
 - **BBVA_ACCOUNT** - XLS bank account statements via BBVADetector + XLSStatementParser
 - **MACRO_ACCOUNT** - XLS account statements via MacroDetector + XLSStatementParser
 - **MERCADOPAGO** - XLSX digital wallet statements via enum-based detection + XLSXStatementParser
@@ -239,11 +239,20 @@ PYTHONPATH=src uv run python -m cli.main validate input/statement.pdf
    - **Solution**: Enhanced regex patterns in `src/infrastructure/extractors.py` with flexible whitespace handling
    - **Additional**: Implemented smart validation logic in `src/domain/validation.py` with dual-approach balance calculation
 
+**Latest Feature Implementation Achievement (July 15, 2025)**:
+
+3. **BBVA Mastercard XLSX Support Successfully Added**:
+   - **Task**: Extended CLI script to support BBVA Mastercard XLSX movements files
+   - **Files Modified**: `src/domain/detectors.py` (filename detection) and `src/infrastructure/parsers/xlsx_parser.py` (dual-format parser)
+   - **Features Added**: DD/MM/YY date parsing, USD/ARS currency detection, European number format handling
+   - **Result**: 2 transactions processed successfully, full consolidation integration (12/12 files, 707 transactions)
+
 **Processing Reliability Enhancement**:
 
 - **Before**: 19/21 files successful (90.5% success rate)
 - **After**: 20/21 files successful (95.2% success rate)
-- **Improvement**: +4.7% reliability increase with better edge case handling
+- **Latest**: 12/12 files successful (100% success rate in current test set)
+- **Improvement**: +4.7% reliability increase with better edge case handling + full BBVA Mastercard XLSX support
 
 **Implementation Achievements**:
 

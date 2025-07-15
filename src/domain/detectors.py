@@ -237,6 +237,8 @@ class PaymentMethodDetector:
         elif extension == ".xlsx":
             if "MERCADOPAGO" in filename_upper:
                 return PaymentMethod.MERCADOPAGO
+            elif "BBVA" in filename_upper and "MASTERCARD" in filename_upper:
+                return PaymentMethod.BBVA_MASTERCARD
 
         raise ValueError(f"Unknown payment method for file: {file_path}")
 

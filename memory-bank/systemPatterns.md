@@ -57,7 +57,7 @@ graph TB
 
     CSV_STRATEGY["CSVStatementParser<br/>infrastructure/parsers/csv_parser.py<br/>pandas delimiter detection<br/>TransactionBuilder.build_from_csv_data()"]
 
-    XLSX_STRATEGY["XLSXStatementParser<br/>infrastructure/parsers/xlsx_parser.py<br/>pandas + openpyxl integration<br/>TransactionBuilder.build_from_xls_data()"]
+    XLSX_STRATEGY["XLSXStatementParser<br/>infrastructure/parsers/xlsx_parser.py<br/>pandas + openpyxl integration<br/>Dual-format support: Mercadopago + BBVA Mastercard<br/>TransactionBuilder.build_from_xls_data()"]
 
     PARSER_INTERFACE --> PDF_STRATEGY
     PARSER_INTERFACE --> XLS_STRATEGY

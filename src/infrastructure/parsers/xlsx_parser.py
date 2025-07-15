@@ -149,7 +149,7 @@ class XLSXStatementParser(StatementParser):
         Helper method to load structured data from XLSX file using pandas.
 
         This method handles the low-level XLSX data loading using pandas.
-        It is proven to work well with Mercadopago statements.
+        It handles both Mercadopago format and BBVA Mastercard format.
 
         Args:
             file_path: Path to the XLSX file
@@ -168,8 +168,16 @@ class XLSXStatementParser(StatementParser):
             >>> assert len(df.columns) > 0
         """
         try:
-            # Load XLSX file using pandas with openpyxl engine
-            df = pd.read_excel(file_path, engine="openpyxl")
+            # Check if it's a BBVA Mastercard file that needs special handling
+            if (
+                "BBVA" in file_path.name.upper()
+                and "MASTERCARD" in file_path.name.upper()
+            ):
+                # Load with third row as header (skip first two rows)
+                df = pd.read_excel(file_path, engine="openpyxl", header=2)
+            else:
+                # Load normally for Mercadopago
+                df = pd.read_excel(file_path, engine="openpyxl")
 
             if df.empty:
                 raise ValueError(f"No data found in XLSX file: {file_path}")
@@ -187,11 +195,12 @@ class XLSXStatementParser(StatementParser):
         """
         Parse transaction data from XLSX DataFrame based on payment method.
 
-        Currently supports Mercadopago XLSX format with ISO 8601 timestamps.
+        Currently supports Mercadopago XLSX format with ISO 8601 timestamps
+        and BBVA Mastercard XLSX format with DD/MM/YY dates.
 
         Args:
             df: DataFrame containing XLSX data
-            payment_method: Detected payment method (should be MERCADOPAGO)
+            payment_method: Detected payment method (MERCADOPAGO or BBVA_MASTERCARD)
 
         Returns:
             List of parsed Transaction objects
@@ -204,6 +213,8 @@ class XLSXStatementParser(StatementParser):
 
         if payment_method == PaymentMethod.MERCADOPAGO:
             transactions = self._parse_mercadopago_transactions(df)
+        elif payment_method == PaymentMethod.BBVA_MASTERCARD:
+            transactions = self._parse_bbva_mastercard_transactions(df)
 
         return transactions
 
@@ -253,3 +264,95 @@ class XLSXStatementParser(StatementParser):
                     continue  # Skip invalid rows
 
         return transactions
+
+    def _parse_bbva_mastercard_transactions(
+        self, df: pd.DataFrame
+    ) -> list[Transaction]:
+        """
+        Parse BBVA Mastercard XLSX transactions.
+
+        BBVA Mastercard format:
+        - Columns: "Fecha y hora", "Movimientos", "Cuota", "Monto"
+        - Date format: DD/MM/YY (e.g., "07/07/25")
+        - Amount: European format with currency prefix (e.g., "USD 35,00", "$ 107.970,00")
+        - Currency: USD prefix or $ for ARS
+        """
+        transactions = []
+
+        # Process each row
+        for _, row in df.iterrows():
+            fecha_str = (
+                str(row["Fecha y hora"]).strip()
+                if pd.notna(row["Fecha y hora"])
+                else ""
+            )
+            movimientos = (
+                str(row["Movimientos"]).strip() if pd.notna(row["Movimientos"]) else ""
+            )
+            monto_str = str(row["Monto"]).strip() if pd.notna(row["Monto"]) else ""
+
+            if fecha_str and movimientos and monto_str:
+                try:
+                    # Parse date from DD/MM/YY to YYYY-MM-DD
+                    formatted_date = self._convert_bbva_date(fecha_str)
+
+                    # Parse currency and amount from monto string
+                    currency, amount_str = self._parse_bbva_amount(monto_str)
+
+                    # Build transaction using TransactionBuilder
+                    transaction = self._transaction_builder.build_from_xls_data(
+                        date_str=formatted_date,
+                        description=movimientos,
+                        amount_str=amount_str,
+                        currency=currency,
+                        payment_method=PaymentMethod.BBVA_MASTERCARD,
+                    )
+                    transactions.append(transaction)
+
+                except (ValueError, IndexError, TypeError):
+                    continue  # Skip invalid rows
+
+        return transactions
+
+    def _convert_bbva_date(self, date_str: str) -> str:
+        """
+        Convert BBVA date format from DD/MM/YY to YYYY-MM-DD.
+
+        Args:
+            date_str: Date string in DD/MM/YY format (e.g., "07/07/25")
+
+        Returns:
+            Date string in YYYY-MM-DD format (e.g., "2025-07-07")
+        """
+        from datetime import datetime
+
+        # Parse DD/MM/YY format and convert to YYYY-MM-DD
+        date_obj = datetime.strptime(date_str, "%d/%m/%y")
+        return date_obj.strftime("%Y-%m-%d")
+
+    def _parse_bbva_amount(self, monto_str: str) -> tuple[Currency, str]:
+        """
+        Parse BBVA amount string to extract currency and amount.
+
+        Args:
+            monto_str: Amount string (e.g., "USD 35,00", "$ 107.970,00")
+
+        Returns:
+            Tuple of (Currency, amount_string)
+        """
+        # Clean the string
+        monto_clean = monto_str.strip()
+
+        # Check for USD prefix
+        if monto_clean.startswith("USD "):
+            currency = Currency.USD
+            amount_str = monto_clean[4:]  # Remove "USD " prefix
+        elif monto_clean.startswith("$ "):
+            currency = Currency.ARS
+            amount_str = monto_clean[2:]  # Remove "$ " prefix
+        else:
+            # Default to ARS if no clear currency indicator
+            currency = Currency.ARS
+            amount_str = monto_clean
+
+        return currency, amount_str

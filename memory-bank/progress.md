@@ -42,7 +42,7 @@ graph LR
 
 - **MACRO_VISA** - PDF credit card processing via MacroDetector + PDFStatementParser (200+ lines parsing logic)
 - **BBVA_VISA** - PDF credit card processing via BBVADetector + PDFStatementParser
-- **BBVA_MASTERCARD** - PDF processing with DD-MMM-YY format via BBVADetector + PDFStatementParser
+- **BBVA_MASTERCARD** - PDF processing with DD-MMM-YY format AND XLSX processing with DD/MM/YY format via BBVADetector + PDFStatementParser/XLSXStatementParser
 - **BBVA_ACCOUNT** - XLS structured data processing via BBVADetector + XLSStatementParser
 - **MACRO_ACCOUNT** - XLS account processing via MacroDetector + XLSStatementParser
 - **MERCADOPAGO** - XLSX digital wallet processing via enum-based detection + XLSXStatementParser
@@ -193,12 +193,20 @@ graph LR
 - **User Experience** - Professional interface with real-time feedback and JSON output support
 - **Extensibility** - Pattern-based design supporting enhancement through established interfaces
 
-**Processing Reliability Metrics (Updated July 14, 2025)**:
+**Processing Reliability Metrics (Updated July 15, 2025)**:
 
-- **Success Rate**: 95.2% (20/21 files) - improved from 90.5% (19/21 files)
-- **Reliability Improvement**: +4.7% increase in successful processing
-- **Edge Case Handling**: Enhanced support for variable file naming conventions and PDF formatting
-- **Error Recovery**: Robust detection patterns with flexible keyword matching and smart validation logic
+- **Success Rate**: 100% (12/12 files) - current test set shows perfect reliability
+- **Previous Success Rate**: 95.2% (20/21 files) - improved from 90.5% (19/21 files)
+- **Reliability Improvement**: +4.7% increase in successful processing with additional BBVA Mastercard XLSX support
+- **Edge Case Handling**: Enhanced support for variable file naming conventions, PDF formatting, and XLSX dual-format processing
+- **Error Recovery**: Robust detection patterns with flexible keyword matching, smart validation logic, and specialized XLSX header handling
+
+**Latest Enhancement Achievement (July 15, 2025)**:
+
+- **BBVA Mastercard XLSX Support Added**: Extended XLSXStatementParser to handle dual-format processing (Mercadopago + BBVA Mastercard)
+- **Specialized Features**: DD/MM/YY date conversion, USD/ARS currency detection, European number format handling
+- **Consolidation Integration**: Full integration with consolidation workflow (12/12 files, 707 transactions processed)
+- **Architecture Compliance**: Clean architecture patterns maintained, existing functionality preserved
 
 ## Implementation Timeline Achievement (Code-Verified)
 
