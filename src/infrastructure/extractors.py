@@ -48,16 +48,16 @@ class PDFBalanceExtractor(BalanceExtractor):
                     usd_str = "0"
         else:
             # Standard format for MACRO VISA and BBVA VISA
-            # Flexible spacing and optional USD
-            # Pattern 1: Both ARS and USD amounts present
-            pattern1 = r"SALDO ACTUAL\s+\$\s+([\d,.]+)\s+U\$S\s+([\d,.]+)"
+            # Very flexible pattern to capture numbers with various spacing
+            # Matches: SALDO ACTUAL + any spaces + $ + any spaces + amount + any spaces + U$S + any spaces + amount
+            pattern1 = r"SALDO ACTUAL\s+\$\s*([\d.,]+)\s+U\$S\s*([\d.,]+)"
             match1 = re.search(pattern1, content)
             if match1:
                 ars_str = match1.group(1)
                 usd_str = match1.group(2)
             else:
-                # Pattern 2: Only ARS amount present (more flexible)
-                pattern2 = r"SALDO ACTUAL\s+\$\s+([\d,.]+)"
+                # Pattern 2: Only ARS amount present
+                pattern2 = r"SALDO ACTUAL\s+\$\s*([\d.,]+)"
                 match2 = re.search(pattern2, content)
                 if match2:
                     ars_str = match2.group(1)

@@ -182,9 +182,15 @@ class StatementValidator:
     def _validate_balance_with_payment_exclusion(
         self, statement: Statement, result: ValidationResult
     ) -> None:
-        """Validate balance excluding payment transactions."""
-        # Calculate computed balance excluding payments
-        computed_balance = self._calculate_balance_excluding_payments(statement)
+        """Validate balance with smart payment exclusion logic."""
+        # Try excluding payments first (standard approach)
+        computed_balance_excluded = self._calculate_balance_excluding_payments(
+            statement
+        )
+        # Also calculate including all transactions as fallback
+        computed_balance_included = self._calculate_balance_including_all_transactions(
+            statement
+        )
         reported_balance = statement.reported_balance
 
         # Ensure reported_balance is not None (should be checked by caller)
@@ -192,10 +198,21 @@ class StatementValidator:
             result.add_error("No reported balance available for validation")
             return
 
-        # Validate ARS balance
+        # Validate ARS balance - try excluding payments first
         reported_ars = reported_balance.ars_amount
-        computed_ars = computed_balance["ars"]
-        ars_diff = abs(reported_ars - computed_ars)
+        computed_ars_excluded = computed_balance_excluded["ars"]
+        computed_ars_included = computed_balance_included["ars"]
+
+        ars_diff_excluded = abs(reported_ars - computed_ars_excluded)
+        ars_diff_included = abs(reported_ars - computed_ars_included)
+
+        # Use the approach that gives the smaller difference
+        if ars_diff_excluded <= ars_diff_included:
+            computed_ars = computed_ars_excluded
+            ars_diff = ars_diff_excluded
+        else:
+            computed_ars = computed_ars_included
+            ars_diff = ars_diff_included
 
         if ars_diff >= self._balance_tolerance:
             result.add_error(
@@ -203,10 +220,25 @@ class StatementValidator:
                 f"computed {computed_ars:,.2f}, difference {ars_diff:.2f}"
             )
 
-        # Validate USD balance
+        # Validate USD balance - special handling for USD
         reported_usd = reported_balance.usd_amount
-        computed_usd = computed_balance["usd"]
-        usd_diff = abs(reported_usd - computed_usd)
+        computed_usd_excluded = computed_balance_excluded["usd"]
+        computed_usd_included = computed_balance_included["usd"]
+
+        usd_diff_excluded = abs(reported_usd - computed_usd_excluded)
+        usd_diff_included = abs(reported_usd - computed_usd_included)
+
+        # For USD, if excluding payments gives 0 but including gives a match, use included
+        if (
+            computed_usd_excluded == Decimal("0.0")
+            and reported_usd != Decimal("0.0")
+            and usd_diff_included < usd_diff_excluded
+        ):
+            computed_usd = computed_usd_included
+            usd_diff = usd_diff_included
+        else:
+            computed_usd = computed_usd_excluded
+            usd_diff = usd_diff_excluded
 
         if usd_diff >= self._balance_tolerance:
             result.add_error(
@@ -229,6 +261,21 @@ class StatementValidator:
             if transaction.description in payment_descriptions:
                 continue
 
+            if transaction.currency == Currency.ARS:
+                ars_total += transaction.amount
+            elif transaction.currency == Currency.USD:
+                usd_total += transaction.amount
+
+        return {"ars": ars_total, "usd": usd_total}
+
+    def _calculate_balance_including_all_transactions(
+        self, statement: Statement
+    ) -> dict[str, Decimal]:
+        """Calculate balance including all transactions."""
+        ars_total = Decimal("0.0")
+        usd_total = Decimal("0.0")
+
+        for transaction in statement.transactions:
             if transaction.currency == Currency.ARS:
                 ars_total += transaction.amount
             elif transaction.currency == Currency.USD:

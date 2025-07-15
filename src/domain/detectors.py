@@ -222,9 +222,15 @@ class PaymentMethodDetector:
         elif extension == ".xls":
             bbva_account_keywords = ["BBVA", "DETALLE"]
             macro_account_keywords = ["MACRO", "MOVIMIENTOS"]
+            macro_account_alternative_keywords = ["MACRO", "ACCOUNT"]
             if all(keyword in filename_upper for keyword in bbva_account_keywords):
                 return PaymentMethod.BBVA_ACCOUNT
             elif all(keyword in filename_upper for keyword in macro_account_keywords):
+                return PaymentMethod.MACRO_ACCOUNT
+            elif all(
+                keyword in filename_upper
+                for keyword in macro_account_alternative_keywords
+            ):
                 return PaymentMethod.MACRO_ACCOUNT
 
         # XLSX filename-based detection
