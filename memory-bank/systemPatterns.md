@@ -326,6 +326,7 @@ config = load_config(config_path)  # None for environment-based
 - **Environment Separation**: Development vs production configuration files
 - **Runtime Overrides**: Environment variables for deployment-specific tuning
 - **CLI Integration**: Seamless integration with Click framework and Rich UI display
+- **Payment Method Mapping**: PaymentMethodMappingConfig for customizable display names in Excel reports
 
 ## Pattern Integration Benefits (Implementation Verified)
 

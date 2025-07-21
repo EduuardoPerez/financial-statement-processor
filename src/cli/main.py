@@ -149,7 +149,9 @@ def create_components(
         # Create other components with balance service
         validator = StatementValidator(balance_extraction_service=balance_service)
         filename_generator = FilenameGenerator()
-        repository = ExcelStatementRepository(file_reader, file_writer)
+        repository = ExcelStatementRepository(
+            file_reader, file_writer, config.payment_method_mapping
+        )
 
         # Create main processing service
         processing_service = StatementProcessingService(

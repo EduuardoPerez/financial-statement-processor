@@ -15,21 +15,31 @@ import pandas as pd
 
 from domain.models import ConsolidatedStatement, Statement
 from domain.repositories import FileReader, FileWriter, StatementRepository
+from infrastructure.config import PaymentMethodMappingConfig
 
 
 class ExcelStatementRepository(StatementRepository):
     """Excel-based statement repository implementation."""
 
-    def __init__(self, file_reader: FileReader, file_writer: FileWriter):
+    def __init__(
+        self,
+        file_reader: FileReader,
+        file_writer: FileWriter,
+        payment_method_mapping: PaymentMethodMappingConfig | None = None,
+    ):
         """
         Initialize the Excel statement repository.
 
         Args:
             file_reader: File reader implementation for loading raw data
             file_writer: File writer implementation for saving files
+            payment_method_mapping: Payment method mapping configuration
         """
         self._file_reader = file_reader
         self._file_writer = file_writer
+        self._payment_method_mapping = (
+            payment_method_mapping or PaymentMethodMappingConfig()
+        )
 
     def save_statement(self, statement: Statement, output_path: Path) -> None:
         """
@@ -102,17 +112,21 @@ class ExcelStatementRepository(StatementRepository):
             Creates DataFrame with columns: Date, Description, Currency,
             Amount, Payment Method. Date format: YYYY-MM-DD.
             Amount format: Float representation of Decimal
+            Uses configured payment method display names if available
         """
         data: list[dict[str, Any]] = []
 
         for transaction in statement.transactions:
+            display_name = self._payment_method_mapping.get_display_name(
+                transaction.payment_method
+            )
             data.append(
                 {
                     "Date": transaction.date.strftime("%Y-%m-%d"),
                     "Description": transaction.description,
                     "Currency": transaction.currency.value,
                     "Amount": float(transaction.amount),
-                    "Payment Method": transaction.payment_method.value,
+                    "Payment Method": display_name,
                 }
             )
 
@@ -173,19 +187,23 @@ class ExcelStatementRepository(StatementRepository):
             Creates DataFrame with columns: Date, Description, Currency,
             Amount, Payment Method. Transactions are already sorted and
             duplicates are already marked in the ConsolidatedStatement.
+            Uses configured payment method display names if available
         """
         from typing import Any
 
         data: list[dict[str, Any]] = []
 
         for transaction in consolidated.transactions:
+            display_name = self._payment_method_mapping.get_display_name(
+                transaction.payment_method
+            )
             data.append(
                 {
                     "Date": transaction.date.strftime("%Y-%m-%d"),
                     "Description": transaction.description,
                     "Currency": transaction.currency.value,
                     "Amount": float(transaction.amount),
-                    "Payment Method": transaction.payment_method.value,
+                    "Payment Method": display_name,
                 }
             )
 

@@ -1,8 +1,10 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
+
+from domain.models import PaymentMethod
 
 
 @dataclass
@@ -30,6 +32,25 @@ class ProcessingConfig:
 
 
 @dataclass
+class PaymentMethodMappingConfig:
+    """Payment method display name mapping configuration"""
+
+    mappings: dict[str, str] = field(default_factory=dict)
+
+    def get_display_name(self, payment_method: PaymentMethod) -> str:
+        """
+        Get the display name for a payment method.
+
+        Args:
+            payment_method: The PaymentMethod enum value
+
+        Returns:
+            Custom display name if configured, otherwise the default enum value
+        """
+        return self.mappings.get(payment_method.name, payment_method.value)
+
+
+@dataclass
 class OutputConfig:
     """Output format configuration"""
 
@@ -48,6 +69,9 @@ class ApplicationConfig:
     output_directory: Path
     processing: ProcessingConfig
     output: OutputConfig
+    payment_method_mapping: PaymentMethodMappingConfig = field(
+        default_factory=PaymentMethodMappingConfig
+    )
     database: DatabaseConfig | None = None
     log_level: str = "INFO"
     enable_async: bool = False
@@ -63,6 +87,9 @@ class ApplicationConfig:
             output_directory=Path(config_data["output_directory"]),
             processing=ProcessingConfig(**config_data.get("processing", {})),
             output=OutputConfig(**config_data.get("output", {})),
+            payment_method_mapping=PaymentMethodMappingConfig(
+                mappings=config_data.get("payment_method_mapping", {})
+            ),
             database=(
                 DatabaseConfig(**config_data["database"])
                 if "database" in config_data
@@ -99,12 +126,29 @@ class ApplicationConfig:
                 ),
                 date_format=os.getenv("FSP_DATE_FORMAT", "%Y-%m-%d"),
             ),
+            payment_method_mapping=PaymentMethodMappingConfig(
+                mappings=cls._load_payment_method_mapping_from_env()
+            ),
             database=(
                 cls._load_database_from_env() if os.getenv("FSP_DB_HOST") else None
             ),
             log_level=os.getenv("FSP_LOG_LEVEL", "INFO"),
             enable_async=(os.getenv("FSP_ENABLE_ASYNC", "false").lower() == "true"),
         )
+
+    @classmethod
+    def _load_payment_method_mapping_from_env(cls) -> dict[str, str]:
+        """Load payment method mapping from environment variables"""
+        mappings = {}
+
+        # Check for FSP_PAYMENT_METHOD_* environment variables
+        for payment_method in PaymentMethod:
+            env_var = f"FSP_PAYMENT_METHOD_{payment_method.name}"
+            value = os.getenv(env_var)
+            if value:
+                mappings[payment_method.name] = value
+
+        return mappings
 
     @classmethod
     def _load_database_from_env(cls) -> DatabaseConfig | None:

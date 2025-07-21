@@ -30,7 +30,12 @@ from cli.main import (
 )
 from domain.models import Balance, PaymentMethod, Statement
 from domain.validation import ValidationResult
-from infrastructure.config import ApplicationConfig, OutputConfig, ProcessingConfig
+from infrastructure.config import (
+    ApplicationConfig,
+    OutputConfig,
+    PaymentMethodMappingConfig,
+    ProcessingConfig,
+)
 
 
 class TestSimpleFileReader:
@@ -181,6 +186,7 @@ class TestCreateComponents:
         """Test successful component creation."""
         # Setup mocks
         mock_config = Mock(spec=ApplicationConfig)
+        mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
         mock_detector = Mock()
         mock_detector_class.return_value = mock_detector
         mock_factory = Mock()
@@ -222,6 +228,7 @@ class TestCreateComponents:
     def test_create_components_failure(self, mock_detector):
         """Test component creation failure raises CLIError."""
         mock_config = Mock(spec=ApplicationConfig)
+        mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
 
         with pytest.raises(
             CLIError, match="Failed to initialize components: Component error"

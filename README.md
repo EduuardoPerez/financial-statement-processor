@@ -41,6 +41,7 @@ src/
 - ✅ **Memory Streaming** - Process large CSV/Excel files efficiently with streaming operations
 - ✅ **Professional CLI** - Rich terminal UI with real-time progress bars and error handling
 - ✅ **Configuration Management** - YAML/environment variable support with smart defaults
+- ✅ **Payment Method Display Mapping** - Customize payment method names in reports via configuration
 
 ## 🚀 Quick Start
 
@@ -688,6 +689,14 @@ FSP_DB_NAME="financial_statements"
 FSP_DB_USER="fsp_user"
 FSP_DB_PASSWORD=""
 FSP_DB_POOL_SIZE="5"
+
+# Payment Method Display Mapping (Optional)
+FSP_PAYMENT_METHOD_MACRO_VISA="MACRO VISA"
+FSP_PAYMENT_METHOD_BBVA_VISA="BBVA VISA"
+FSP_PAYMENT_METHOD_BBVA_MASTERCARD="BBVA MASTERCARD"
+FSP_PAYMENT_METHOD_BBVA_ACCOUNT="BBVA ACCOUNT"
+FSP_PAYMENT_METHOD_MACRO_ACCOUNT="MACRO ACCOUNT"
+FSP_PAYMENT_METHOD_MERCADOPAGO="mercadopago"
 ```
 
 ### CLI Configuration Usage
@@ -724,6 +733,50 @@ FSP_LOG_LEVEL=DEBUG PYTHONPATH=src uv run python -m cli.main process input/state
 2. **Environment Variables** - `FSP_*` prefixed variables
 3. **YAML Configuration** - Specified via `--config` parameter
 4. **Smart Defaults** (lowest priority) - Built-in fallback values
+
+### Payment Method Display Name Mapping
+
+Customize how payment method names appear in Excel reports without affecting business logic.
+
+#### YAML Configuration Example
+
+```yaml
+# config/development.yaml
+payment_method_mapping:
+  MACRO_VISA: "MACRO VISA"           # Override default "Macro Visa"
+  BBVA_VISA: "BBVA VISA"             # Override default "BBVA Visa"
+  MERCADOPAGO: "mercadopago"         # Override default "Mercado Pago"
+  # BBVA_MASTERCARD: "BBVA Mastercard" # Commented = use default
+  # BBVA_ACCOUNT: "BBVA Account"       # Commented = use default
+  # MACRO_ACCOUNT: "Macro Account"     # Commented = use default
+```
+
+#### Environment Variable Examples
+
+```bash
+# Single payment method override
+FSP_PAYMENT_METHOD_MERCADOPAGO="MercadoPago" PYTHONPATH=src uv run python -m cli.main process input/mercadopago.xlsx
+
+# Multiple overrides for corporate reporting
+FSP_PAYMENT_METHOD_MACRO_VISA="MACRO VISA" \
+FSP_PAYMENT_METHOD_BBVA_VISA="BBVA VISA" \
+PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Abbreviated names for compact reports
+FSP_PAYMENT_METHOD_MACRO_VISA="MV" \
+FSP_PAYMENT_METHOD_BBVA_VISA="BV" \
+FSP_PAYMENT_METHOD_MERCADOPAGO="MP" \
+PYTHONPATH=src uv run python -m cli.main consolidate input/
+```
+
+#### Use Cases
+
+- **Corporate Reporting**: Match company naming conventions
+- **Data Integration**: Align with existing systems' naming schemes
+- **User Preference**: Customize for readability (all caps, lowercase)
+- **Internationalization**: Prepare for future multi-language support
+
+**📖 Documentation**: See [`docs/PAYMENT_METHOD_MAPPING.md`](docs/PAYMENT_METHOD_MAPPING.md) for comprehensive examples and configuration details.
 
 ### Configuration Examples by Use Case
 
