@@ -579,19 +579,64 @@ financial-statement-processor/
 
 ## 🛠️ Configuration
 
-### YAML Configuration
+The Financial Statement Processor features a **comprehensive YAML configuration system** with environment variable fallbacks and CLI argument overrides. The system uses a **hierarchical configuration approach**: YAML files → Environment variables → CLI arguments → Smart defaults.
+
+### Configuration Loading Behavior
+
+When you run commands **without** specifying `--config`, the system uses **environment-based defaults**:
+
+```bash
+# This command uses default configuration
+PYTHONPATH=src uv run python -m cli.main consolidate /Users/eduardoperez/Downloads/statements --output-dir /Users/eduardoperez/Downloads/consolidated
+
+# Default values applied:
+# - Input Directory: "input" (overridden by CLI argument)
+# - Output Directory: "output" (overridden by --output-dir)
+# - Max Workers: 4
+# - Log Level: "INFO"
+# - Async Processing: false
+# - Enable Validation: true
+# - Excel Sheet Name: "Sheet1"
+```
+
+### YAML Configuration Files
+
+#### Development Configuration (`config/development.yaml`)
 
 ```yaml
-# config/local.yaml
 input_directory: "input"
 output_directory: "output"
+log_level: "DEBUG"
+enable_async: false
+
+processing:
+  max_workers: 2
+  chunk_size: 500
+  timeout_seconds: 60
+  retry_attempts: 2
+  enable_validation: true
+  enable_balance_checking: true
+
+output:
+  default_format: "excel"
+  excel_sheet_name: "Transactions"
+  include_index: false
+  date_format: "%Y-%m-%d"
+```
+
+#### Production Configuration (`config/production.yaml`)
+
+```yaml
+input_directory: "/app/data/input"
+output_directory: "/app/data/output"
 log_level: "INFO"
 enable_async: true
 
 processing:
-  max_workers: 4
-  chunk_size: 1000
-  timeout_seconds: 300
+  max_workers: 8
+  chunk_size: 2000
+  timeout_seconds: 600
+  retry_attempts: 5
   enable_validation: true
   enable_balance_checking: true
 
@@ -600,27 +645,138 @@ output:
   excel_sheet_name: "Sheet1"
   include_index: false
   date_format: "%Y-%m-%d"
+
+database:
+  host: "postgres.internal"
+  port: 5432
+  database: "financial_statements"
+  username: "fsp_user"
+  password: "${DB_PASSWORD}"
+  pool_size: 10
 ```
 
-### Environment Variables
+### Environment Variables (FSP_ Prefix)
+
+Complete list of environment variables with defaults:
 
 ```bash
-# .env file
+# Core Settings
 FSP_INPUT_DIR="input"
 FSP_OUTPUT_DIR="output"
-FSP_MAX_WORKERS="4"
-FSP_ENABLE_ASYNC="true"
 FSP_LOG_LEVEL="INFO"
+FSP_ENABLE_ASYNC="false"
+
+# Processing Settings
+FSP_MAX_WORKERS="4"
+FSP_CHUNK_SIZE="1000"
+FSP_TIMEOUT="300"
+FSP_RETRY_ATTEMPTS="3"
+FSP_ENABLE_VALIDATION="true"
+FSP_ENABLE_BALANCE_CHECK="true"
+
+# Output Settings
+FSP_OUTPUT_FORMAT="excel"
+FSP_EXCEL_SHEET="Sheet1"
+FSP_CSV_DELIMITER=","
+FSP_INCLUDE_INDEX="false"
+FSP_DATE_FORMAT="%Y-%m-%d"
+
+# Database Settings (Optional)
+FSP_DB_HOST=""
+FSP_DB_PORT="5432"
+FSP_DB_NAME="financial_statements"
+FSP_DB_USER="fsp_user"
+FSP_DB_PASSWORD=""
+FSP_DB_POOL_SIZE="5"
 ```
 
-### CLI Configuration
+### CLI Configuration Usage
+
+#### Using YAML Configuration Files
 
 ```bash
-# Use custom configuration file
-PYTHONPATH=src uv run python -m cli.main --config config/production.yaml process input/
+# Use development configuration
+PYTHONPATH=src uv run python -m cli.main --config config/development.yaml batch input/
 
-# Override with environment variables
-FSP_MAX_WORKERS=8 PYTHONPATH=src uv run python -m cli.main batch input/
+# Use production configuration
+PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consolidate input/
+
+# Use custom configuration
+PYTHONPATH=src uv run python -m cli.main --config config/local.yaml process input/statement.pdf
+```
+
+#### Environment Variable Overrides
+
+```bash
+# Override specific settings
+FSP_MAX_WORKERS=8 FSP_LOG_LEVEL=DEBUG PYTHONPATH=src uv run python -m cli.main batch input/
+
+# High-performance batch processing
+FSP_MAX_WORKERS=12 FSP_ENABLE_ASYNC=true FSP_CHUNK_SIZE=5000 PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Debug mode with detailed logging
+FSP_LOG_LEVEL=DEBUG PYTHONPATH=src uv run python -m cli.main process input/statement.pdf --verbose
+```
+
+#### Configuration Priority Order
+
+1. **CLI Arguments** (highest priority) - `--output-dir`, file paths
+2. **Environment Variables** - `FSP_*` prefixed variables
+3. **YAML Configuration** - Specified via `--config` parameter
+4. **Smart Defaults** (lowest priority) - Built-in fallback values
+
+### Configuration Examples by Use Case
+
+#### Local Development
+
+```bash
+# Copy and customize development config
+cp config/development.yaml config/local.yaml
+
+# Edit for your local setup
+# Use with: PYTHONPATH=src uv run python -m cli.main --config config/local.yaml
+```
+
+#### Production Deployment
+
+```bash
+# Environment-based configuration
+export FSP_INPUT_DIR="/data/financial-statements"
+export FSP_OUTPUT_DIR="/data/processed-statements"
+export FSP_MAX_WORKERS=16
+export FSP_ENABLE_ASYNC=true
+
+# Run with production settings
+PYTHONPATH=src uv run python -m cli.main batch /data/financial-statements/
+```
+
+#### Performance Optimization
+
+```bash
+# High-throughput processing
+FSP_MAX_WORKERS=16 \
+FSP_CHUNK_SIZE=5000 \
+FSP_ENABLE_ASYNC=true \
+FSP_TIMEOUT=1200 \
+PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Memory-conscious processing
+FSP_MAX_WORKERS=2 \
+FSP_CHUNK_SIZE=100 \
+PYTHONPATH=src uv run python -m cli.main batch input/
+```
+
+### Configuration Verification
+
+```bash
+# Check current configuration
+PYTHONPATH=src uv run python -m cli.main info
+
+# Output shows:
+# ✅ Configuration settings
+# ✅ Max workers, async status
+# ✅ Input/output directories
+# ✅ Validation settings
 ```
 
 ## 🔍 Troubleshooting

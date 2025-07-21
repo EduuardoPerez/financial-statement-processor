@@ -163,21 +163,69 @@ PYTHONPATH=src uv run python -m cli.main validate input/statement.pdf
 - Contextual error messages with actionable guidance via error_data structures
 - Progress tracking with success/failure indication via Rich UI components
 
-## Configuration Management (ApplicationConfig Implementation)
+## Configuration Management System (Implementation Verified)
+
+**Configuration Architecture**: Comprehensive YAML configuration system with hierarchical priority: YAML files → Environment variables → CLI arguments → Smart defaults.
 
 **Configuration Sources (Code-Verified)**:
 
-- YAML configuration files via pyyaml>=6.0.0 integration
-- Environment variables with FSP_ prefix via python-dotenv for runtime overrides
-- CLI arguments for dynamic control via Click parameter parsing
-- Smart defaults for zero-configuration operation via ApplicationConfig.from_environment()
+- **YAML Configuration Files**: ApplicationConfig.from_yaml() with development.yaml and production.yaml implementations
+- **Environment Variables**: FSP_prefixed runtime overrides via ApplicationConfig.from_environment() with python-dotenv integration
+- **CLI Arguments**: Dynamic parameter control via Click integration (--config, --output-dir) with override capability
+- **Smart Defaults**: Zero-configuration operation with sensible fallback values for immediate usage
 
-**Configuration Categories**:
+**Configuration Files Implementation**:
 
-- Processing settings (workers, timeouts, performance tuning)
-- Output settings (format preferences, directory paths, styling)
-- Logging configuration (levels, formats, output routing)
-- Validation settings (balance checking, tolerance levels)
+- **Development Configuration** (`config/development.yaml`): DEBUG logging, 2 workers, conservative settings for local development
+- **Production Configuration** (`config/production.yaml`): INFO logging, 8 workers, database support, containerized paths (/app/data/)
+
+**Active Configuration Categories (ApplicationConfig Dataclasses)**:
+
+- **ProcessingConfig**: max_workers (4 default), chunk_size (1000), timeout_seconds (300), retry_attempts (3), enable_validation/balance_checking (true)
+- **OutputConfig**: default_format ("excel"), excel_sheet_name ("Sheet1"), csv_delimiter (","), include_index (false), date_format ("%Y-%m-%d")
+- **DatabaseConfig**: host, port (5432), database, username, password, pool_size (5) - Available for production deployment
+- **ApplicationConfig**: input_directory (Path), output_directory (Path), log_level ("INFO"), enable_async (false)
+
+**Environment Variables (FSP_ Prefix Complete List)**:
+
+```
+# Core Settings: FSP_INPUT_DIR, FSP_OUTPUT_DIR, FSP_LOG_LEVEL, FSP_ENABLE_ASYNC
+# Processing Settings: FSP_MAX_WORKERS, FSP_CHUNK_SIZE, FSP_TIMEOUT, FSP_RETRY_ATTEMPTS, FSP_ENABLE_VALIDATION, FSP_ENABLE_BALANCE_CHECK
+# Output Settings: FSP_OUTPUT_FORMAT, FSP_EXCEL_SHEET, FSP_CSV_DELIMITER, FSP_INCLUDE_INDEX, FSP_DATE_FORMAT
+# Database Settings: FSP_DB_HOST, FSP_DB_PORT, FSP_DB_NAME, FSP_DB_USER, FSP_DB_PASSWORD, FSP_DB_POOL_SIZE
+```
+
+**Configuration Loading Behavior (User Command Analysis)**:
+
+When executing: `PYTHONPATH=src uv run python -m cli.main consolidate /Users/eduardoperez/Downloads/statements --output-dir /Users/eduardoperez/Downloads/consolidated`
+
+**Active Configuration Applied**:
+
+- **Input Directory**: "/Users/eduardoperez/Downloads/statements" (CLI argument override)
+- **Output Directory**: "/Users/eduardoperez/Downloads/consolidated" (--output-dir override)
+- **Max Workers**: 4 (environment default)
+- **Log Level**: "INFO" (environment default)
+- **Async Processing**: false (environment default)
+- **Enable Validation**: true (environment default)
+- **Excel Sheet Name**: "Sheet1" (environment default)
+
+**Configuration Usage Patterns (Active)**:
+
+```bash
+# Default configuration (environment-based) - Most common usage
+PYTHONPATH=src uv run python -m cli.main consolidate input/
+
+# Development configuration with enhanced debugging
+PYTHONPATH=src uv run python -m cli.main --config config/development.yaml batch input/
+
+# Environment variable performance tuning
+FSP_MAX_WORKERS=8 FSP_ENABLE_ASYNC=true PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Production configuration with database integration
+PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consolidate input/
+```
+
+**Configuration Verification**: `PYTHONPATH=src uv run python -m cli.main info` displays current configuration status with Rich table formatting showing all active settings.
 
 ## Extension Readiness (Architectural Verification)
 

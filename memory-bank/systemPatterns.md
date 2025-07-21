@@ -276,6 +276,57 @@ graph TB
 - **Integration**: Used by StatementProcessingService for validation workflow
 - **Balance Checking**: Optional balance extraction service integration
 
+## Configuration Pattern Implementation
+
+**Implementation**: Hierarchical configuration system with YAML files, environment variables, and CLI arguments
+
+```mermaid
+graph TB
+    CONFIG_INTERFACE["ApplicationConfig<br/>infrastructure/config.py<br/>Dataclass-based configuration<br/>from_yaml() + from_environment()"]
+
+    CONFIG_SOURCES["Configuration Sources<br/>YAML files (development.yaml, production.yaml)<br/>Environment variables (FSP_ prefix)<br/>CLI arguments (--config, --output-dir)<br/>Smart defaults"]
+
+    CONFIG_CATEGORIES["Configuration Categories<br/>ProcessingConfig (workers, timeouts)<br/>OutputConfig (formats, paths)<br/>DatabaseConfig (optional production)<br/>ApplicationConfig (core settings)"]
+
+    CONFIG_LOADING["Configuration Loading<br/>Hierarchical priority system<br/>CLI Args > Env Vars > YAML > Defaults<br/>ApplicationConfig factory methods"]
+
+    CONFIG_INTEGRATION["CLI Integration<br/>load_config() in cli/main.py<br/>Click parameter validation<br/>Rich table display via info command"]
+
+    CONFIG_INTERFACE --> CONFIG_SOURCES
+    CONFIG_SOURCES --> CONFIG_CATEGORIES
+    CONFIG_CATEGORIES --> CONFIG_LOADING
+    CONFIG_LOADING --> CONFIG_INTEGRATION
+```
+
+**Code Verification**:
+
+- **Dataclass Structure**: `ApplicationConfig`, `ProcessingConfig`, `OutputConfig`, `DatabaseConfig` in infrastructure/config.py
+- **Factory Methods**: `ApplicationConfig.from_yaml(config_path)` and `ApplicationConfig.from_environment()`
+- **Environment Integration**: FSP_ prefixed variables with python-dotenv support
+- **CLI Integration**: `load_config()` function in cli/main.py with Click parameter handling
+- **Hierarchical Priority**: CLI arguments override environment variables override YAML override defaults
+
+**Configuration Usage Patterns (Code-Verified)**:
+
+```python
+# YAML-based configuration
+config = ApplicationConfig.from_yaml(Path("config/development.yaml"))
+
+# Environment-based configuration (default)
+config = ApplicationConfig.from_environment()
+
+# CLI integration with override capability
+config = load_config(config_path)  # None for environment-based
+```
+
+**Configuration Benefits**:
+
+- **Flexibility**: Multiple configuration sources for different deployment scenarios
+- **Type Safety**: Dataclass validation with proper type annotations
+- **Environment Separation**: Development vs production configuration files
+- **Runtime Overrides**: Environment variables for deployment-specific tuning
+- **CLI Integration**: Seamless integration with Click framework and Rich UI display
+
 ## Pattern Integration Benefits (Implementation Verified)
 
 **Extensibility Benefits**:

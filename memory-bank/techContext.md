@@ -96,19 +96,65 @@ graph TB
 
 ## Configuration Management Technology (Code-Verified)
 
+**Configuration Architecture**: Hierarchical configuration system with YAML files → Environment variables → CLI arguments → Smart defaults priority order.
+
 **Configuration Sources**:
 
-- **YAML Configuration**: Hierarchical settings via pyyaml>=6.0.0 integration
-- **Environment Variables**: FSP_ prefixed runtime overrides via python-dotenv
-- **CLI Arguments**: Dynamic parameter control via Click integration
-- **Smart Defaults**: Zero-configuration operation via ApplicationConfig.from_environment()
+- **YAML Configuration**: Hierarchical settings via pyyaml>=6.0.0 integration with ApplicationConfig.from_yaml()
+- **Environment Variables**: FSP_prefixed runtime overrides via python-dotenv with ApplicationConfig.from_environment()
+- **CLI Arguments**: Dynamic parameter control via Click integration (--config, --output-dir)
+- **Smart Defaults**: Zero-configuration operation with sensible fallback values
 
-**Configuration Categories (ApplicationConfig)**:
+**Configuration Files (Implementation Verified)**:
 
-- **Processing Settings**: Worker configuration, timeout handling, performance tuning
-- **Output Settings**: Format preferences, directory paths, styling options
-- **Logging Configuration**: Level control, format settings, output routing
-- **Validation Settings**: Balance checking, tolerance levels, quality standards
+- **Development Configuration** (`config/development.yaml`): Local development with DEBUG logging, 2 workers, conservative settings
+- **Production Configuration** (`config/production.yaml`): Production deployment with INFO logging, 8 workers, database support, container paths
+
+**Configuration Categories (ApplicationConfig Dataclasses)**:
+
+- **ProcessingConfig**: max_workers (4 default), chunk_size (1000), timeout_seconds (300), retry_attempts (3), enable_validation (true), enable_balance_checking (true)
+- **OutputConfig**: default_format ("excel"), excel_sheet_name ("Sheet1"), csv_delimiter (","), include_index (false), date_format ("%Y-%m-%d")
+- **DatabaseConfig**: host, port (5432), database, username, password, pool_size (5) - Optional for production environments
+- **ApplicationConfig**: input_directory (Path), output_directory (Path), log_level ("INFO"), enable_async (false)
+
+**Environment Variables (FSP_ Prefix Implementation)**:
+
+```
+# Core Settings
+FSP_INPUT_DIR, FSP_OUTPUT_DIR, FSP_LOG_LEVEL, FSP_ENABLE_ASYNC
+
+# Processing Settings
+FSP_MAX_WORKERS, FSP_CHUNK_SIZE, FSP_TIMEOUT, FSP_RETRY_ATTEMPTS, FSP_ENABLE_VALIDATION, FSP_ENABLE_BALANCE_CHECK
+
+# Output Settings
+FSP_OUTPUT_FORMAT, FSP_EXCEL_SHEET, FSP_CSV_DELIMITER, FSP_INCLUDE_INDEX, FSP_DATE_FORMAT
+
+# Database Settings (Optional)
+FSP_DB_HOST, FSP_DB_PORT, FSP_DB_NAME, FSP_DB_USER, FSP_DB_PASSWORD, FSP_DB_POOL_SIZE
+```
+
+**Configuration Loading Behavior (Code-Verified)**:
+
+- **Without --config**: Uses ApplicationConfig.from_environment() with default values (4 workers, INFO logging, synchronous processing)
+- **With --config**: Uses ApplicationConfig.from_yaml() to load specified YAML file with custom settings
+- **CLI Override**: Directory arguments (input_directory, --output-dir) override both YAML and environment settings
+- **Priority Order**: CLI Arguments > Environment Variables > YAML Configuration > Smart Defaults
+
+**Configuration Usage Patterns**:
+
+```bash
+# Default configuration (environment-based)
+PYTHONPATH=src uv run python -m cli.main consolidate input/
+
+# Development configuration
+PYTHONPATH=src uv run python -m cli.main --config config/development.yaml batch input/
+
+# Environment variable overrides
+FSP_MAX_WORKERS=8 FSP_LOG_LEVEL=DEBUG PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Production configuration with database support
+PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consolidate input/
+```
 
 ## Quality Assurance Technology Stack (pyproject.toml Verified)
 
