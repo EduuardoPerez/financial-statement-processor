@@ -38,21 +38,21 @@ class TestPaymentMethod:
 
     def test_payment_method_values(self):
         """Test payment method enum values are correct."""
-        assert PaymentMethod.MACRO_VISA.value == "Macro VISA"
-        assert PaymentMethod.BBVA_VISA.value == "BBVA VISA"
+        assert PaymentMethod.MACRO_VISA.value == "Macro Visa"
+        assert PaymentMethod.BBVA_VISA.value == "BBVA Visa"
         assert PaymentMethod.BBVA_MASTERCARD.value == "BBVA Mastercard"
         assert PaymentMethod.BBVA_ACCOUNT.value == "BBVA Account"
         assert PaymentMethod.MACRO_ACCOUNT.value == "Macro Account"
-        assert PaymentMethod.MERCADOPAGO.value == "Mercadopago"
+        assert PaymentMethod.MERCADOPAGO.value == "Mercado Pago"
 
     def test_payment_method_string_representation(self):
         """Test payment method string representation."""
-        assert str(PaymentMethod.MACRO_VISA) == "Macro VISA"
-        assert str(PaymentMethod.BBVA_VISA) == "BBVA VISA"
+        assert str(PaymentMethod.MACRO_VISA) == "Macro Visa"
+        assert str(PaymentMethod.BBVA_VISA) == "BBVA Visa"
         assert str(PaymentMethod.BBVA_MASTERCARD) == "BBVA Mastercard"
         assert str(PaymentMethod.BBVA_ACCOUNT) == "BBVA Account"
         assert str(PaymentMethod.MACRO_ACCOUNT) == "Macro Account"
-        assert str(PaymentMethod.MERCADOPAGO) == "Mercadopago"
+        assert str(PaymentMethod.MERCADOPAGO) == "Mercado Pago"
 
 
 class TestTransaction:
@@ -357,7 +357,7 @@ class TestStatement:
 
         with pytest.raises(
             ValueError,
-            match="Transaction payment method 'Macro VISA' does not match statement payment method 'BBVA VISA'",
+            match="Transaction payment method 'Macro Visa' does not match statement payment method 'BBVA Visa'",
         ):
             statement.add_transaction(transaction)
 
@@ -410,7 +410,7 @@ class TestStatement:
 
         with pytest.raises(
             ValueError,
-            match="Transaction payment method 'Macro VISA' does not match statement payment method 'BBVA VISA'",
+            match="Transaction payment method 'Macro Visa' does not match statement payment method 'BBVA Visa'",
         ):
             statement.add_transactions(transactions)
 

@@ -32,12 +32,12 @@ class Currency(Enum):
 class PaymentMethod(Enum):
     """Enumeration of supported payment methods."""
 
-    MACRO_VISA = "Macro VISA"
-    BBVA_VISA = "BBVA VISA"
+    MACRO_VISA = "Macro Visa"
+    BBVA_VISA = "BBVA Visa"
     BBVA_MASTERCARD = "BBVA Mastercard"
     BBVA_ACCOUNT = "BBVA Account"
     MACRO_ACCOUNT = "Macro Account"
-    MERCADOPAGO = "Mercadopago"
+    MERCADOPAGO = "Mercado Pago"
 
     def __str__(self) -> str:
         return self.value

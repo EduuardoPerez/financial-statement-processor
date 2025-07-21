@@ -83,7 +83,7 @@ class TestPDFParserIntegration:
         # Assert
         assert statement is not None, "Statement should not be None"
         assert len(statement.transactions) > 0, "No transactions were parsed"
-        assert statement.payment_method.value == "BBVA VISA", (
+        assert statement.payment_method.value == "BBVA Visa", (
             "Incorrect payment method detected"
         )
 
@@ -104,7 +104,7 @@ class TestPDFParserIntegration:
         # Assert
         assert statement is not None, "Statement should not be None"
         assert len(statement.transactions) > 0, "No transactions were parsed"
-        assert statement.payment_method.value == "Macro VISA", (
+        assert statement.payment_method.value == "Macro Visa", (
             "Incorrect payment method detected"
         )
 
@@ -252,7 +252,7 @@ class TestPDFParserIntegration:
         """Test that all BBVA VISA transactions have the correct payment method"""
         # Arrange
         input_path = Path(bbva_visa_input_path)
-        expected_payment_method = "BBVA VISA"
+        expected_payment_method = "BBVA Visa"
 
         # Act
         statement = pdf_parser.parse(input_path)
