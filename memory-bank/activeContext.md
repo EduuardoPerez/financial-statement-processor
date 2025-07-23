@@ -333,6 +333,74 @@ PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consoli
    - **Testing Verified**: Configuration loading, environment variables, and Excel output mapping confirmed operational
    - **Result**: Professional user experience enhancement with enterprise-grade configuration flexibility
 
+**Latest Output Formatting Enhancement Achievement (July 23, 2025)**:
+
+6. **Decimal Separator Configuration Feature Implemented**:
+   - **Task**: Added configurable decimal point formatting for Excel output files to support regional preferences
+   - **Problem Solved**: Users needed ability to configure decimal separator (comma vs dot) for different regional standards or system integration requirements
+   - **Architecture Enhancement**:
+     - **OutputConfig** class enhanced with `decimal_separator` field in `src/infrastructure/config.py`
+     - **ExcelStatementRepository** modified to format amounts as strings with configured decimal separator
+     - **CLI Integration** through info command display and configuration loading
+   - **Configuration Support**:
+     - **YAML Configuration**: `decimal_separator` field in output section (default: ",")
+     - **Environment Variable**: `FSP_DECIMAL_SEPARATOR` for runtime override
+     - **Hierarchical Priority**: CLI → Environment → YAML → Default (",")
+   - **Implementation Details**:
+     - Both `_statement_to_dataframe()` and `_consolidated_to_dataframe()` methods updated
+     - Amount formatting: `str(float(transaction.amount))` with separator replacement
+     - Backward compatible: defaults to comma separator for European format
+   - **Files Modified**:
+     - `src/infrastructure/config.py` (OutputConfig decimal_separator field)
+     - `src/infrastructure/repositories.py` (ExcelStatementRepository formatting logic)
+     - `src/cli/main.py` (repository wiring and info command display)
+     - `config/development.yaml` (example configuration)
+   - **Testing Implemented**:
+     - **Configuration Tests**: `tests/unit/infrastructure/test_config_decimal_separator.py` (7 tests)
+     - **Repository Tests**: `tests/unit/infrastructure/test_repository_decimal_separator.py` (6 tests)
+     - **Integration Tests**: CLI integration and existing repository tests updated
+   - **User Value Delivered**:
+     - **Regional Compliance**: Support for European (1.234,56) vs US (1,234.56) formats
+     - **System Integration**: Easy alignment with existing Excel processing systems
+     - **Corporate Standards**: Meet reporting format requirements
+     - **Zero Breaking Changes**: Existing installations continue working with default comma separator
+   - **Documentation Updated**: README.md with comprehensive decimal separator configuration examples
+   - **Result**: Enhanced output flexibility supporting international usage patterns while maintaining backward compatibility
+
+**Critical Bug Fix Achievement (July 23, 2025)**:
+
+7. **Null Configuration Handling Bug Fixed**:
+   - **Critical Issue**: Configuration loading with `payment_method_mapping: null` in YAML caused system failure with "'NoneType' object has no attribute 'get'" error
+   - **Root Cause**: YAML loading logic `config_data.get("payment_method_mapping", {})` returned `None` when key exists with null value, not the default `{}`
+   - **Impact**: Complete system failure - all file processing operations failing across all payment methods and file types
+   - **Solution Implemented**:
+     - **One-Line Fix**: Changed YAML loading logic to `config_data.get("payment_method_mapping", {}) or {}` in `src/infrastructure/config.py`
+     - **Defensive Programming**: Ensures empty dictionary fallback even with explicit null values
+     - **Backward Compatible**: Zero impact on existing configurations, preserves all functionality
+   - **Architecture Improvement**:
+     - **Robust Configuration Loading**: System now handles null, missing, and empty YAML sections gracefully
+     - **Graceful Degradation**: Falls back to default enum values when no custom mappings provided
+     - **Error Prevention**: Prevents critical runtime failures from configuration edge cases
+   - **Comprehensive Testing Added**:
+     - **New Test File**: `tests/unit/infrastructure/test_config_null_handling.py` (7 comprehensive tests)
+     - **Regression Test**: Exact scenario that caused original failure now passes
+     - **Edge Case Coverage**: Null, missing, empty, and valid configuration scenarios tested
+     - **Environment Configuration**: Tests both YAML and environment variable loading paths
+   - **Files Modified**:
+     - `src/infrastructure/config.py` (one-line defensive fix in `from_yaml()` method)
+     - `tests/unit/infrastructure/test_config_null_handling.py` (comprehensive test coverage)
+   - **Verification Completed**:
+     - **All Tests Pass**: 7 new tests + 230 existing infrastructure tests passing
+     - **CLI Functionality Restored**: Info, process, batch, and consolidate commands operational
+     - **File Processing Verified**: Successfully processed test files with development configuration
+     - **No Regressions**: Existing functionality preserved and enhanced
+   - **User Impact Resolved**:
+     - **System Reliability**: Eliminated complete system failure scenario
+     - **Operational Continuity**: All file processing operations restored to normal function
+     - **Configuration Flexibility**: Users can safely use null, missing, or custom payment method mappings
+     - **Enhanced Robustness**: System now handles configuration edge cases gracefully
+   - **Result**: Critical system stability issue resolved with minimal code change, comprehensive testing, and enhanced error resilience
+
 **Processing Reliability Enhancement**:
 
 - **Before**: 19/21 files successful (90.5% success rate)

@@ -59,6 +59,7 @@ class OutputConfig:
     csv_delimiter: str = ","
     include_index: bool = False
     date_format: str = "%Y-%m-%d"
+    decimal_separator: str = ","
 
 
 @dataclass
@@ -88,7 +89,7 @@ class ApplicationConfig:
             processing=ProcessingConfig(**config_data.get("processing", {})),
             output=OutputConfig(**config_data.get("output", {})),
             payment_method_mapping=PaymentMethodMappingConfig(
-                mappings=config_data.get("payment_method_mapping", {})
+                mappings=config_data.get("payment_method_mapping", {}) or {}
             ),
             database=(
                 DatabaseConfig(**config_data["database"])
@@ -125,6 +126,7 @@ class ApplicationConfig:
                     os.getenv("FSP_INCLUDE_INDEX", "false").lower() == "true"
                 ),
                 date_format=os.getenv("FSP_DATE_FORMAT", "%Y-%m-%d"),
+                decimal_separator=os.getenv("FSP_DECIMAL_SEPARATOR", ","),
             ),
             payment_method_mapping=PaymentMethodMappingConfig(
                 mappings=cls._load_payment_method_mapping_from_env()

@@ -150,7 +150,7 @@ def create_components(
         validator = StatementValidator(balance_extraction_service=balance_service)
         filename_generator = FilenameGenerator()
         repository = ExcelStatementRepository(
-            file_reader, file_writer, config.payment_method_mapping
+            file_reader, file_writer, config.payment_method_mapping, config.output
         )
 
         # Create main processing service
@@ -248,6 +248,7 @@ def info(ctx: click.Context, output_json_flag: bool) -> None:
                 "async_processing": config.enable_async,
                 "max_workers": config.processing.max_workers,
                 "default_format": config.output.default_format,
+                "decimal_separator": config.output.decimal_separator,
                 "enable_validation": config.processing.enable_validation,
                 "enable_balance_checking": config.processing.enable_balance_checking,
             },
@@ -277,6 +278,7 @@ def info(ctx: click.Context, output_json_flag: bool) -> None:
             config_table.add_row("Async Processing", str(config.enable_async))
             config_table.add_row("Max Workers", str(config.processing.max_workers))
             config_table.add_row("Default Format", config.output.default_format)
+            config_table.add_row("Decimal Separator", config.output.decimal_separator)
             config_table.add_row(
                 "Enable Validation", str(config.processing.enable_validation)
             )

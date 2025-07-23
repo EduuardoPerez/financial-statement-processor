@@ -187,6 +187,7 @@ class TestCreateComponents:
         # Setup mocks
         mock_config = Mock(spec=ApplicationConfig)
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
+        mock_config.output = Mock(spec=OutputConfig)
         mock_detector = Mock()
         mock_detector_class.return_value = mock_detector
         mock_factory = Mock()
@@ -229,6 +230,7 @@ class TestCreateComponents:
         """Test component creation failure raises CLIError."""
         mock_config = Mock(spec=ApplicationConfig)
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
+        mock_config.output = Mock(spec=OutputConfig)
 
         with pytest.raises(
             CLIError, match="Failed to initialize components: Component error"
@@ -296,6 +298,7 @@ class TestCLIGroup:
             mock_config.processing.enable_balance_checking = True
             mock_config.output = Mock(spec=OutputConfig)
             mock_config.output.default_format = "excel"
+            mock_config.output.decimal_separator = ","
             mock_load_config.return_value = mock_config
 
             # Mock create_components for info command

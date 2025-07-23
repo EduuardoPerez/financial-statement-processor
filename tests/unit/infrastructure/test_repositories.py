@@ -165,7 +165,7 @@ class TestExcelStatementRepository:
         assert df.iloc[0]["Date"] == "2025-01-15"
         assert df.iloc[0]["Description"] == "Test Transaction 1"
         assert df.iloc[0]["Currency"] == "ARS"
-        assert df.iloc[0]["Amount"] == 100.50
+        assert df.iloc[0]["Amount"] == "100,5"
         assert df.iloc[0]["Payment Method"] == "BBVA Visa"
 
     def test_save_consolidated_statement_success(

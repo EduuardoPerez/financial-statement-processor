@@ -681,6 +681,7 @@ FSP_EXCEL_SHEET="Sheet1"
 FSP_CSV_DELIMITER=","
 FSP_INCLUDE_INDEX="false"
 FSP_DATE_FORMAT="%Y-%m-%d"
+FSP_DECIMAL_SEPARATOR=","
 
 # Database Settings (Optional)
 FSP_DB_HOST=""
@@ -777,6 +778,42 @@ PYTHONPATH=src uv run python -m cli.main consolidate input/
 - **Internationalization**: Prepare for future multi-language support
 
 **📖 Documentation**: See [`docs/PAYMENT_METHOD_MAPPING.md`](docs/PAYMENT_METHOD_MAPPING.md) for comprehensive examples and configuration details.
+
+### Decimal Separator Configuration
+
+Control how decimal numbers are formatted in Excel output files. This is particularly useful for different regional preferences or system integration requirements.
+
+#### YAML Configuration
+
+```yaml
+# config/development.yaml
+output:
+  decimal_separator: ","    # European format (default)
+  # decimal_separator: "."  # US format
+  # decimal_separator: ";"  # Alternative format
+```
+
+#### Environment Variable
+
+```bash
+# Use dot separator for US format
+FSP_DECIMAL_SEPARATOR="." PYTHONPATH=src uv run python -m cli.main process input/statement.pdf
+
+# Use comma separator for European format (default)
+FSP_DECIMAL_SEPARATOR="," PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Use semicolon separator for special requirements
+FSP_DECIMAL_SEPARATOR=";" PYTHONPATH=src uv run python -m cli.main consolidate input/
+```
+
+#### Use Cases
+
+- **Regional Compliance**: Match local accounting standards (European vs US formats)
+- **System Integration**: Align with existing Excel processing systems
+- **Data Import**: Prepare files for specific spreadsheet applications
+- **Reporting Standards**: Meet corporate formatting requirements
+
+**Default**: Comma separator (`,`) for European format compatibility with Argentine banking standards.
 
 ### Configuration Examples by Use Case
 

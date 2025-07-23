@@ -15,7 +15,7 @@ import pandas as pd
 
 from domain.models import ConsolidatedStatement, Statement
 from domain.repositories import FileReader, FileWriter, StatementRepository
-from infrastructure.config import PaymentMethodMappingConfig
+from infrastructure.config import OutputConfig, PaymentMethodMappingConfig
 
 
 class ExcelStatementRepository(StatementRepository):
@@ -26,6 +26,7 @@ class ExcelStatementRepository(StatementRepository):
         file_reader: FileReader,
         file_writer: FileWriter,
         payment_method_mapping: PaymentMethodMappingConfig | None = None,
+        output_config: OutputConfig | None = None,
     ):
         """
         Initialize the Excel statement repository.
@@ -34,12 +35,14 @@ class ExcelStatementRepository(StatementRepository):
             file_reader: File reader implementation for loading raw data
             file_writer: File writer implementation for saving files
             payment_method_mapping: Payment method mapping configuration
+            output_config: Output configuration including decimal separator
         """
         self._file_reader = file_reader
         self._file_writer = file_writer
         self._payment_method_mapping = (
             payment_method_mapping or PaymentMethodMappingConfig()
         )
+        self._output_config = output_config or OutputConfig()
 
     def save_statement(self, statement: Statement, output_path: Path) -> None:
         """
@@ -111,7 +114,7 @@ class ExcelStatementRepository(StatementRepository):
         Note:
             Creates DataFrame with columns: Date, Description, Currency,
             Amount, Payment Method. Date format: YYYY-MM-DD.
-            Amount format: Float representation of Decimal
+            Amount format: String with configured decimal separator
             Uses configured payment method display names if available
         """
         data: list[dict[str, Any]] = []
@@ -120,12 +123,19 @@ class ExcelStatementRepository(StatementRepository):
             display_name = self._payment_method_mapping.get_display_name(
                 transaction.payment_method
             )
+            # Format amount with configured decimal separator
+            amount_str = str(float(transaction.amount))
+            if self._output_config.decimal_separator != ".":
+                amount_str = amount_str.replace(
+                    ".", self._output_config.decimal_separator
+                )
+
             data.append(
                 {
                     "Date": transaction.date.strftime("%Y-%m-%d"),
                     "Description": transaction.description,
                     "Currency": transaction.currency.value,
-                    "Amount": float(transaction.amount),
+                    "Amount": amount_str,
                     "Payment Method": display_name,
                 }
             )
@@ -197,12 +207,19 @@ class ExcelStatementRepository(StatementRepository):
             display_name = self._payment_method_mapping.get_display_name(
                 transaction.payment_method
             )
+            # Format amount with configured decimal separator
+            amount_str = str(float(transaction.amount))
+            if self._output_config.decimal_separator != ".":
+                amount_str = amount_str.replace(
+                    ".", self._output_config.decimal_separator
+                )
+
             data.append(
                 {
                     "Date": transaction.date.strftime("%Y-%m-%d"),
                     "Description": transaction.description,
                     "Currency": transaction.currency.value,
-                    "Amount": float(transaction.amount),
+                    "Amount": amount_str,
                     "Payment Method": display_name,
                 }
             )

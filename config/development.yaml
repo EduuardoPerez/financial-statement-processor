@@ -16,13 +16,14 @@ output:
   excel_sheet_name: "Transactions"
   include_index: false
   date_format: "%Y-%m-%d"
+  decimal_separator: ","
 
 # Payment method display name customization
 # Uncomment and modify to customize payment method names in reports
 payment_method_mapping:
-  # MACRO_VISA: "MACRO VISA" # Override default "Macro Visa"
-  # BBVA_VISA: "BBVA VISA" # Override default "BBVA Visa"
-  # MERCADOPAGO: "mercadopago" # Override default "Mercado Pago"
-  # BBVA_MASTERCARD: "BBVA Mastercard" # Commented = use default
-  # BBVA_ACCOUNT: "BBVA Account"       # Commented = use default
-  # MACRO_ACCOUNT: "Macro Account"     # Commented = use default
+# MACRO_VISA: "MACRO VISA" # Override default "Macro Visa"
+# BBVA_VISA: "BBVA VISA" # Override default "BBVA Visa"
+# MERCADOPAGO: "mercadopago" # Override default "Mercado Pago"
+# BBVA_MASTERCARD: "BBVA Mastercard" # Commented = use default
+# BBVA_ACCOUNT: "BBVA Account"       # Commented = use default
+# MACRO_ACCOUNT: "Macro Account"     # Commented = use default
