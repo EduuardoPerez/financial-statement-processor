@@ -36,7 +36,7 @@ class TestPDFStatementParserFixtures:
         # Create sample transaction for testing - based on actual first transaction from legacy system
         sample_transaction = Transaction(
             date=date(2025, 3, 28),
-            description="020396* PERSONAL FLOW 300060254971003",
+            description="PERSONAL FLOW 300060254971003",
             amount=Decimal("41937.01"),
             currency=Currency.ARS,
             payment_method=PaymentMethod.BBVA_VISA,
@@ -83,7 +83,7 @@ class TestPDFStatementParserFixtures:
             # Configure transaction builder to return expected first transaction
             expected_first_transaction = Transaction(
                 date=date(2025, 3, 28),
-                description="020396* PERSONAL FLOW 300060254971003",
+                description="PERSONAL FLOW 300060254971003",
                 amount=Decimal("41937.01"),
                 currency=Currency.ARS,
                 payment_method=PaymentMethod.BBVA_VISA,
@@ -105,10 +105,8 @@ class TestPDFStatementParserFixtures:
             assert first_transaction.date == date(2025, 3, 28), (
                 f"Expected first transaction date to be 2025-03-28, got {first_transaction.date}"
             )
-            assert (
-                first_transaction.description == "020396* PERSONAL FLOW 300060254971003"
-            ), (
-                f"Expected first transaction description to be '020396* PERSONAL FLOW 300060254971003', got '{first_transaction.description}'"
+            assert first_transaction.description == "PERSONAL FLOW 300060254971003", (
+                f"Expected first transaction description to be 'PERSONAL FLOW 300060254971003', got '{first_transaction.description}'"
             )
 
             # Additional validations
@@ -123,9 +121,7 @@ class TestPDFStatementParserFixtures:
             assert mock_transaction_builder.build_from_pdf_line.call_count >= 1
             first_call = mock_transaction_builder.build_from_pdf_line.call_args_list[0]
             assert first_call[1]["date_str"] == "28.03.25"
-            assert (
-                first_call[1]["description"] == "020396* PERSONAL FLOW 300060254971003"
-            )
+            assert first_call[1]["description"] == "PERSONAL FLOW 300060254971003"
             assert first_call[1]["amount_str"] == "41.937,01"
             assert first_call[1]["currency"] == Currency.ARS
             assert first_call[1]["payment_method"] == PaymentMethod.BBVA_VISA

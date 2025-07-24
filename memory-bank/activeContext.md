@@ -333,9 +333,62 @@ PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consoli
    - **Testing Verified**: Configuration loading, environment variables, and Excel output mapping confirmed operational
    - **Result**: Professional user experience enhancement with enterprise-grade configuration flexibility
 
-**Latest Output Formatting Enhancement Achievement (July 23, 2025)**:
+**Latest Transaction Description Enhancement Achievement (July 24, 2025)**:
 
-6. **Decimal Separator Configuration Feature Implemented**:
+6. **Visa Transaction Description Cleanup Feature Implemented**:
+   - **Task**: Clean up Visa credit card transaction descriptions by removing reference numbers for better readability
+   - **Problem Solved**: Transaction descriptions contained unwanted reference prefixes (e.g., "005302* ON FIT Cuota 06/06" → "ON FIT Cuota 06/06")
+   - **Reference Pattern Analysis**: Identified and documented all reference number patterns:
+     - **Asterisk Pattern**: `005302*`, `001320*`, `000001*`, `994537*`
+     - **K Pattern**: `071512K`, `891733K`
+     - **Q Pattern**: `093709Q`
+     - **V Pattern**: `362503V`
+     - **F Pattern**: `241004F` ← **Newly discovered and added**
+     - **No Suffix**: `791406`
+   - **Implementation Details**:
+     - **Regex Pattern Enhanced**: Updated from `([A-Z0-9*]+[*KQV]?)\s+` to `([A-Z0-9*]+[*KQVF]?)\s+` to include F suffix
+     - **PDF Parser Modified**: Updated 5 locations in `src/infrastructure/parsers/pdf_parser.py` to exclude reference numbers from descriptions
+     - **Description Cleaning Logic**: Changed from `f"{ref_number} {description}"` to `description.strip()` across multiple transaction types
+     - **Currency Support Preserved**: Both ARS and USD transactions maintain clean descriptions
+     - **Parsing Logic Maintained**: Reference number detection still used for parsing but excluded from final descriptions
+   - **Transaction Type Coverage**:
+     - **Regular ARS Transactions**: Reference numbers removed (e.g., "071512K MERPAGO*THOMAS" → "MERPAGO*THOMAS")
+     - **USD Transactions**: Reference numbers removed (e.g., "241004F Spotify USD 2,90" → "Spotify USD 2,90")
+     - **European Format Fallback**: Reference numbers removed from fallback parsing paths
+     - **Last Resort Parsing**: Reference numbers removed from last resort number detection
+   - **Files Modified**:
+     - `src/infrastructure/parsers/pdf_parser.py` (regex pattern + 5 description cleaning locations)
+   - **Comprehensive Testing Implemented**:
+     - **New Test File**: `tests/unit/test_visa_description_cleanup.py` (12 comprehensive tests)
+     - **Pattern Detection Tests**: Verified all reference suffixes (*, K, Q, V, F) correctly detected
+     - **Description Cleaning Tests**: ARS and USD transactions cleaned properly
+     - **Functionality Preservation Tests**: Amount parsing, date parsing, and currency detection preserved
+     - **Edge Case Coverage**: Complex descriptions and multiple transaction types tested
+     - **Integration Tests**: TransactionBuilder integration verified with cleaned descriptions
+   - **Existing Test Updates**:
+     - **Infrastructure Tests**: Updated `tests/unit/infrastructure/test_pdf_parser.py` (2 test fixes)
+     - **Parser Tests**: Updated `tests/unit/parsers/test_pdf_parser.py` (1 test fix)
+     - **Description Expectations**: Changed test expectations from reference-included to clean descriptions
+   - **Quality Assurance**:
+     - **All New Tests Pass**: 12/12 new tests passing
+     - **All Updated Tests Pass**: 3/3 updated tests passing
+     - **No Regressions**: Full test suite maintains functionality
+     - **Parsing Logic Preserved**: All existing parsing capabilities maintained
+   - **User Value Delivered**:
+     - **Improved Readability**: Transaction descriptions now cleaner and more user-friendly
+     - **Better Analysis**: Easier to analyze transaction patterns without reference noise
+     - **Consistent Format**: All Visa transactions follow same clean description format
+     - **Backward Compatible**: All existing functionality preserved
+   - **Examples of Improvement**:
+     - `"005302* ON FIT Cuota 06/06"` → `"ON FIT Cuota 06/06"`
+     - `"241004F Spotify USD 2,90"` → `"Spotify USD 2,90"`
+     - `"071512K MERPAGO*THOMAS"` → `"MERPAGO*THOMAS"`
+     - `"093709Q NETFLIX.COM 42785628363430465"` → `"NETFLIX.COM 42785628363430465"`
+   - **Result**: Enhanced transaction description readability while maintaining all parsing functionality and comprehensive test coverage
+
+**Previous Output Formatting Enhancement Achievement (July 23, 2025)**:
+
+7. **Decimal Separator Configuration Feature Implemented**:
    - **Task**: Added configurable decimal point formatting for Excel output files to support regional preferences
    - **Problem Solved**: Users needed ability to configure decimal separator (comma vs dot) for different regional standards or system integration requirements
    - **Architecture Enhancement**:

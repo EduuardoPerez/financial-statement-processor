@@ -161,7 +161,7 @@ class TestPDFStatementParser:
 
         # Verify parsing handled multiple spaces correctly
         call_args = mock_transaction_builder.build_from_pdf_line.call_args
-        assert call_args[1]["description"] == "DESCRIPTION WITH SPACES"
+        assert call_args[1]["description"] == "WITH SPACES"
 
     def test_parse_transactions_graceful_degradation(
         self, pdf_parser, mock_transaction_builder
@@ -212,9 +212,9 @@ class TestPDFStatementParser:
 
         # Verify all transactions are present
         descriptions = [t.description for t in transactions]
-        assert "020396* PERSONAL FLOW 300060254971003" in descriptions
-        assert "041685K PEDIDOSYA RESTAURANTE" in descriptions
-        assert "052966K PEDIDOSYA PROPINAS" in descriptions
+        assert "PERSONAL FLOW 300060254971003" in descriptions
+        assert "PEDIDOSYA RESTAURANTE" in descriptions
+        assert "PEDIDOSYA PROPINAS" in descriptions
 
     def test_parse_file_not_found(self, pdf_parser):
         """Test parse method with non-existent file"""

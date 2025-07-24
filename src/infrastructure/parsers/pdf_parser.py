@@ -452,10 +452,9 @@ class PDFStatementParser(StatementParser):
                 continue
 
             # Parse regular transactions - look for reference number pattern at start
-            ref_match = re.match(r"([A-Z0-9*]+[*KQV]?)\s+", remaining_line)
+            ref_match = re.match(r"([A-Z0-9*]+[*KQVF]?)\s+", remaining_line)
 
             if ref_match:
-                ref_number = ref_match.group(1)
                 after_ref = remaining_line[ref_match.end() :].strip()
 
                 # Check for USD transactions
@@ -464,9 +463,7 @@ class PDFStatementParser(StatementParser):
                     amount_str = usd_match.group(1).replace(",", ".")
                     desc_before_usd = after_ref.split("USD")[0].strip()
                     usd_amount_str = usd_match.group(1)
-                    full_description = (
-                        f"{ref_number} {desc_before_usd} USD {usd_amount_str}".strip()
-                    )
+                    full_description = f"{desc_before_usd} USD {usd_amount_str}".strip()
 
                     try:
                         transaction = self._transaction_builder.build_from_pdf_line(
@@ -497,7 +494,7 @@ class PDFStatementParser(StatementParser):
                         description = after_ref.rsplit(amount_match.group(1), 1)[
                             0
                         ].strip()
-                        full_description = f"{ref_number} {description}".strip()
+                        full_description = description.strip()
 
                         try:
                             transaction = self._transaction_builder.build_from_pdf_line(
@@ -523,7 +520,7 @@ class PDFStatementParser(StatementParser):
                         description = after_ref.replace(
                             european_amounts[-1], ""
                         ).strip()
-                        full_description = f"{ref_number} {description}".strip()
+                        full_description = description.strip()
 
                         try:
                             transaction = self._transaction_builder.build_from_pdf_line(
@@ -550,9 +547,7 @@ class PDFStatementParser(StatementParser):
                                     )
                                     if test_amount > 0:
                                         description = after_ref.replace(num, "").strip()
-                                        full_description = (
-                                            f"{ref_number} {description}".strip()
-                                        )
+                                        full_description = description.strip()
 
                                         transaction = self._transaction_builder.build_from_pdf_line(
                                             date_str=date_str,
