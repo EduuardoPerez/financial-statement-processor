@@ -305,7 +305,7 @@ class TestDuplicateDetector:
         """Test _create_duplicate_key method."""
         key = self.detector._create_duplicate_key(self.transaction1)
 
-        expected_key = (self.transaction1.date, self.transaction1.amount)
+        expected_key = (self.transaction1.date, abs(self.transaction1.amount))
         assert key == expected_key
 
     def test_mark_as_duplicate(self):
@@ -381,3 +381,304 @@ class TestDuplicateDetector:
         assert self.transaction1.description in descriptions
         assert self.transaction4.description in descriptions
         assert f"DUPLICATED: {self.transaction2.description}" in descriptions
+
+    def test_mark_duplicates_absolute_amount_positive_negative(self):
+        """Test that transactions with same absolute amount but different signs are marked as duplicates."""
+        # Create transactions with same date and absolute amount but different signs
+        positive_transaction = Transaction(
+            date=date(2025, 4, 2),
+            description="Transfer sent",
+            amount=Decimal("15500.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_ACCOUNT,
+            reference="TRANS_OUT",
+        )
+
+        negative_transaction = Transaction(
+            date=date(2025, 4, 2),
+            description="Transfer received",
+            amount=Decimal("-15500.00"),  # Same absolute amount, different sign
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MACRO_ACCOUNT,
+            reference="TRANS_IN",
+        )
+
+        transactions = [positive_transaction, negative_transaction]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 2
+        assert duplicate_count == 1
+
+        # First transaction should be unchanged
+        assert result_transactions[0] == positive_transaction
+
+        # Second transaction should be marked as duplicate
+        assert result_transactions[1].description == "DUPLICATED: Transfer received"
+        assert result_transactions[1].amount == Decimal("-15500.00")  # Amount preserved
+        assert result_transactions[1].date == negative_transaction.date
+
+    def test_mark_duplicates_mercadopago_pattern(self):
+        """Test the specific MercadoPago pattern: Macro VISA (+), MP Ingreso (+), MP Pago (-)."""
+        # Create the exact MercadoPago scenario from the user's example
+        macro_visa_transaction = Transaction(
+            date=date(2025, 4, 2),
+            description="789797K MERPAGO*VILLACRESPO",
+            amount=Decimal("15500.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MACRO_VISA,
+            reference="789797K",
+        )
+
+        mp_ingreso_transaction = Transaction(
+            date=date(2025, 4, 2),
+            description="Ingreso de dinero",
+            amount=Decimal("15500.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MERCADOPAGO,
+            reference="MP_IN",
+        )
+
+        mp_pago_transaction = Transaction(
+            date=date(2025, 4, 2),
+            description="Pago",
+            amount=Decimal("-15500.00"),  # Negative amount
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MERCADOPAGO,
+            reference="MP_OUT",
+        )
+
+        transactions = [
+            macro_visa_transaction,
+            mp_ingreso_transaction,
+            mp_pago_transaction,
+        ]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 3
+        assert duplicate_count == 2  # Two duplicates (all but first)
+
+        # First transaction should be unchanged
+        assert result_transactions[0] == macro_visa_transaction
+
+        # All three should be detected as duplicates since they have same absolute amount and date
+        duplicated_descriptions = [
+            t.description
+            for t in result_transactions
+            if t.description.startswith("DUPLICATED:")
+        ]
+        assert len(duplicated_descriptions) == 2
+        assert "DUPLICATED: Ingreso de dinero" in duplicated_descriptions
+        assert "DUPLICATED: Pago" in duplicated_descriptions
+
+    def test_mark_duplicates_cross_payment_method_transfers(self):
+        """Test duplicate detection for transfers between different payment methods."""
+        # Simulate a transfer from BBVA to Macro
+        bbva_debit = Transaction(
+            date=date(2025, 4, 10),
+            description="Transfer to Macro",
+            amount=Decimal("-5000.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_ACCOUNT,
+            reference="BBVA_OUT",
+        )
+
+        macro_credit = Transaction(
+            date=date(2025, 4, 10),
+            description="Transfer from BBVA",
+            amount=Decimal("5000.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MACRO_ACCOUNT,
+            reference="MACRO_IN",
+        )
+
+        transactions = [bbva_debit, macro_credit]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 2
+        assert duplicate_count == 1
+
+        # Check that both transactions are considered duplicates due to same absolute amount and date
+        assert result_transactions[0] == bbva_debit
+        assert result_transactions[1].description == "DUPLICATED: Transfer from BBVA"
+        assert result_transactions[1].amount == Decimal(
+            "5000.00"
+        )  # Preserve original sign
+
+    def test_mark_duplicates_mixed_scenarios(self):
+        """Test complex scenario with both traditional duplicates and cross-payment transfers."""
+        # Traditional duplicates (same sign, same amount)
+        traditional_dup1 = Transaction(
+            date=date(2025, 4, 15),
+            description="Purchase 1",
+            amount=Decimal("100.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="TRAD1",
+        )
+
+        traditional_dup2 = Transaction(
+            date=date(2025, 4, 15),
+            description="Purchase 2",
+            amount=Decimal("100.00"),  # Same sign, same amount
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="TRAD2",
+        )
+
+        # Cross-payment transfer (different signs, same absolute amount)
+        transfer_out = Transaction(
+            date=date(2025, 4, 15),
+            description="Transfer out",
+            amount=Decimal("-200.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MACRO_ACCOUNT,
+            reference="XFER_OUT",
+        )
+
+        transfer_in = Transaction(
+            date=date(2025, 4, 15),
+            description="Transfer in",
+            amount=Decimal("200.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_ACCOUNT,
+            reference="XFER_IN",
+        )
+
+        # Unique transaction
+        unique_transaction = Transaction(
+            date=date(2025, 4, 15),
+            description="Unique purchase",
+            amount=Decimal("300.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="UNIQUE",
+        )
+
+        transactions = [
+            traditional_dup1,
+            traditional_dup2,  # Traditional duplicates
+            transfer_out,
+            transfer_in,  # Cross-payment transfer
+            unique_transaction,  # Unique
+        ]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 5
+        assert duplicate_count == 2  # traditional_dup2, transfer_in
+
+        # Count duplicated descriptions
+        duplicated_descriptions = [
+            t.description
+            for t in result_transactions
+            if t.description.startswith("DUPLICATED:")
+        ]
+        assert len(duplicated_descriptions) == 2
+
+        # Verify specific duplicates
+        assert "DUPLICATED: Purchase 2" in duplicated_descriptions
+        assert "DUPLICATED: Transfer in" in duplicated_descriptions
+
+    def test_mark_duplicates_usd_transfers(self):
+        """Test duplicate detection works with USD transfers."""
+        usd_debit = Transaction(
+            date=date(2025, 4, 20),
+            description="USD Payment",
+            amount=Decimal("-100.50"),
+            currency=Currency.USD,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="USD_OUT",
+        )
+
+        usd_credit = Transaction(
+            date=date(2025, 4, 20),
+            description="USD Received",
+            amount=Decimal("100.50"),
+            currency=Currency.USD,
+            payment_method=PaymentMethod.MERCADOPAGO,
+            reference="USD_IN",
+        )
+
+        transactions = [usd_debit, usd_credit]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 2
+        assert duplicate_count == 1
+
+        assert result_transactions[0] == usd_debit
+        assert result_transactions[1].description == "DUPLICATED: USD Received"
+        assert result_transactions[1].currency == Currency.USD
+
+    def test_create_duplicate_key_absolute_amount(self):
+        """Test that _create_duplicate_key uses absolute amount."""
+        positive_transaction = Transaction(
+            date=date(2025, 1, 15),
+            description="Positive",
+            amount=Decimal("100.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="POS",
+        )
+
+        negative_transaction = Transaction(
+            date=date(2025, 1, 15),
+            description="Negative",
+            amount=Decimal("-100.00"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_VISA,
+            reference="NEG",
+        )
+
+        positive_key = self.detector._create_duplicate_key(positive_transaction)
+        negative_key = self.detector._create_duplicate_key(negative_transaction)
+
+        # Both should have the same key due to absolute amount
+        assert positive_key == negative_key
+        assert positive_key == (date(2025, 1, 15), Decimal("100.00"))
+        assert negative_key == (date(2025, 1, 15), Decimal("100.00"))
+
+    def test_mark_duplicates_large_amounts_precision(self):
+        """Test duplicate detection with large amounts and high precision."""
+        large_positive = Transaction(
+            date=date(2025, 5, 1),
+            description="Large positive",
+            amount=Decimal("123456.789012"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.MACRO_ACCOUNT,
+            reference="LARGE_POS",
+        )
+
+        large_negative = Transaction(
+            date=date(2025, 5, 1),
+            description="Large negative",
+            amount=Decimal("-123456.789012"),
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_ACCOUNT,
+            reference="LARGE_NEG",
+        )
+
+        transactions = [large_positive, large_negative]
+
+        result_transactions, duplicate_count = self.detector.mark_duplicates(
+            transactions
+        )
+
+        assert len(result_transactions) == 2
+        assert duplicate_count == 1
+        assert result_transactions[1].description == "DUPLICATED: Large negative"
+        # Verify precision is preserved
+        assert result_transactions[1].amount == Decimal("-123456.789012")

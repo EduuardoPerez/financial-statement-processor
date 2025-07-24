@@ -238,8 +238,8 @@ class DuplicateDetector:
         return result, duplicate_count
 
     def _create_duplicate_key(self, transaction: Transaction) -> tuple:
-        """Create key for duplicate detection (date, amount)."""
-        return (transaction.date, transaction.amount)
+        """Create key for duplicate detection (date, absolute_amount)."""
+        return (transaction.date, abs(transaction.amount))
 
     def _mark_as_duplicate(self, transaction: Transaction) -> Transaction:
         """Create new transaction with DUPLICATED: prefix."""

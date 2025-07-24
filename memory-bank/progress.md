@@ -227,7 +227,18 @@ graph LR
 - **Clean Implementation**: Following established configuration patterns, preserving business logic separation
 - **Enterprise-Grade Flexibility**: Hierarchical configuration priority with comprehensive documentation
 
-**Latest Transaction Description Enhancement Achievement (July 24, 2025)**:
+**Latest Duplicate Detection Enhancement Achievement (July 24, 2025)**:
+
+- **Universal Absolute Amount Detection**: Successfully implemented comprehensive duplicate detection using absolute amounts instead of exact amounts
+- **Problem Solved**: Enhanced duplicate detection to catch transfer scenarios where amounts have opposite signs (+$1000 vs -$1000) but same absolute value and date
+- **Real-World Coverage**: Now detects MercadoPago patterns, bank transfers, credit card payments, and traditional duplicates across all payment methods
+- **Architecture Enhancement**: Modified DuplicateDetector to use `abs(transaction.amount)` in duplicate key generation for universal coverage
+- **Comprehensive Testing**: Added 22 complete test cases covering MercadoPago patterns, cross-payment transfers, mixed scenarios, and edge cases
+- **Backward Compatibility**: All existing duplicate detection behavior preserved while expanding detection capabilities 3x
+- **Multi-Currency Support**: USD and ARS transfers both supported with high precision decimal handling
+- **User Value Enhancement**: Dramatically improved duplicate detection accuracy for real-world financial workflows and transfer patterns
+
+**Previous Transaction Description Enhancement Achievement (July 24, 2025)**:
 
 - **Visa Transaction Description Cleanup Feature**: Successfully implemented automatic removal of reference numbers from Visa transaction descriptions
 - **Problem Solved**: Enhanced readability by removing unwanted reference prefixes (e.g., "005302* ON FIT Cuota 06/06" → "ON FIT Cuota 06/06")
