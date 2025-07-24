@@ -674,6 +674,10 @@ FSP_TIMEOUT="300"
 FSP_RETRY_ATTEMPTS="3"
 FSP_ENABLE_VALIDATION="true"
 FSP_ENABLE_BALANCE_CHECK="true"
+FSP_DUPLICATE_PREFIX="DUPLICATED"
+
+# Duplicate Detection Settings
+FSP_DUPLICATE_PREFIX="DUPLICATED"  # Customize duplicate transaction prefix
 
 # Output Settings
 FSP_OUTPUT_FORMAT="excel"

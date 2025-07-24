@@ -22,6 +22,7 @@ from domain.models import ConsolidatedStatement, Statement, Transaction
 from domain.repositories import StatementRepository
 from domain.services import DuplicateDetector
 from domain.validation import StatementValidator, ValidationResult
+from infrastructure.config import ProcessingConfig
 from infrastructure.extractors import BalanceExtractionService
 
 
@@ -103,6 +104,7 @@ class StatementProcessingService:
         repository: StatementRepository,
         validator: StatementValidator,
         filename_generator: FilenameGenerator,
+        processing_config: ProcessingConfig,
         balance_extraction_service: BalanceExtractionService | None = None,
     ):
         """
@@ -113,12 +115,14 @@ class StatementProcessingService:
             repository: Repository for saving statements
             validator: Validator for statement validation
             filename_generator: Generator for output filenames
+            processing_config: Configuration for processing behavior
             balance_extraction_service: Optional service for balance extraction
         """
         self._parser_factory = parser_factory
         self._repository = repository
         self._validator = validator
         self._filename_generator = filename_generator
+        self._processing_config = processing_config
         self._balance_extraction_service = balance_extraction_service
 
     def process_statement(self, input_path: Path, output_dir: Path) -> ProcessingResult:
@@ -366,8 +370,8 @@ class StatementProcessingService:
         all_transactions = self._collect_all_transactions(successful_statements)
         sorted_transactions = self._sort_transactions_chronologically(all_transactions)
 
-        # Detect and mark duplicates
-        detector = DuplicateDetector()
+        # Detect and mark duplicates with configured prefix
+        detector = DuplicateDetector(self._processing_config.duplicate_prefix)
         processed_transactions, duplicate_count = detector.mark_duplicates(
             sorted_transactions
         )

@@ -159,6 +159,7 @@ def create_components(
             repository=repository,
             validator=validator,
             filename_generator=filename_generator,
+            processing_config=config.processing,
             balance_extraction_service=balance_service,
         )
 

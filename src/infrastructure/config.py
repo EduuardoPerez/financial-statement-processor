@@ -29,6 +29,7 @@ class ProcessingConfig:
     retry_attempts: int = 3
     enable_validation: bool = True
     enable_balance_checking: bool = True
+    duplicate_prefix: str = "DUPLICATED"
 
 
 @dataclass
@@ -117,6 +118,7 @@ class ApplicationConfig:
                 enable_balance_checking=(
                     os.getenv("FSP_ENABLE_BALANCE_CHECK", "true").lower() == "true"
                 ),
+                duplicate_prefix=os.getenv("FSP_DUPLICATE_PREFIX", "DUPLICATED"),
             ),
             output=OutputConfig(
                 default_format=os.getenv("FSP_OUTPUT_FORMAT", "excel"),

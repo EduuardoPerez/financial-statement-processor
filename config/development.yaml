@@ -10,6 +10,7 @@ processing:
   retry_attempts: 2
   enable_validation: true
   enable_balance_checking: true
+  duplicate_prefix: "DUPLICATED" # Customize duplicate transaction prefix (e.g. "DUPLICADO", "DUPLICATE")
 
 output:
   default_format: "excel"

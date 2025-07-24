@@ -19,6 +19,7 @@ from infrastructure.async_processing import (
     BatchProcessingResult,
     process_files_async,
 )
+from infrastructure.config import ProcessingConfig
 from infrastructure.detectors import build_default_payment_detector
 from infrastructure.factories import DefaultParserFactory
 from infrastructure.observers import ProgressTracker
@@ -75,6 +76,7 @@ def mock_dependencies():
         repository=repository,
         validator=validator,
         filename_generator=filename_generator,
+        processing_config=ProcessingConfig(),
     )
 
     return {
@@ -414,6 +416,7 @@ async def test_phase_4_1_validation():
         repository=repository,
         validator=validator,
         filename_generator=filename_generator,
+        processing_config=ProcessingConfig(),
     )
 
     # Test both asyncio and threading modes
@@ -488,6 +491,7 @@ async def test_real_asyncio_run_simulation():
             repository=repository,
             validator=validator,
             filename_generator=filename_generator,
+            processing_config=ProcessingConfig(),
         )
 
         processor = AsyncStatementProcessor(
@@ -525,6 +529,7 @@ async def test_real_asyncio_run_simulation():
         repository=repository,
         validator=validator,
         filename_generator=filename_generator,
+        processing_config=ProcessingConfig(),
     )
 
     result = await process_files_async(

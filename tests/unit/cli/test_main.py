@@ -187,6 +187,7 @@ class TestCreateComponents:
         # Setup mocks
         mock_config = Mock(spec=ApplicationConfig)
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
+        mock_config.processing = Mock(spec=ProcessingConfig)
         mock_config.output = Mock(spec=OutputConfig)
         mock_detector = Mock()
         mock_detector_class.return_value = mock_detector
@@ -230,6 +231,7 @@ class TestCreateComponents:
         """Test component creation failure raises CLIError."""
         mock_config = Mock(spec=ApplicationConfig)
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
+        mock_config.processing = Mock(spec=ProcessingConfig)
         mock_config.output = Mock(spec=OutputConfig)
 
         with pytest.raises(

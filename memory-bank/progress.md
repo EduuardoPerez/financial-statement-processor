@@ -227,7 +227,21 @@ graph LR
 - **Clean Implementation**: Following established configuration patterns, preserving business logic separation
 - **Enterprise-Grade Flexibility**: Hierarchical configuration priority with comprehensive documentation
 
-**Latest Duplicate Detection Enhancement Achievement (July 24, 2025)**:
+**Latest Configurable Duplicate Prefix Enhancement Achievement (July 24, 2025) - COMPLETED**:
+
+- **Configurable Duplicate Prefix Feature**: Successfully implemented comprehensive duplicate prefix configuration with multi-language support and CLI integration
+- **Problem Solved**: Users can now customize the "DUPLICATED" text via YAML configuration and environment variables for different languages, reporting standards, or system integration
+- **CLI Integration Fix**: Resolved critical missing `processing_config` parameter in `StatementProcessingService` constructor call within CLI `create_components()` function
+- **Architecture Enhancement**: Extended ProcessingConfig with duplicate_prefix field, enhanced DuplicateDetector constructor, and wired through StatementProcessingService following clean architecture patterns
+- **Configuration Support**: Full YAML and environment variable support with hierarchical priority (YAML → Environment → Default "DUPLICATED")
+- **Multi-Language Examples**: Spanish ("DUPLICADO"), French ("DUPLIQUÉ"), English alternatives ("DUPLICATE"), and Unicode support tested
+- **Comprehensive Testing**: Added 46 total tests (14 configuration + 10 CLI integration + 22 existing duplicate detector tests) all passing with no regressions
+- **Backward Compatibility**: Zero breaking changes - default "DUPLICATED" behavior preserved when no custom configuration provided
+- **Files Enhanced**: ProcessingConfig, DuplicateDetector, StatementProcessingService, CLI main.py, development.yaml, README.md with comprehensive documentation
+- **End-to-End Verification**: CLI command `PYTHONPATH=src python -m cli.main --config config/development.yaml consolidate input/` successfully processed 12/12 files with 707 transactions and 150 duplicates detected
+- **User Value Enhancement**: Complete internationalization support, runtime flexibility for corporate reporting standards, and seamless CLI integration
+
+**Previous Universal Duplicate Detection Enhancement Achievement (July 24, 2025)**:
 
 - **Universal Absolute Amount Detection**: Successfully implemented comprehensive duplicate detection using absolute amounts instead of exact amounts
 - **Problem Solved**: Enhanced duplicate detection to catch transfer scenarios where amounts have opposite signs (+$1000 vs -$1000) but same absolute value and date

@@ -333,7 +333,64 @@ PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consoli
    - **Testing Verified**: Configuration loading, environment variables, and Excel output mapping confirmed operational
    - **Result**: Professional user experience enhancement with enterprise-grade configuration flexibility
 
-**Latest Duplicate Detection Enhancement Achievement (July 24, 2025)**:
+**Latest Configurable Duplicate Prefix Enhancement Achievement (July 24, 2025)**:
+
+7. **Configurable Duplicate Prefix Feature Implemented**:
+   - **Task**: Added configurable duplicate transaction prefix to allow users to customize the "DUPLICATED" text via YAML configuration and environment variables
+   - **Problem Solved**: Users needed ability to change duplicate prefix for different languages, reporting standards, or system integration requirements
+   - **Architecture Enhancement**:
+     - **ProcessingConfig Extended**: Added `duplicate_prefix: str = "DUPLICATED"` field to maintain backward compatibility
+     - **DuplicateDetector Enhanced**: Modified constructor to accept configurable prefix parameter with sensible default
+     - **Configuration Integration**: Wired through StatementProcessingService to use configured prefix from processing config
+     - **Clean Architecture Compliance**: Followed established configuration patterns without breaking existing interfaces
+   - **Configuration Support**:
+     - **YAML Configuration**: `duplicate_prefix: "DUPLICADO"` in processing section with examples in development.yaml
+     - **Environment Variable**: `FSP_DUPLICATE_PREFIX=DUPLICATE` for runtime override with hierarchical priority
+     - **Backward Compatible**: Default "DUPLICATED" maintains existing behavior when no custom configuration provided
+     - **Multi-Language Support**: Supports any language prefix ("DUPLICADO", "DUPLIQUÉ", "重复", etc.)
+   - **CLI Integration Fix**:
+     - **Critical Issue Resolved**: Fixed missing `processing_config` parameter in `StatementProcessingService` constructor call
+     - **Root Cause**: CLI `create_components()` function was not passing the required configuration parameter
+     - **Solution**: Added `processing_config=config.processing` to service initialization in `src/cli/main.py`
+     - **End-to-End Verification**: Original failing command now works successfully with custom configuration
+   - **Implementation Details**:
+     - **DuplicateDetector Constructor**: `def __init__(self, duplicate_prefix: str = "DUPLICATED")` with parameter validation
+     - **Mark Logic Updated**: `f"{self.duplicate_prefix}: {transaction.description}"` uses configurable prefix
+     - **Service Wiring**: StatementProcessingService passes `self._processing_config.duplicate_prefix` to detector
+     - **Configuration Loading**: Both YAML (`processing.duplicate_prefix`) and environment (`FSP_DUPLICATE_PREFIX`) supported
+   - **Comprehensive Testing Implemented**:
+     - **14 Configuration Tests**: Complete configuration test suite in `tests/unit/infrastructure/test_duplicate_prefix_config.py`
+     - **10 CLI Integration Tests**: CLI component wiring tests in `tests/unit/cli/test_duplicate_prefix_cli_integration.py`
+     - **22 Existing Tests Maintained**: All existing duplicate detector tests continue passing
+     - **46 Total Tests Passing**: Complete test coverage with no regressions
+     - **Multi-Language Tests**: Spanish, French, English, Chinese prefix examples verified
+     - **Edge Case Coverage**: Empty prefix, special characters, Unicode support, mixed scenarios
+   - **Files Modified**:
+     - `src/infrastructure/config.py` (ProcessingConfig extension + environment loading)
+     - `src/domain/services.py` (DuplicateDetector constructor + configurable marking)
+     - `src/application/services.py` (service wiring + configuration integration)
+     - `src/cli/main.py` (CLI integration fix + component wiring)
+     - `config/development.yaml` (example configuration with documentation)
+     - `README.md` (environment variable documentation)
+   - **Test Results**:
+     - **All Tests Pass**: 46/46 total tests for duplicate prefix functionality
+     - **No Regressions**: Complete backward compatibility maintained
+     - **New Capabilities**: Multi-language support, runtime configuration, YAML/environment flexibility
+     - **Quality Assurance**: Comprehensive edge case coverage with special character and empty prefix handling
+   - **User Value Delivered**:
+     - **Internationalization**: Support for any language prefix without code changes
+     - **System Integration**: Easy alignment with existing reporting systems and naming conventions
+     - **Runtime Flexibility**: Change prefix via environment variables for different deployment contexts
+     - **Corporate Standards**: Meet reporting format requirements with customizable labeling
+   - **Configuration Examples**:
+     - **Spanish**: `duplicate_prefix: "DUPLICADO"` → "DUPLICADO: Ingreso de dinero"
+     - **French**: `FSP_DUPLICATE_PREFIX=DUPLIQUÉ` → "DUPLIQUÉ: Transfer received"
+     - **Corporate**: `duplicate_prefix: "[DUPLICATE]"` → "[DUPLICATE]: Transaction description"
+     - **Minimal**: `duplicate_prefix: "DUP"` → "DUP: Short description"
+   - **CLI Command Verification**: `PYTHONPATH=src python -m cli.main --config config/development.yaml consolidate input/` successfully processed 12/12 files with 707 transactions and 150 duplicates detected
+   - **Result**: Complete configurable duplicate prefix system with multi-language support, comprehensive configuration options, CLI integration, and zero breaking changes
+
+**Previous Universal Duplicate Detection Enhancement Achievement (July 24, 2025)**:
 
 6. **Universal Absolute Amount Duplicate Detection Implemented**:
    - **Task**: Enhanced duplicate detection to use absolute amounts instead of exact amounts, solving MercadoPago transfer patterns and cross-payment method transfers

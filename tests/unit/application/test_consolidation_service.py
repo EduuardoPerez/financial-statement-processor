@@ -15,6 +15,7 @@ from domain.filename import FilenameGenerator
 from domain.models import PaymentMethod, Statement
 from domain.repositories import StatementRepository
 from domain.validation import StatementValidator
+from infrastructure.config import ProcessingConfig
 
 
 class TestStatementProcessingServiceConsolidation:
@@ -28,6 +29,7 @@ class TestStatementProcessingServiceConsolidation:
             "repository": Mock(spec=StatementRepository),
             "validator": Mock(spec=StatementValidator),
             "filename_generator": Mock(spec=FilenameGenerator),
+            "processing_config": ProcessingConfig(),
             "balance_extraction_service": Mock(),
         }
 

@@ -189,8 +189,17 @@ class DuplicateDetector:
 
     A transaction is considered duplicate if it has the same date and amount
     as another transaction, regardless of payment method or description.
-    Duplicates are marked with "DUPLICATED: " prefix in the description.
+    Duplicates are marked with configurable prefix in the description.
     """
+
+    def __init__(self, duplicate_prefix: str = "DUPLICATED"):
+        """
+        Initialize the duplicate detector.
+
+        Args:
+            duplicate_prefix: Prefix to use for marking duplicate transactions
+        """
+        self.duplicate_prefix = duplicate_prefix
 
     def mark_duplicates(
         self, transactions: list[Transaction]
@@ -242,8 +251,8 @@ class DuplicateDetector:
         return (transaction.date, abs(transaction.amount))
 
     def _mark_as_duplicate(self, transaction: Transaction) -> Transaction:
-        """Create new transaction with DUPLICATED: prefix."""
-        new_description = f"DUPLICATED: {transaction.description}"
+        """Create new transaction with configurable prefix."""
+        new_description = f"{self.duplicate_prefix}: {transaction.description}"
 
         return Transaction(
             date=transaction.date,
