@@ -218,7 +218,17 @@ graph LR
 - **Zero Regressions**: All functionality preserved while enhancing user experience with proper capitalization
 - **Quality Assurance**: Complete test coverage validation ensuring system integrity
 
-**Latest Configuration Enhancement Achievement (July 21, 2025)**:
+**Latest USD Transaction Detection Bug Fix Achievement (August 6, 2025)**:
+
+- **BBVA Mastercard USD Transaction Detection Bug Fixed**: Resolved critical issue where USD transactions were incorrectly classified as ARS, causing balance mismatches
+- **Problem Solved**: Transaction "07-Jul-25 internation-site.Com USD 35,00 974461 35,00" now correctly processed as USD instead of ARS
+- **Balance Impact Resolved**: Eliminated ARS balance mismatch (35.00 difference) and USD balance mismatch (35.00 difference)
+- **Implementation Enhancement**: Added USD detection logic to BBVA Mastercard section in PDF parser with regex pattern `r"USD\s+([\d,.-]+)"`
+- **Comprehensive Testing**: Created 10 new test cases in `tests/unit/test_bbva_mastercard_usd_detection.py` covering USD detection, mixed currencies, edge cases
+- **Quality Assurance**: 869/869 tests passing with 90.42% coverage maintained, zero regressions
+- **User Value Delivered**: Accurate currency assignment for financial analysis, eliminates balance reconciliation errors
+
+**Previous Configuration Enhancement Achievement (July 21, 2025)**:
 
 - **Payment Method Display Name Mapping Configuration**: Added configurable payment method display names for Excel reports
 - **Architecture Enhancement**: PaymentMethodMappingConfig class with ExcelStatementRepository integration

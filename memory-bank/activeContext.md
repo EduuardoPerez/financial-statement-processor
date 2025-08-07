@@ -333,7 +333,49 @@ PYTHONPATH=src uv run python -m cli.main --config config/production.yaml consoli
    - **Testing Verified**: Configuration loading, environment variables, and Excel output mapping confirmed operational
    - **Result**: Professional user experience enhancement with enterprise-grade configuration flexibility
 
-**Latest Configurable Duplicate Prefix Enhancement Achievement (July 24, 2025)**:
+**Latest USD Transaction Detection Bug Fix Achievement (August 6, 2025)**:
+
+8. **BBVA Mastercard USD Transaction Detection Bug Fixed**:
+   - **Problem Identified**: USD transactions in BBVA Mastercard PDFs were being incorrectly classified as ARS transactions, causing balance mismatches
+   - **Root Cause**: BBVA Mastercard-specific parsing logic didn't check for USD keyword before defaulting to ARS currency
+   - **Specific Case**: Transaction "07-Jul-25 internation-site.Com USD 35,00 974461 35,00" was being processed as ARS instead of USD
+   - **Balance Impact**: Caused ARS balance mismatch (reported 217,240.93, computed 217,275.93, difference 35.00) and USD balance mismatch (reported 35.00, computed 0.00, difference 35.00)
+   - **Solution Implemented**:
+     - **Enhanced PDF Parser**: Added USD detection logic to BBVA Mastercard section in `src/infrastructure/parsers/pdf_parser.py`
+     - **Pattern Recognition**: Added regex check `r"USD\s+([\d,.-]+)"` to identify USD transactions before processing as ARS
+     - **Proper Currency Assignment**: USD transactions now correctly assigned `Currency.USD` instead of defaulting to `Currency.ARS`
+     - **Description Preservation**: Full description including USD amount preserved (e.g., "internation-site.Com USD 35,00")
+   - **Implementation Details**:
+     - **Code Location**: Lines 307-324 in BBVA Mastercard parsing section
+     - **Pattern Detection**: Searches for "USD" keyword followed by amount in European format
+     - **Amount Parsing**: Converts comma decimal separator to dot for proper decimal handling
+     - **Currency Logic**: Sets `currency=Currency.USD` when USD detected, falls back to ARS processing otherwise
+   - **Comprehensive Testing Added**:
+     - **New Test File**: `tests/unit/test_bbva_mastercard_usd_detection.py` with 10 comprehensive test cases
+     - **Test Coverage**: Basic USD detection, mixed USD/ARS transactions, complex descriptions, edge cases
+     - **Pattern Testing**: Various USD amount formats, whole dollars, complex merchant names
+     - **Regression Testing**: Verified ARS transactions continue working, other payment methods unaffected
+     - **Integration Testing**: Confirmed USD payments and existing logic preserved
+   - **Quality Assurance**:
+     - **All Tests Pass**: 10/10 new tests + 869/869 full test suite passing
+     - **Coverage Maintained**: 90.42% test coverage maintained
+     - **No Regressions**: All existing functionality preserved
+     - **Balance Validation**: Original balance mismatch error resolved
+   - **User Value Delivered**:
+     - **Accurate Processing**: USD transactions now correctly identified and processed
+     - **Balance Reconciliation**: Eliminates balance mismatch errors for mixed currency statements
+     - **Reliable Currency Detection**: Proper currency assignment for financial analysis
+     - **Enhanced Accuracy**: Improved processing reliability for BBVA Mastercard statements
+   - **Files Modified**:
+     - `src/infrastructure/parsers/pdf_parser.py` (USD detection logic in BBVA Mastercard section)
+     - `tests/unit/test_bbva_mastercard_usd_detection.py` (comprehensive test coverage)
+   - **Verification Results**:
+     - **Processing Success**: `input/BBVA-Mastercard.pdf` now processes without balance mismatch errors
+     - **Transaction Accuracy**: internation-site USD 35.00 transaction correctly identified as USD currency
+     - **Output Verification**: Excel output shows proper currency assignment and descriptions
+   - **Result**: Complete resolution of USD transaction misclassification issue with comprehensive testing and zero regressions
+
+**Previous Configurable Duplicate Prefix Enhancement Achievement (July 24, 2025)**:
 
 7. **Configurable Duplicate Prefix Feature Implemented**:
    - **Task**: Added configurable duplicate transaction prefix to allow users to customize the "DUPLICATED" text via YAML configuration and environment variables

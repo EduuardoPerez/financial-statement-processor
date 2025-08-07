@@ -36,7 +36,7 @@ class TestXLSXStatementParser:
         # Create sample BBVA Mastercard transaction
         sample_transaction = Transaction(
             date=date(2025, 7, 7),
-            description="Onlyfans.Com",
+            description="internation-site.Com",
             amount=Decimal("35.00"),
             currency=Currency.USD,
             payment_method=PaymentMethod.BBVA_MASTERCARD,
@@ -74,7 +74,7 @@ class TestXLSXStatementParser:
         mock_df = pd.DataFrame(
             {
                 "Fecha y hora": ["07/07/25", "15/03/25"],
-                "Movimientos": ["Onlyfans.Com", "ON FIT"],
+                "Movimientos": ["internation-site.Com", "ON FIT"],
                 "Cuota": ["-", "05/06"],
                 "Monto": ["USD 35,00", "$ 107.970,00"],
             }
@@ -179,7 +179,7 @@ class TestXLSXStatementParser:
         mock_df = pd.DataFrame(
             {
                 "Fecha y hora": ["07/07/25", "15/03/25"],
-                "Movimientos": ["Onlyfans.Com", "ON FIT"],
+                "Movimientos": ["internation-site.Com", "ON FIT"],
                 "Cuota": ["-", "05/06"],
                 "Monto": ["USD 35,00", "$ 107.970,00"],
             }
@@ -188,7 +188,7 @@ class TestXLSXStatementParser:
         # Configure mock to return different transactions
         transaction1 = Transaction(
             date=date(2025, 7, 7),
-            description="Onlyfans.Com",
+            description="internation-site.Com",
             amount=Decimal("35.00"),
             currency=Currency.USD,
             payment_method=PaymentMethod.BBVA_MASTERCARD,
@@ -210,7 +210,7 @@ class TestXLSXStatementParser:
 
         # Assert
         assert len(transactions) == 2
-        assert transactions[0].description == "Onlyfans.Com"
+        assert transactions[0].description == "internation-site.Com"
         assert transactions[0].currency == Currency.USD
         assert transactions[1].description == "ON FIT"
         assert transactions[1].currency == Currency.ARS
@@ -221,7 +221,7 @@ class TestXLSXStatementParser:
         # Check first call
         first_call = mock_transaction_builder.build_from_xls_data.call_args_list[0]
         assert first_call[1]["date_str"] == "2025-07-07"
-        assert first_call[1]["description"] == "Onlyfans.Com"
+        assert first_call[1]["description"] == "internation-site.Com"
         assert first_call[1]["amount_str"] == "35,00"
         assert first_call[1]["currency"] == Currency.USD
         assert first_call[1]["payment_method"] == PaymentMethod.BBVA_MASTERCARD
@@ -235,7 +235,7 @@ class TestXLSXStatementParser:
         mock_df = pd.DataFrame(
             {
                 "Fecha y hora": ["07/07/25", "", "15/03/25"],  # Empty date
-                "Movimientos": ["Onlyfans.Com", "Invalid", "ON FIT"],
+                "Movimientos": ["internation-site.Com", "Invalid", "ON FIT"],
                 "Cuota": ["-", "05/06", "05/06"],
                 "Monto": ["USD 35,00", "", "$ 107.970,00"],  # Empty amount
             }
@@ -244,7 +244,7 @@ class TestXLSXStatementParser:
         # Configure mock to return transaction for valid rows only
         valid_transaction = Transaction(
             date=date(2025, 7, 7),
-            description="Onlyfans.Com",
+            description="internation-site.Com",
             amount=Decimal("35.00"),
             currency=Currency.USD,
             payment_method=PaymentMethod.BBVA_MASTERCARD,
@@ -345,7 +345,7 @@ class TestXLSXStatementParser:
         mock_df = pd.DataFrame(
             {
                 "Fecha y hora": ["07/07/25"],
-                "Movimientos": ["Onlyfans.Com"],
+                "Movimientos": ["internation-site.Com"],
                 "Cuota": ["-"],
                 "Monto": ["USD 35,00"],
             }
@@ -356,7 +356,7 @@ class TestXLSXStatementParser:
 
         transaction = Transaction(
             date=date(2025, 7, 7),
-            description="Onlyfans.Com",
+            description="internation-site.Com",
             amount=Decimal("35.00"),
             currency=Currency.USD,
             payment_method=PaymentMethod.BBVA_MASTERCARD,
@@ -372,7 +372,7 @@ class TestXLSXStatementParser:
             assert isinstance(statement, Statement)
             assert statement.payment_method == PaymentMethod.BBVA_MASTERCARD
             assert len(statement.transactions) == 1
-            assert statement.transactions[0].description == "Onlyfans.Com"
+            assert statement.transactions[0].description == "internation-site.Com"
             assert statement.transactions[0].currency == Currency.USD
 
     def test_parse_file_not_found(self, xlsx_parser):

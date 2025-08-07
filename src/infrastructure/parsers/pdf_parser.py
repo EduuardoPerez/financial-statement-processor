@@ -303,26 +303,49 @@ class PDFStatementParser(StatementParser):
                         except ValueError:
                             pass
                 else:
-                    amount_match = re.search(r"([\d,.]+)$", remaining_line)
-                    if amount_match:
-                        amount_str = amount_match.group(1)
-                        description = remaining_line.rsplit(amount_match.group(1), 1)[
-                            0
-                        ].strip()
-                        if len(description.split()) >= 2:
-                            try:
-                                transaction = (
-                                    self._transaction_builder.build_from_pdf_line(
-                                        date_str=date_str,
-                                        description=description,
-                                        amount_str=amount_str,
-                                        currency=Currency.ARS,
-                                        payment_method=payment_method,
+                    # Check for USD transactions first
+                    usd_match = re.search(r"USD\s+([\d,.-]+)", remaining_line)
+                    if usd_match:
+                        amount_str = usd_match.group(1).replace(",", ".")
+                        desc_before_usd = remaining_line.split("USD")[0].strip()
+                        usd_amount_str = usd_match.group(1)
+                        full_description = (
+                            f"{desc_before_usd} USD {usd_amount_str}".strip()
+                        )
+
+                        try:
+                            transaction = self._transaction_builder.build_from_pdf_line(
+                                date_str=date_str,
+                                description=full_description,
+                                amount_str=amount_str,
+                                currency=Currency.USD,
+                                payment_method=payment_method,
+                            )
+                            transactions.append(transaction)
+                        except ValueError:
+                            pass
+                    else:
+                        # Handle regular ARS transactions
+                        amount_match = re.search(r"([\d,.]+)$", remaining_line)
+                        if amount_match:
+                            amount_str = amount_match.group(1)
+                            description = remaining_line.rsplit(
+                                amount_match.group(1), 1
+                            )[0].strip()
+                            if len(description.split()) >= 2:
+                                try:
+                                    transaction = (
+                                        self._transaction_builder.build_from_pdf_line(
+                                            date_str=date_str,
+                                            description=description,
+                                            amount_str=amount_str,
+                                            currency=Currency.ARS,
+                                            payment_method=payment_method,
+                                        )
                                     )
-                                )
-                                transactions.append(transaction)
-                            except ValueError:
-                                pass
+                                    transactions.append(transaction)
+                                except ValueError:
+                                    pass
                 continue
 
             # Handle tax entries

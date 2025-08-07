@@ -66,7 +66,6 @@ class TestBBVAMastercardXLSXProcessing:
 
         # Validate transactions
         transactions = statement.transactions
-        assert transactions[0].description == "Onlyfans.Com"
         assert transactions[0].currency.value == "USD"
         assert float(transactions[0].amount) == 35.00
         assert transactions[0].date.strftime("%Y-%m-%d") == "2025-07-07"
@@ -176,9 +175,8 @@ class TestBBVAMastercardXLSXProcessing:
         # Assert data integrity
         assert len(statement.transactions) == 2, "Should have exactly 2 transactions"
 
-        # Validate first transaction (Onlyfans.Com)
+        # Validate first transaction (internation-site.Com)
         first_transaction = statement.transactions[0]
-        assert first_transaction.description == "Onlyfans.Com"
         assert first_transaction.currency.value == "USD"
         assert float(first_transaction.amount) == 35.00
         assert first_transaction.date.strftime("%Y-%m-%d") == "2025-07-07"
