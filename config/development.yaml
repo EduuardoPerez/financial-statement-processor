@@ -17,7 +17,7 @@ output:
   excel_sheet_name: "Transactions"
   include_index: false
   date_format: "%Y-%m-%d"
-  decimal_separator: ","
+  decimal_separator: "."
 
 # Payment method display name customization
 # Uncomment and modify to customize payment method names in reports
