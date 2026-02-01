@@ -42,6 +42,7 @@ src/
 - ✅ **Professional CLI** - Rich terminal UI with real-time progress bars and error handling
 - ✅ **Configuration Management** - YAML/environment variable support with smart defaults
 - ✅ **Payment Method Display Mapping** - Customize payment method names in reports via configuration
+- ✅ **Amount Sign Inversion** - Invert transaction amount signs per payment method via configuration
 
 ## 🚀 Quick Start
 
@@ -687,6 +688,11 @@ FSP_INCLUDE_INDEX="false"
 FSP_DATE_FORMAT="%Y-%m-%d"
 FSP_DECIMAL_SEPARATOR=","
 
+# Amount Sign Inversion Settings
+FSP_AMOUNT_INVERT_ALL="false"              # Invert all payment methods
+FSP_AMOUNT_INVERT_PATTERNS=""              # Comma-separated patterns (e.g., "*_VISA,*_MASTERCARD")
+FSP_AMOUNT_EXCLUDE_PATTERNS=""             # Comma-separated exclusions (e.g., "*_ACCOUNT")
+
 # Database Settings (Optional)
 FSP_DB_HOST=""
 FSP_DB_PORT="5432"
@@ -818,6 +824,56 @@ FSP_DECIMAL_SEPARATOR=";" PYTHONPATH=src uv run python -m cli.main consolidate i
 - **Reporting Standards**: Meet corporate formatting requirements
 
 **Default**: Comma separator (`,`) for European format compatibility with Argentine banking standards.
+
+### Amount Sign Inversion Configuration
+
+Invert the sign of transaction amounts for specific payment methods in Excel output. Useful when credit card charges should appear as negative values for accounting integration.
+
+#### YAML Configuration
+
+```yaml
+# config/development.yaml
+amount_sign_inversion:
+  invert_all: false                    # Global: invert all payment methods
+  invert_patterns:                     # Patterns to invert (fnmatch-style wildcards)
+    - "*_VISA"                         # All VISA cards
+    - "*_MASTERCARD"                   # All Mastercard cards
+  exclude_patterns:                    # Patterns to exclude from inversion (highest priority)
+    - "*_ACCOUNT"                      # Exclude bank accounts
+```
+
+#### Environment Variable Examples
+
+```bash
+# Invert all credit card transactions
+FSP_AMOUNT_INVERT_PATTERNS="*_VISA,*_MASTERCARD" PYTHONPATH=src uv run python -m cli.main consolidate input/
+
+# Invert everything except bank accounts
+FSP_AMOUNT_INVERT_ALL=true FSP_AMOUNT_EXCLUDE_PATTERNS="*_ACCOUNT,MERCADOPAGO" PYTHONPATH=src uv run python -m cli.main batch input/
+
+# Invert only BBVA cards
+FSP_AMOUNT_INVERT_PATTERNS="BBVA_*" FSP_AMOUNT_EXCLUDE_PATTERNS="BBVA_ACCOUNT" PYTHONPATH=src uv run python -m cli.main process input/bbva.pdf
+```
+
+#### Priority Rules
+
+1. **`exclude_patterns`** - Highest priority (never inverted)
+2. **`invert_patterns`** - Overrides `invert_all` for matching methods
+3. **`invert_all`** - Fallback for all unmatched methods
+
+#### Pattern Syntax
+
+Uses fnmatch-style wildcards:
+- `*` matches any sequence of characters
+- `?` matches any single character
+- `[seq]` matches any character in seq
+
+#### Use Cases
+
+- **Accounting Integration**: Credit card charges as negative values
+- **Bank Reconciliation**: Match bank statement conventions
+- **Regional Standards**: Align with local accounting practices
+- **System Compatibility**: Match existing data processing systems
 
 ### Configuration Examples by Use Case
 

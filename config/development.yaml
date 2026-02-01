@@ -28,3 +28,14 @@ payment_method_mapping:
 # BBVA_MASTERCARD: "BBVA Mastercard" # Commented = use default
 # BBVA_ACCOUNT: "BBVA Account"       # Commented = use default
 # MACRO_ACCOUNT: "Macro Account"     # Commented = use default
+
+# Amount sign inversion configuration
+# Invert the sign of transaction amounts for specific payment methods
+# Useful for credit cards where charges should appear as negative
+amount_sign_inversion:
+  invert_all: false # Set to true to invert all payment methods
+  invert_patterns: # [] # Patterns to invert (fnmatch-style wildcards)
+    - "*_VISA" # All VISA cards
+    - "*_MASTERCARD" # All Mastercard cards
+  exclude_patterns: [] # Patterns to exclude from inversion (highest priority)
+  # - "*_ACCOUNT"    # Exclude all account types

@@ -1,3 +1,4 @@
+import fnmatch
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -52,6 +53,31 @@ class PaymentMethodMappingConfig:
 
 
 @dataclass
+class AmountSignInversionConfig:
+    """Amount sign inversion configuration per payment method."""
+
+    invert_all: bool = False
+    invert_patterns: list[str] = field(default_factory=list)
+    exclude_patterns: list[str] = field(default_factory=list)
+
+    def should_invert(self, payment_method: PaymentMethod) -> bool:
+        """Determine if amounts should be inverted for this payment method."""
+        method_name = payment_method.name
+
+        # Exclusions take highest priority
+        for pattern in self.exclude_patterns:
+            if fnmatch.fnmatch(method_name, pattern):
+                return False
+
+        # Check invert patterns
+        for pattern in self.invert_patterns:
+            if fnmatch.fnmatch(method_name, pattern):
+                return True
+
+        return self.invert_all
+
+
+@dataclass
 class OutputConfig:
     """Output format configuration"""
 
@@ -74,6 +100,9 @@ class ApplicationConfig:
     payment_method_mapping: PaymentMethodMappingConfig = field(
         default_factory=PaymentMethodMappingConfig
     )
+    amount_sign_inversion: AmountSignInversionConfig = field(
+        default_factory=AmountSignInversionConfig
+    )
     database: DatabaseConfig | None = None
     log_level: str = "INFO"
     enable_async: bool = False
@@ -84,6 +113,14 @@ class ApplicationConfig:
         with open(config_path) as file:
             config_data = yaml.safe_load(file)
 
+        # Parse amount sign inversion config
+        inversion_data = config_data.get("amount_sign_inversion", {}) or {}
+        amount_sign_inversion = AmountSignInversionConfig(
+            invert_all=inversion_data.get("invert_all", False),
+            invert_patterns=inversion_data.get("invert_patterns", []) or [],
+            exclude_patterns=inversion_data.get("exclude_patterns", []) or [],
+        )
+
         return cls(
             input_directory=Path(config_data["input_directory"]),
             output_directory=Path(config_data["output_directory"]),
@@ -92,6 +129,7 @@ class ApplicationConfig:
             payment_method_mapping=PaymentMethodMappingConfig(
                 mappings=config_data.get("payment_method_mapping", {}) or {}
             ),
+            amount_sign_inversion=amount_sign_inversion,
             database=(
                 DatabaseConfig(**config_data["database"])
                 if "database" in config_data
@@ -133,6 +171,17 @@ class ApplicationConfig:
             payment_method_mapping=PaymentMethodMappingConfig(
                 mappings=cls._load_payment_method_mapping_from_env()
             ),
+            amount_sign_inversion=AmountSignInversionConfig(
+                invert_all=(
+                    os.getenv("FSP_AMOUNT_INVERT_ALL", "false").lower() == "true"
+                ),
+                invert_patterns=cls._parse_env_list(
+                    os.getenv("FSP_AMOUNT_INVERT_PATTERNS", "")
+                ),
+                exclude_patterns=cls._parse_env_list(
+                    os.getenv("FSP_AMOUNT_EXCLUDE_PATTERNS", "")
+                ),
+            ),
             database=(
                 cls._load_database_from_env() if os.getenv("FSP_DB_HOST") else None
             ),
@@ -153,6 +202,13 @@ class ApplicationConfig:
                 mappings[payment_method.name] = value
 
         return mappings
+
+    @classmethod
+    def _parse_env_list(cls, env_value: str) -> list[str]:
+        """Parse a comma-separated environment variable into a list."""
+        if not env_value or not env_value.strip():
+            return []
+        return [item.strip() for item in env_value.split(",") if item.strip()]
 
     @classmethod
     def _load_database_from_env(cls) -> DatabaseConfig | None:

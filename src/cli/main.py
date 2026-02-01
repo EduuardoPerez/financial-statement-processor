@@ -150,7 +150,11 @@ def create_components(
         validator = StatementValidator(balance_extraction_service=balance_service)
         filename_generator = FilenameGenerator()
         repository = ExcelStatementRepository(
-            file_reader, file_writer, config.payment_method_mapping, config.output
+            file_reader,
+            file_writer,
+            config.payment_method_mapping,
+            config.output,
+            config.amount_sign_inversion,
         )
 
         # Create main processing service

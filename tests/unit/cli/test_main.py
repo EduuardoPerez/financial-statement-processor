@@ -31,6 +31,7 @@ from cli.main import (
 from domain.models import Balance, PaymentMethod, Statement
 from domain.validation import ValidationResult
 from infrastructure.config import (
+    AmountSignInversionConfig,
     ApplicationConfig,
     OutputConfig,
     PaymentMethodMappingConfig,
@@ -189,6 +190,7 @@ class TestCreateComponents:
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
         mock_config.processing = Mock(spec=ProcessingConfig)
         mock_config.output = Mock(spec=OutputConfig)
+        mock_config.amount_sign_inversion = Mock(spec=AmountSignInversionConfig)
         mock_detector = Mock()
         mock_detector_class.return_value = mock_detector
         mock_factory = Mock()
@@ -233,6 +235,7 @@ class TestCreateComponents:
         mock_config.payment_method_mapping = Mock(spec=PaymentMethodMappingConfig)
         mock_config.processing = Mock(spec=ProcessingConfig)
         mock_config.output = Mock(spec=OutputConfig)
+        mock_config.amount_sign_inversion = Mock(spec=AmountSignInversionConfig)
 
         with pytest.raises(
             CLIError, match="Failed to initialize components: Component error"

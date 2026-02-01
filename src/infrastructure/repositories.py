@@ -15,7 +15,11 @@ import pandas as pd
 
 from domain.models import ConsolidatedStatement, Statement
 from domain.repositories import FileReader, FileWriter, StatementRepository
-from infrastructure.config import OutputConfig, PaymentMethodMappingConfig
+from infrastructure.config import (
+    AmountSignInversionConfig,
+    OutputConfig,
+    PaymentMethodMappingConfig,
+)
 
 
 class ExcelStatementRepository(StatementRepository):
@@ -27,6 +31,7 @@ class ExcelStatementRepository(StatementRepository):
         file_writer: FileWriter,
         payment_method_mapping: PaymentMethodMappingConfig | None = None,
         output_config: OutputConfig | None = None,
+        amount_sign_inversion: AmountSignInversionConfig | None = None,
     ):
         """
         Initialize the Excel statement repository.
@@ -36,6 +41,7 @@ class ExcelStatementRepository(StatementRepository):
             file_writer: File writer implementation for saving files
             payment_method_mapping: Payment method mapping configuration
             output_config: Output configuration including decimal separator
+            amount_sign_inversion: Amount sign inversion configuration
         """
         self._file_reader = file_reader
         self._file_writer = file_writer
@@ -43,6 +49,9 @@ class ExcelStatementRepository(StatementRepository):
             payment_method_mapping or PaymentMethodMappingConfig()
         )
         self._output_config = output_config or OutputConfig()
+        self._amount_sign_inversion = (
+            amount_sign_inversion or AmountSignInversionConfig()
+        )
 
     def save_statement(self, statement: Statement, output_path: Path) -> None:
         """
@@ -123,8 +132,12 @@ class ExcelStatementRepository(StatementRepository):
             display_name = self._payment_method_mapping.get_display_name(
                 transaction.payment_method
             )
+            # Apply sign inversion if configured
+            amount = transaction.amount
+            if self._amount_sign_inversion.should_invert(transaction.payment_method):
+                amount = -amount
             # Format amount with configured decimal separator
-            amount_str = str(float(transaction.amount))
+            amount_str = str(float(amount))
             if self._output_config.decimal_separator != ".":
                 amount_str = amount_str.replace(
                     ".", self._output_config.decimal_separator
@@ -207,8 +220,12 @@ class ExcelStatementRepository(StatementRepository):
             display_name = self._payment_method_mapping.get_display_name(
                 transaction.payment_method
             )
+            # Apply sign inversion if configured
+            amount = transaction.amount
+            if self._amount_sign_inversion.should_invert(transaction.payment_method):
+                amount = -amount
             # Format amount with configured decimal separator
-            amount_str = str(float(transaction.amount))
+            amount_str = str(float(amount))
             if self._output_config.decimal_separator != ".":
                 amount_str = amount_str.replace(
                     ".", self._output_config.decimal_separator
