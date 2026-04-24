@@ -45,6 +45,7 @@ logs/
 *.tmp
 *.temp
 .cache/
+temp/
 
 # Coverage files
 .coverage
