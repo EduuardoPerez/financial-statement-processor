@@ -343,7 +343,7 @@ class TestRepositoryAmountSignInversion:
             payment_method=PaymentMethod.MACRO_VISA, transactions=[transaction]
         )
 
-        df = repository._statement_to_dataframe(statement)
+        df = repository._transactions_to_dataframe(statement.transactions)
 
         # Amount should be inverted (negative)
         assert df["Amount"].iloc[0] == "-100.5"
@@ -375,7 +375,7 @@ class TestRepositoryAmountSignInversion:
             payment_method=PaymentMethod.BBVA_ACCOUNT, transactions=[transaction]
         )
 
-        df = repository._statement_to_dataframe(statement)
+        df = repository._transactions_to_dataframe(statement.transactions)
 
         # Amount should not be inverted (positive)
         assert df["Amount"].iloc[0] == "100.5"
@@ -406,7 +406,7 @@ class TestRepositoryAmountSignInversion:
             payment_method=PaymentMethod.MACRO_VISA, transactions=[transaction]
         )
 
-        df = repository._statement_to_dataframe(statement)
+        df = repository._transactions_to_dataframe(statement.transactions)
 
         # Negative amount should become positive when inverted
         assert df["Amount"].iloc[0] == "50.25"
@@ -443,7 +443,7 @@ class TestRepositoryAmountSignInversion:
             duplicate_count=0,
         )
 
-        df = repository._consolidated_to_dataframe(consolidated)
+        df = repository._transactions_to_dataframe(consolidated.transactions)
 
         # VISA should be inverted, ACCOUNT should not
         assert df["Amount"].iloc[0] == "-100.0"
@@ -470,7 +470,7 @@ class TestRepositoryAmountSignInversion:
             payment_method=PaymentMethod.MACRO_VISA, transactions=[transaction]
         )
 
-        df = repository._statement_to_dataframe(statement)
+        df = repository._transactions_to_dataframe(statement.transactions)
 
         # Amount should not be inverted by default
         assert df["Amount"].iloc[0] == "100.5"

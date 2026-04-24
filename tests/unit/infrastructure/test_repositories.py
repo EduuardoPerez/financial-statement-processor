@@ -152,7 +152,7 @@ class TestExcelStatementRepository:
         """Test conversion of statement to DataFrame."""
         repository = ExcelStatementRepository(**mock_dependencies)
 
-        df = repository._statement_to_dataframe(sample_statement)
+        df = repository._transactions_to_dataframe(sample_statement.transactions)
 
         assert len(df) == 2
         assert list(df.columns) == [
@@ -236,7 +236,7 @@ class TestExcelStatementRepository:
             duplicate_count=0,
         )
 
-        df = repository._consolidated_to_dataframe(consolidated)
+        df = repository._transactions_to_dataframe(consolidated.transactions)
 
         assert len(df) == 2
         assert list(df.columns) == [

@@ -13,7 +13,7 @@ from typing import Any
 
 import pandas as pd
 
-from domain.models import ConsolidatedStatement, Statement
+from domain.models import ConsolidatedStatement, Statement, Transaction
 from domain.repositories import FileReader, FileWriter, StatementRepository
 from infrastructure.config import (
     AmountSignInversionConfig,
@@ -88,7 +88,7 @@ class ExcelStatementRepository(StatementRepository):
         self._file_writer.ensure_directory(output_path.parent)
 
         # Convert statement to DataFrame
-        df = self._statement_to_dataframe(statement)
+        df = self._transactions_to_dataframe(statement.transactions)
 
         # Save as Excel file using pandas with openpyxl engine
         try:
@@ -126,33 +126,25 @@ class ExcelStatementRepository(StatementRepository):
         except Exception as e:
             raise OSError(f"Error reading file {input_path}: {str(e)}") from e
 
-    def _statement_to_dataframe(self, statement: Statement) -> pd.DataFrame:
+    def _transactions_to_dataframe(
+        self, transactions: list[Transaction]
+    ) -> pd.DataFrame:
         """
-        Convert Statement object to pandas DataFrame.
+        Convert a list of Transaction objects to a standardized DataFrame.
 
-        Args:
-            statement: Statement to convert
-
-        Returns:
-            DataFrame with standardized columns for Excel output
-
-        Note:
-            Creates DataFrame with columns: Date, Description, Currency,
-            Amount, Payment Method. Date format: YYYY-MM-DD.
-            Amount format: String with configured decimal separator
-            Uses configured payment method display names if available
+        Columns: Date (YYYY-MM-DD), Description, Currency, Amount (string with
+        configured decimal separator), Payment Method (using display name
+        mapping). Applies sign inversion per payment method.
         """
         data: list[dict[str, Any]] = []
 
-        for transaction in statement.transactions:
+        for transaction in transactions:
             display_name = self._payment_method_mapping.get_display_name(
                 transaction.payment_method
             )
-            # Apply sign inversion if configured
             amount = transaction.amount
             if self._amount_sign_inversion.should_invert(transaction.payment_method):
                 amount = -amount
-            # Format amount with configured decimal separator
             amount_str = str(float(amount))
             if self._output_config.decimal_separator != ".":
                 amount_str = amount_str.replace(
@@ -198,7 +190,7 @@ class ExcelStatementRepository(StatementRepository):
         self._file_writer.ensure_directory(output_path.parent)
 
         # Convert consolidated statement to DataFrame
-        df = self._consolidated_to_dataframe(consolidated)
+        df = self._transactions_to_dataframe(consolidated.transactions)
 
         # Save as Excel file using pandas with openpyxl engine
         try:
@@ -209,52 +201,3 @@ class ExcelStatementRepository(StatementRepository):
             raise OSError(
                 f"Failed to save consolidated Excel file to {output_path}: {str(e)}"
             ) from e
-
-    def _consolidated_to_dataframe(
-        self, consolidated: "ConsolidatedStatement"
-    ) -> pd.DataFrame:
-        """
-        Convert ConsolidatedStatement to DataFrame.
-
-        Args:
-            consolidated: ConsolidatedStatement to convert
-
-        Returns:
-            DataFrame with all transactions sorted chronologically
-
-        Note:
-            Creates DataFrame with columns: Date, Description, Currency,
-            Amount, Payment Method. Transactions are already sorted and
-            duplicates are already marked in the ConsolidatedStatement.
-            Uses configured payment method display names if available
-        """
-        from typing import Any
-
-        data: list[dict[str, Any]] = []
-
-        for transaction in consolidated.transactions:
-            display_name = self._payment_method_mapping.get_display_name(
-                transaction.payment_method
-            )
-            # Apply sign inversion if configured
-            amount = transaction.amount
-            if self._amount_sign_inversion.should_invert(transaction.payment_method):
-                amount = -amount
-            # Format amount with configured decimal separator
-            amount_str = str(float(amount))
-            if self._output_config.decimal_separator != ".":
-                amount_str = amount_str.replace(
-                    ".", self._output_config.decimal_separator
-                )
-
-            data.append(
-                {
-                    "Date": transaction.date.strftime("%Y-%m-%d"),
-                    "Description": transaction.description,
-                    "Currency": transaction.currency.value,
-                    "Amount": amount_str,
-                    "Payment Method": display_name,
-                }
-            )
-
-        return pd.DataFrame(data)
