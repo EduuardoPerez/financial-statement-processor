@@ -13,11 +13,13 @@ Commands:
     batch: Process multiple files in a directory
 """
 
+import functools
 import json
 import logging
 import sys
 import traceback
 import warnings
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -130,6 +132,35 @@ def output_error(
         console.print(f"[red]❌ Error: {message}[/red]")
 
 
+def cli_command(
+    error_prefix: str,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Wrap a click command body with common error handling and context pass-through.
+
+    Each command reported errors with its own prefix and called sys.exit(1) in a
+    duplicated try/except. This decorator centralizes that boilerplate so the
+    command bodies can focus on their logic.
+    """
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @click.pass_context
+        @functools.wraps(func)
+        def wrapper(ctx: click.Context, *args: Any, **kwargs: Any) -> Any:
+            try:
+                return func(ctx, *args, **kwargs)
+            except Exception as e:
+                output_error(
+                    f"{error_prefix}: {str(e)}",
+                    verbose=ctx.obj["verbose"],
+                    exception=e,
+                )
+                sys.exit(1)
+
+        return wrapper
+
+    return decorator
+
+
 @click.group()
 @click.option(
     "--config",
@@ -171,82 +202,75 @@ def cli(ctx: click.Context, config: Path | None, verbose: bool) -> None:
 
 @cli.command()
 @click.option("--json", "output_json_flag", is_flag=True, help="Output in JSON format")
-@click.pass_context
+@cli_command("Failed to display info")
 def info(ctx: click.Context, output_json_flag: bool) -> None:
     """Show system information and configuration."""
-    try:
-        config: ApplicationConfig = ctx.obj["config"]
+    config: ApplicationConfig = ctx.obj["config"]
 
-        # Create components to get supported extensions
-        _, parser_factory = create_components(config)
-        supported_extensions = sorted(parser_factory.get_supported_extensions())
+    # Create components to get supported extensions
+    _, parser_factory = create_components(config)
+    supported_extensions = sorted(parser_factory.get_supported_extensions())
 
-        # Supported payment methods
-        supported_methods = [method.value for method in PaymentMethod]
+    # Supported payment methods
+    supported_methods = [method.value for method in PaymentMethod]
 
-        info_data = {
-            "version": "0.1.0",
-            "config": {
-                "input_directory": str(config.input_directory),
-                "output_directory": str(config.output_directory),
-                "log_level": config.log_level,
-                "max_workers": config.processing.max_workers,
-                "default_format": config.output.default_format,
-                "decimal_separator": config.output.decimal_separator,
-                "enable_validation": config.processing.enable_validation,
-                "enable_balance_checking": config.processing.enable_balance_checking,
-            },
-            "supported_banks": supported_methods,
-            "supported_extensions": supported_extensions,
-        }
+    info_data = {
+        "version": "0.1.0",
+        "config": {
+            "input_directory": str(config.input_directory),
+            "output_directory": str(config.output_directory),
+            "log_level": config.log_level,
+            "max_workers": config.processing.max_workers,
+            "default_format": config.output.default_format,
+            "decimal_separator": config.output.decimal_separator,
+            "enable_validation": config.processing.enable_validation,
+            "enable_balance_checking": config.processing.enable_balance_checking,
+        },
+        "supported_banks": supported_methods,
+        "supported_extensions": supported_extensions,
+    }
 
-        if output_json_flag:
-            output_json(info_data)
-        else:
-            # Rich formatted output
-            console.print(
-                Panel.fit(
-                    "[bold blue]Financial Statement Processor[/bold blue]",
-                    title="v0.1.0",
-                )
+    if output_json_flag:
+        output_json(info_data)
+    else:
+        # Rich formatted output
+        console.print(
+            Panel.fit(
+                "[bold blue]Financial Statement Processor[/bold blue]",
+                title="v0.1.0",
             )
-
-            # Configuration table
-            config_table = Table(title="Configuration")
-            config_table.add_column("Setting", style="cyan")
-            config_table.add_column("Value", style="magenta")
-
-            config_table.add_row("Input Directory", str(config.input_directory))
-            config_table.add_row("Output Directory", str(config.output_directory))
-            config_table.add_row("Log Level", config.log_level)
-            config_table.add_row("Max Workers", str(config.processing.max_workers))
-            config_table.add_row("Default Format", config.output.default_format)
-            config_table.add_row("Decimal Separator", config.output.decimal_separator)
-            config_table.add_row(
-                "Enable Validation", str(config.processing.enable_validation)
-            )
-            config_table.add_row(
-                "Enable Balance Checking",
-                str(config.processing.enable_balance_checking),
-            )
-
-            console.print(config_table)
-
-            # Supported banks
-            console.print("\n[bold green]Supported Banks:[/bold green]")
-            for method in supported_methods:
-                console.print(f"  • {method}")
-
-            # Supported formats
-            console.print(
-                f"\n[bold green]Supported Formats:[/bold green] {', '.join(supported_extensions)}"
-            )
-
-    except Exception as e:
-        output_error(
-            f"Failed to display info: {str(e)}", verbose=ctx.obj["verbose"], exception=e
         )
-        sys.exit(1)
+
+        # Configuration table
+        config_table = Table(title="Configuration")
+        config_table.add_column("Setting", style="cyan")
+        config_table.add_column("Value", style="magenta")
+
+        config_table.add_row("Input Directory", str(config.input_directory))
+        config_table.add_row("Output Directory", str(config.output_directory))
+        config_table.add_row("Log Level", config.log_level)
+        config_table.add_row("Max Workers", str(config.processing.max_workers))
+        config_table.add_row("Default Format", config.output.default_format)
+        config_table.add_row("Decimal Separator", config.output.decimal_separator)
+        config_table.add_row(
+            "Enable Validation", str(config.processing.enable_validation)
+        )
+        config_table.add_row(
+            "Enable Balance Checking",
+            str(config.processing.enable_balance_checking),
+        )
+
+        console.print(config_table)
+
+        # Supported banks
+        console.print("\n[bold green]Supported Banks:[/bold green]")
+        for method in supported_methods:
+            console.print(f"  • {method}")
+
+        # Supported formats
+        console.print(
+            f"\n[bold green]Supported Formats:[/bold green] {', '.join(supported_extensions)}"
+        )
 
 
 @cli.command()
@@ -264,7 +288,7 @@ def info(ctx: click.Context, output_json_flag: bool) -> None:
 @click.option(
     "--json", "output_json_flag", is_flag=True, help="Output result in JSON format"
 )
-@click.pass_context
+@cli_command("Processing failed")
 def process(
     ctx: click.Context,
     input_file: Path,
@@ -273,79 +297,60 @@ def process(
     output_json_flag: bool,
 ) -> None:
     """Process a single statement file."""
-    try:
-        config: ApplicationConfig = ctx.obj["config"]
+    config: ApplicationConfig = ctx.obj["config"]
 
-        # Create components
-        processing_service, _ = create_components(config)
+    processing_service, _ = create_components(config)
 
-        # Determine output path
-        if output:
-            output_path = output.parent
-        else:
-            output_path = config.output_directory
+    output_path = output.parent if output else config.output_directory
+    output_path.mkdir(parents=True, exist_ok=True)
 
-        # Ensure output directory exists
-        output_path.mkdir(parents=True, exist_ok=True)
-
-        # Process with progress indication
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-            transient=True,
-        ) as progress:
-            task = progress.add_task(f"Processing {input_file.name}...", total=None)
-
-            result: ProcessingResult = processing_service.process_statement(
-                input_file, output_path
-            )
-
-            progress.update(task, completed=True)
-
-        if result.success:
-            result_data = {
-                "success": True,
-                "input_file": str(result.input_path),
-                "output_file": str(result.output_path),
-                "transaction_count": (
-                    len(result.statement.transactions) if result.statement else 0
-                ),
-                "processing_time": result.processing_time,
-            }
-
-            if output_json_flag:
-                output_json(result_data)
-            else:
-                console.print(
-                    f"[green]✅ Successfully processed {input_file.name}[/green]"
-                )
-                console.print(f"   Output: {result.output_path}")
-                console.print(
-                    f"   Transactions: {len(result.statement.transactions) if result.statement else 0}"
-                )
-                console.print(f"   Processing time: {result.processing_time:.2f}s")
-        else:
-            error_data = {
-                "success": False,
-                "input_file": str(input_file),
-                "errors": result.errors,
-                "processing_time": result.processing_time,
-            }
-
-            if output_json_flag:
-                output_json(error_data)
-            else:
-                console.print(f"[red]❌ Failed to process {input_file.name}[/red]")
-                for error in result.errors:
-                    console.print(f"   • {error}")
-
-            sys.exit(1)
-
-    except Exception as e:
-        output_error(
-            f"Processing failed: {str(e)}", verbose=ctx.obj["verbose"], exception=e
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(f"Processing {input_file.name}...", total=None)
+        result: ProcessingResult = processing_service.process_statement(
+            input_file, output_path
         )
+        progress.update(task, completed=True)
+
+    if result.success:
+        result_data = {
+            "success": True,
+            "input_file": str(result.input_path),
+            "output_file": str(result.output_path),
+            "transaction_count": (
+                len(result.statement.transactions) if result.statement else 0
+            ),
+            "processing_time": result.processing_time,
+        }
+
+        if output_json_flag:
+            output_json(result_data)
+        else:
+            console.print(f"[green]✅ Successfully processed {input_file.name}[/green]")
+            console.print(f"   Output: {result.output_path}")
+            console.print(
+                f"   Transactions: {len(result.statement.transactions) if result.statement else 0}"
+            )
+            console.print(f"   Processing time: {result.processing_time:.2f}s")
+    else:
+        error_data = {
+            "success": False,
+            "input_file": str(input_file),
+            "errors": result.errors,
+            "processing_time": result.processing_time,
+        }
+
+        if output_json_flag:
+            output_json(error_data)
+        else:
+            console.print(f"[red]❌ Failed to process {input_file.name}[/red]")
+            for error in result.errors:
+                console.print(f"   • {error}")
+
         sys.exit(1)
 
 
@@ -355,115 +360,98 @@ def process(
 @click.option(
     "--json", "output_json_flag", is_flag=True, help="Output result in JSON format"
 )
-@click.pass_context
+@cli_command("Validation failed")
 def validate(
     ctx: click.Context, input_file: Path, quick: bool, output_json_flag: bool
 ) -> None:
     """Validate a statement file without processing."""
-    try:
-        config: ApplicationConfig = ctx.obj["config"]
+    config: ApplicationConfig = ctx.obj["config"]
 
-        # Create components
-        processing_service, _ = create_components(config)
+    processing_service, _ = create_components(config)
 
-        # Create a temporary output directory for validation
-        temp_output = Path("temp_validation")
-        temp_output.mkdir(exist_ok=True)
+    temp_output = Path("temp_validation")
+    temp_output.mkdir(exist_ok=True)
 
-        # Process file to get validation results
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            console=console,
-            transient=True,
-        ) as progress:
-            task = progress.add_task(f"Validating {input_file.name}...", total=None)
-
-            result: ProcessingResult = processing_service.process_statement(
-                input_file, temp_output
-            )
-
-            progress.update(task, completed=True)
-
-        # Clean up temp file if created
-        if result.output_path and result.output_path.exists():
-            result.output_path.unlink()
-        temp_output.rmdir()
-
-        validation_data = {
-            "valid": result.success and result.validation_result.is_valid,
-            "input_file": str(input_file),
-            "transaction_count": (
-                len(result.statement.transactions) if result.statement else 0
-            ),
-            "errors": (
-                result.validation_result.errors
-                if result.validation_result
-                else result.errors
-            ),
-            "processing_time": result.processing_time,
-        }
-
-        if result.statement:
-            validation_data.update(
-                {
-                    "balance_ars": float(result.statement.get_balance().ars_amount),
-                    "balance_usd": float(result.statement.get_balance().usd_amount),
-                    "payment_method": result.statement.payment_method.value,
-                    "transaction_count": len(result.statement.transactions),
-                }
-            )
-
-        if output_json_flag:
-            output_json(validation_data)
-        else:
-            if quick:
-                # Quick validation output
-                status = "✅ VALID" if validation_data["valid"] else "❌ INVALID"
-                console.print(
-                    f"{status} - {validation_data['transaction_count']} transactions"
-                )
-            else:
-                # Detailed validation output
-                status_color = "green" if validation_data["valid"] else "red"
-                status_icon = "✅" if validation_data["valid"] else "❌"
-
-                console.print(
-                    f"[{status_color}]{status_icon} Validation Results for {input_file.name}[/{status_color}]"
-                )
-                console.print(
-                    f"   Status: {'VALID' if validation_data['valid'] else 'INVALID'}"
-                )
-                console.print(
-                    f"   Transactions: {validation_data['transaction_count']}"
-                )
-
-                if result.statement:
-                    console.print(
-                        f"   Payment Method: {result.statement.payment_method.value}"
-                    )
-                    console.print(
-                        f"   Balance: ARS {validation_data['balance_ars']:.2f}, USD {validation_data['balance_usd']:.2f}"
-                    )
-
-                console.print(
-                    f"   Validation Time: {validation_data['processing_time']:.2f}s"
-                )
-
-                if not validation_data["valid"] and validation_data["errors"]:
-                    console.print("\n[red]Validation Errors:[/red]")
-                    errors = validation_data["errors"]
-                    if isinstance(errors, list):
-                        for error in errors:
-                            console.print(f"   • {error}")
-
-        if not validation_data["valid"]:
-            sys.exit(1)
-
-    except Exception as e:
-        output_error(
-            f"Validation failed: {str(e)}", verbose=ctx.obj["verbose"], exception=e
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+        transient=True,
+    ) as progress:
+        task = progress.add_task(f"Validating {input_file.name}...", total=None)
+        result: ProcessingResult = processing_service.process_statement(
+            input_file, temp_output
         )
+        progress.update(task, completed=True)
+
+    if result.output_path and result.output_path.exists():
+        result.output_path.unlink()
+    temp_output.rmdir()
+
+    validation_data = {
+        "valid": result.success and result.validation_result.is_valid,
+        "input_file": str(input_file),
+        "transaction_count": (
+            len(result.statement.transactions) if result.statement else 0
+        ),
+        "errors": (
+            result.validation_result.errors
+            if result.validation_result
+            else result.errors
+        ),
+        "processing_time": result.processing_time,
+    }
+
+    if result.statement:
+        validation_data.update(
+            {
+                "balance_ars": float(result.statement.get_balance().ars_amount),
+                "balance_usd": float(result.statement.get_balance().usd_amount),
+                "payment_method": result.statement.payment_method.value,
+                "transaction_count": len(result.statement.transactions),
+            }
+        )
+
+    if output_json_flag:
+        output_json(validation_data)
+    else:
+        if quick:
+            status = "✅ VALID" if validation_data["valid"] else "❌ INVALID"
+            console.print(
+                f"{status} - {validation_data['transaction_count']} transactions"
+            )
+        else:
+            status_color = "green" if validation_data["valid"] else "red"
+            status_icon = "✅" if validation_data["valid"] else "❌"
+
+            console.print(
+                f"[{status_color}]{status_icon} Validation Results for {input_file.name}[/{status_color}]"
+            )
+            console.print(
+                f"   Status: {'VALID' if validation_data['valid'] else 'INVALID'}"
+            )
+            console.print(f"   Transactions: {validation_data['transaction_count']}")
+
+            if result.statement:
+                console.print(
+                    f"   Payment Method: {result.statement.payment_method.value}"
+                )
+                console.print(
+                    f"   Balance: ARS {validation_data['balance_ars']:.2f}, USD {validation_data['balance_usd']:.2f}"
+                )
+
+            console.print(
+                f"   Validation Time: {validation_data['processing_time']:.2f}s"
+            )
+
+            if not validation_data["valid"] and validation_data["errors"]:
+                console.print("\n[red]Validation Errors:[/red]")
+                errors = validation_data["errors"]
+                if isinstance(errors, list):
+                    for error in errors:
+                        console.print(f"   • {error}")
+
+    if not validation_data["valid"]:
         sys.exit(1)
 
 
@@ -480,7 +468,7 @@ def validate(
 @click.option(
     "--quiet", "-q", is_flag=True, help="Suppress progress bars and detailed output"
 )
-@click.pass_context
+@cli_command("Batch processing failed")
 def batch(
     ctx: click.Context,
     input_directory: Path,
@@ -489,120 +477,93 @@ def batch(
     quiet: bool,
 ) -> None:
     """Process multiple statement files in a directory."""
-    try:
-        config: ApplicationConfig = ctx.obj["config"]
+    config: ApplicationConfig = ctx.obj["config"]
 
-        # Create components
-        processing_service, parser_factory = create_components(config)
+    processing_service, parser_factory = create_components(config)
 
-        # Determine output directory
-        if output_dir:
-            output_path = output_dir
-        else:
-            output_path = config.output_directory
+    output_path = output_dir if output_dir else config.output_directory
+    output_path.mkdir(parents=True, exist_ok=True)
 
-        # Ensure output directory exists
-        output_path.mkdir(parents=True, exist_ok=True)
+    supported_extensions = parser_factory.get_supported_extensions()
+    files: list[Path] = []
+    for ext in supported_extensions:
+        files.extend(input_directory.glob(f"*{ext}"))
+        files.extend(input_directory.glob(f"*{ext.upper()}"))
+    files = sorted(set(files))
 
-        # Find all supported files
-        supported_extensions = parser_factory.get_supported_extensions()
-        files: list[Path] = []
-        for ext in supported_extensions:
-            files.extend(input_directory.glob(f"*{ext}"))
-            files.extend(input_directory.glob(f"*{ext.upper()}"))
+    if not files:
+        console.print(f"[yellow]No supported files found in {input_directory}[/yellow]")
+        console.print(f"Supported extensions: {', '.join(supported_extensions)}")
+        return
 
-        files = sorted(set(files))  # Remove duplicates and sort
+    successful_files = []
+    failed_files = []
+    total_transactions = 0
 
-        if not files:
-            console.print(
-                f"[yellow]No supported files found in {input_directory}[/yellow]"
-            )
-            console.print(f"Supported extensions: {', '.join(supported_extensions)}")
-            return
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        TimeElapsedColumn(),
+        console=console,
+    ) as progress:
+        task = progress.add_task(f"Processing {len(files)} files...", total=len(files))
 
-        # Process files with progress bar
-        successful_files = []
-        failed_files = []
-        total_transactions = 0
+        for file_path in files:
+            progress.update(task, description=f"Processing {file_path.name}...")
 
-        with Progress(
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            "[progress.percentage]{task.percentage:>3.0f}%",
-            TimeElapsedColumn(),
-            console=console,
-        ) as progress:
-            task = progress.add_task(
-                f"Processing {len(files)} files...", total=len(files)
-            )
+            try:
+                result = processing_service.process_statement(file_path, output_path)
 
-            for i, file_path in enumerate(files):
-                progress.update(task, description=f"Processing {file_path.name}...")
-
-                try:
-                    result = processing_service.process_statement(
-                        file_path, output_path
+                if result.success and result.statement:
+                    successful_files.append(
+                        {
+                            "file": str(file_path),
+                            "output": str(result.output_path),
+                            "transactions": len(result.statement.transactions),
+                            "processing_time": result.processing_time,
+                        }
                     )
-
-                    if result.success and result.statement:
-                        successful_files.append(
-                            {
-                                "file": str(file_path),
-                                "output": str(result.output_path),
-                                "transactions": len(result.statement.transactions),
-                                "processing_time": result.processing_time,
-                            }
-                        )
-                        total_transactions += len(result.statement.transactions)
-                    else:
-                        failed_files.append(
-                            {"file": str(file_path), "errors": result.errors}
-                        )
-
-                except Exception as e:
-                    failed_files.append({"file": str(file_path), "errors": [str(e)]})
-
-                progress.update(task, advance=1)
-
-        # Results
-        batch_data = {
-            "total_files": len(files),
-            "successful": len(successful_files),
-            "failed": len(failed_files),
-            "total_transactions": total_transactions,
-            "successful_files": successful_files,
-            "failed_files": failed_files,
-        }
-
-        if output_json_flag:
-            output_json(batch_data)
-        else:
-            console.print("\n[bold green]✅ Batch Processing Complete[/bold green]")
-            console.print(f"   Processed: {len(successful_files)}/{len(files)} files")
-            console.print(f"   Failed: {len(failed_files)}/{len(files)} files")
-            console.print(f"   Total Transactions: {total_transactions}")
-
-            if failed_files:
-                console.print("\n[red]Failed Files:[/red]")
-                for failed in failed_files:
-                    file_path = Path(str(failed["file"]))
-                    errors = failed["errors"]
-                    error_str = (
-                        ", ".join(str(e) for e in errors)
-                        if isinstance(errors, list)
-                        else str(errors)
+                    total_transactions += len(result.statement.transactions)
+                else:
+                    failed_files.append(
+                        {"file": str(file_path), "errors": result.errors}
                     )
-                    console.print(f"   • {file_path.name}: {error_str}")
+            except Exception as e:
+                failed_files.append({"file": str(file_path), "errors": [str(e)]})
+
+            progress.update(task, advance=1)
+
+    batch_data = {
+        "total_files": len(files),
+        "successful": len(successful_files),
+        "failed": len(failed_files),
+        "total_transactions": total_transactions,
+        "successful_files": successful_files,
+        "failed_files": failed_files,
+    }
+
+    if output_json_flag:
+        output_json(batch_data)
+    else:
+        console.print("\n[bold green]✅ Batch Processing Complete[/bold green]")
+        console.print(f"   Processed: {len(successful_files)}/{len(files)} files")
+        console.print(f"   Failed: {len(failed_files)}/{len(files)} files")
+        console.print(f"   Total Transactions: {total_transactions}")
 
         if failed_files:
-            sys.exit(1)
+            console.print("\n[red]Failed Files:[/red]")
+            for failed in failed_files:
+                file_path = Path(str(failed["file"]))
+                errors = failed["errors"]
+                error_str = (
+                    ", ".join(str(e) for e in errors)
+                    if isinstance(errors, list)
+                    else str(errors)
+                )
+                console.print(f"   • {file_path.name}: {error_str}")
 
-    except Exception as e:
-        output_error(
-            f"Batch processing failed: {str(e)}",
-            verbose=ctx.obj["verbose"],
-            exception=e,
-        )
+    if failed_files:
         sys.exit(1)
 
 
@@ -619,7 +580,7 @@ def batch(
 @click.option(
     "--quiet", "-q", is_flag=True, help="Suppress progress bars and detailed output"
 )
-@click.pass_context
+@cli_command("Consolidation failed")
 def consolidate(
     ctx: click.Context,
     input_directory: Path,
@@ -639,43 +600,29 @@ def consolidate(
         uv run python -m cli consolidate input/ --output-dir output/
         uv run python -m cli consolidate input/ --json
     """
-    try:
-        config: ApplicationConfig = ctx.obj["config"]
+    config: ApplicationConfig = ctx.obj["config"]
 
-        # Create components
-        processing_service, _ = create_components(config)
+    processing_service, _ = create_components(config)
 
-        # Determine output directory
-        if output_dir:
-            output_path = output_dir
-        else:
-            output_path = config.output_directory
+    output_path = output_dir if output_dir else config.output_directory
+    output_path.mkdir(parents=True, exist_ok=True)
 
-        # Ensure output directory exists
-        output_path.mkdir(parents=True, exist_ok=True)
+    if not quiet:
+        console.print(f"[blue]🔍 Discovering files in {input_directory}...[/blue]")
 
-        # Show initial progress if not quiet
-        if not quiet:
-            console.print(f"[blue]🔍 Discovering files in {input_directory}...[/blue]")
-
-        # Process with detailed progress reporting
-        with Progress(
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            "[progress.percentage]{task.percentage:>3.0f}%",
-            TimeElapsedColumn(),
-            console=console,
-            disable=quiet,
-        ) as progress:
-            # Add main consolidation task
-            main_task = progress.add_task("Consolidating statements...", total=None)
-
-            # Call consolidation service
-            result: ConsolidationResult = processing_service.consolidate_statements(
-                input_directory, output_path
-            )
-
-            progress.update(main_task, completed=True)
+    with Progress(
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        TimeElapsedColumn(),
+        console=console,
+        disable=quiet,
+    ) as progress:
+        main_task = progress.add_task("Consolidating statements...", total=None)
+        result: ConsolidationResult = processing_service.consolidate_statements(
+            input_directory, output_path
+        )
+        progress.update(main_task, completed=True)
 
         # Prepare output data
         consolidation_data = {
@@ -738,22 +685,14 @@ def consolidate(
                         error_msg = str(errors)
                     console.print(f"   • [red]{file_name}[/red]: {error_msg}")
 
-        # Exit with error code if consolidation failed or had file failures
-        if not result.success:
-            sys.exit(1)
-        elif result.failed_files and not quiet:
-            # Show warning but don't exit with error since consolidation succeeded
-            console.print(
-                f"\n[yellow]⚠️  Warning: {len(result.failed_files)} file(s) could not be processed.[/yellow]"
-            )
-
-    except Exception as e:
-        output_error(
-            f"Consolidation failed: {str(e)}",
-            verbose=ctx.obj["verbose"],
-            exception=e,
-        )
+    # Exit with error code if consolidation failed or had file failures
+    if not result.success:
         sys.exit(1)
+    elif result.failed_files and not quiet:
+        # Show warning but don't exit with error since consolidation succeeded
+        console.print(
+            f"\n[yellow]⚠️  Warning: {len(result.failed_files)} file(s) could not be processed.[/yellow]"
+        )
 
 
 def main() -> None:
