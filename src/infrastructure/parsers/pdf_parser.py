@@ -19,6 +19,18 @@ from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 from domain.utils import AmountParser
 
+_DATE_PATTERN = r"(\d{2}\.\d{2}\.\d{2})\s+"
+_DATE_PATTERN_MMM = r"(\d{2}-\w{3}-\d{2})\s+"
+_TAX_KEYWORDS = (
+    "IMPUESTO DE SELLOS",
+    "DB.IMPUESTO PAIS",
+    "IIBB PERCEP",
+    "IVA RG",
+    "DB.RG",
+)
+_SKIP_KEYWORDS = ("SALDO ANTERIOR", "Total Consumos")
+_BBVA_MC_SKIP_KEYWORDS = ("SALDO ACTUAL", "VENCIMIENTO", "PAGO MÍNIMO")
+
 
 class PDFStatementParser(StatementParser):
     """
@@ -55,7 +67,6 @@ class PDFStatementParser(StatementParser):
         """
         self._detector = detector
         self._transaction_builder = transaction_builder
-        # Extract amount parser from transaction builder for direct use
         self._amount_parser: AmountParser = transaction_builder._amount_parser
 
     def can_parse(self, file_path: Path) -> bool:
@@ -221,367 +232,271 @@ class PDFStatementParser(StatementParser):
     def _parse_transactions(
         self, text: str, payment_method: PaymentMethod
     ) -> list[Transaction]:
-        """
-        Parse transaction lines from PDF text using sophisticated logic from working parser.
+        """Parse transaction lines from PDF text into Transaction objects."""
+        transactions: list[Transaction] = []
 
-        Implements the task requirements:
-        1. Split lines on ≥ 2 spaces (when needed for parsing)
-        2. Build Transactions (currency = ARS default, USD when detected)
-        3. Append to Statement
-
-        Args:
-            text: Raw text extracted from PDF
-            payment_method: Detected payment method for transactions
-
-        Returns:
-            List of parsed Transaction objects
-
-        Example:
-            >>> transactions = parser._parse_transactions(pdf_text, method)
-            >>> assert len(transactions) > 0
-        """
-        transactions = []
-        lines = text.split("\n")
-
-        # Pattern for transaction lines with date
-        date_pattern = r"(\d{2}\.\d{2}\.\d{2})\s+"
-        date_pattern_mmm = r"(\d{2}-\w{3}-\d{2})\s+"  # BBVA Mastercard format
-
-        for i, line in enumerate(lines):
-            line = line.strip()
+        for raw_line in text.split("\n"):
+            line = raw_line.strip()
             if not line:
                 continue
 
-            match = re.match(date_pattern, line)
-            match_mmm = re.match(date_pattern_mmm, line)
+            match = re.match(_DATE_PATTERN, line)
+            match_mmm = re.match(_DATE_PATTERN_MMM, line)
 
             if match:
                 date_str = match.group(1)
                 remaining_line = line[match.end() :].strip()
+                is_mmm_date = False
             elif match_mmm:
                 date_str = match_mmm.group(1)
                 remaining_line = line[match_mmm.end() :].strip()
+                is_mmm_date = True
             else:
                 continue
 
-            # Skip certain lines
-            if "SALDO ANTERIOR" in remaining_line or "Total Consumos" in remaining_line:
+            if any(kw in remaining_line for kw in _SKIP_KEYWORDS):
                 continue
 
-            # Handle BBVA Mastercard single-line format
-            if payment_method == PaymentMethod.BBVA_MASTERCARD and match_mmm:
-                if (
-                    len(remaining_line.split()) < 2
-                    or "SALDO ACTUAL" in remaining_line
-                    or "VENCIMIENTO" in remaining_line
-                    or remaining_line.count("-") > 2
-                    or "PAGO MÍNIMO" in remaining_line
-                    or re.match(
-                        r"\d{2}-\w{3}-\d{2}\s+[\d,.]+\s+[\d,.]+\s+[\d,.]+",
-                        remaining_line,
-                    )
-                ):
-                    continue
-
-                if "SU PAGO EN PESOS" in remaining_line:
-                    amount_match = re.search(r"(-?[\d,.]+)$", remaining_line)
-                    if amount_match:
-                        amount_str = amount_match.group(1)
-                        is_negative = amount_str.startswith("-")
-                        if is_negative:
-                            amount_str = amount_str[1:]
-
-                        try:
-                            transaction = self._transaction_builder.build_from_pdf_line(
-                                date_str=date_str,
-                                description="SU PAGO EN PESOS",
-                                amount_str=f"-{amount_str}",  # Always negative for payments
-                                currency=Currency.ARS,
-                                payment_method=payment_method,
-                            )
-                            transactions.append(transaction)
-                        except ValueError:
-                            pass
-                else:
-                    # Check for USD transactions first
-                    usd_match = re.search(r"USD\s+([\d,.-]+)", remaining_line)
-                    if usd_match:
-                        amount_str = usd_match.group(1).replace(",", ".")
-                        desc_before_usd = remaining_line.split("USD")[0].strip()
-                        usd_amount_str = usd_match.group(1)
-                        full_description = (
-                            f"{desc_before_usd} USD {usd_amount_str}".strip()
-                        )
-
-                        try:
-                            transaction = self._transaction_builder.build_from_pdf_line(
-                                date_str=date_str,
-                                description=full_description,
-                                amount_str=amount_str,
-                                currency=Currency.USD,
-                                payment_method=payment_method,
-                            )
-                            transactions.append(transaction)
-                        except ValueError:
-                            pass
-                    else:
-                        # Handle regular ARS transactions
-                        amount_match = re.search(r"([\d,.]+)$", remaining_line)
-                        if amount_match:
-                            amount_str = amount_match.group(1)
-                            description = remaining_line.rsplit(
-                                amount_match.group(1), 1
-                            )[0].strip()
-                            if len(description.split()) >= 2:
-                                try:
-                                    transaction = (
-                                        self._transaction_builder.build_from_pdf_line(
-                                            date_str=date_str,
-                                            description=description,
-                                            amount_str=amount_str,
-                                            currency=Currency.ARS,
-                                            payment_method=payment_method,
-                                        )
-                                    )
-                                    transactions.append(transaction)
-                                except ValueError:
-                                    pass
+            if payment_method == PaymentMethod.BBVA_MASTERCARD and is_mmm_date:
+                txn = self._try_parse_bbva_mastercard_line(
+                    date_str, remaining_line, payment_method
+                )
+                if txn is not None:
+                    transactions.append(txn)
                 continue
 
-            # Handle tax entries
-            if any(
-                tax in remaining_line
-                for tax in [
-                    "IMPUESTO DE SELLOS",
-                    "DB.IMPUESTO PAIS",
-                    "IIBB PERCEP",
-                    "IVA RG",
-                    "DB.RG",
-                ]
-            ):
-                amount_match = re.search(r"([\d.,]+)$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    description = remaining_line.rsplit(amount_match.group(1), 1)[
-                        0
-                    ].strip()
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description=description,
-                            amount_str=amount_str,
-                            currency=Currency.ARS,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Handle payment lines (SU PAGO EN PESOS)
-            if "SU PAGO EN PESOS" in remaining_line:
-                amount_match = re.search(r"([\d,.]+)-?\s*_?$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description="SU PAGO EN PESOS",
-                            amount_str=f"-{amount_str}",  # Always negative for payments
-                            currency=Currency.ARS,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Handle USD payment lines (SU PAGO EN USD)
-            if "SU PAGO EN USD" in remaining_line:
-                amount_match = re.search(r"([\d,.]+)-?\s*_?$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description="SU PAGO EN USD",
-                            amount_str=f"-{amount_str}",  # Always negative for payments
-                            currency=Currency.USD,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Handle adjustment lines
-            if "AJUSTE" in remaining_line:
-                amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description="AJUSTE P/DESCNTO. EN COMERCIO",
-                            amount_str=f"-{amount_str}",  # Always negative for adjustments
-                            currency=Currency.ARS,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Handle BBVA bonification lines (BONIF.)
-            if "BONIF." in remaining_line:
-                amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    description = remaining_line.rsplit(amount_match.group(0), 1)[
-                        0
-                    ].strip()
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description=description,
-                            amount_str=f"-{amount_str}",  # Always negative for bonifications
-                            currency=Currency.ARS,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Handle OFF/promo lines
-            if "OFF " in remaining_line or "Promo" in remaining_line:
-                amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
-                if amount_match:
-                    amount_str = amount_match.group(1)
-                    description = remaining_line.rsplit(amount_match.group(0), 1)[
-                        0
-                    ].strip()
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description=description,
-                            amount_str=f"-{amount_str}",  # Always negative for promos
-                            currency=Currency.ARS,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        continue
-                continue
-
-            # Parse regular transactions - look for reference number pattern at start
-            ref_match = re.match(r"([A-Z0-9*]+[*KQVF]?)\s+", remaining_line)
-
-            if ref_match:
-                after_ref = remaining_line[ref_match.end() :].strip()
-
-                # Check for USD transactions
-                usd_match = re.search(r"USD\s+([\d,.-]+)", after_ref)
-                if usd_match:
-                    amount_str = usd_match.group(1).replace(",", ".")
-                    desc_before_usd = after_ref.split("USD")[0].strip()
-                    usd_amount_str = usd_match.group(1)
-                    full_description = f"{desc_before_usd} USD {usd_amount_str}".strip()
-
-                    try:
-                        transaction = self._transaction_builder.build_from_pdf_line(
-                            date_str=date_str,
-                            description=full_description,
-                            amount_str=amount_str,
-                            currency=Currency.USD,
-                            payment_method=payment_method,
-                        )
-                        transactions.append(transaction)
-                    except ValueError:
-                        pass
-                    continue
-
-                # For ARS transactions, find amount at the end
-                amount_patterns = [
-                    r"(\d{1,3}(?:\.\d{3})*,\d{2})$",  # 1.234,56 format
-                    r"(\d+,\d{2})$",  # 123,45 format
-                    r"(\d+\.\d{2})$",  # 123.45 format (US style)
-                    r"(\d+)$",  # Integer amounts
-                ]
-
-                amount_found = False
-                for pattern in amount_patterns:
-                    amount_match = re.search(pattern, after_ref)
-                    if amount_match:
-                        amount_str = amount_match.group(1)
-                        description = after_ref.rsplit(amount_match.group(1), 1)[
-                            0
-                        ].strip()
-                        full_description = description.strip()
-
-                        try:
-                            transaction = self._transaction_builder.build_from_pdf_line(
-                                date_str=date_str,
-                                description=full_description,
-                                amount_str=amount_str,
-                                currency=Currency.ARS,
-                                payment_method=payment_method,
-                            )
-                            transactions.append(transaction)
-                            amount_found = True
-                            break
-                        except ValueError:
-                            continue
-
-                if not amount_found:
-                    # Fallback: try to find European format amounts
-                    european_amounts = re.findall(
-                        r"\d{1,3}(?:\.\d{3})*,\d{2}", after_ref
-                    )
-                    if european_amounts:
-                        amount_str = european_amounts[-1]
-                        description = after_ref.replace(
-                            european_amounts[-1], ""
-                        ).strip()
-                        full_description = description.strip()
-
-                        try:
-                            transaction = self._transaction_builder.build_from_pdf_line(
-                                date_str=date_str,
-                                description=full_description,
-                                amount_str=amount_str,
-                                currency=Currency.ARS,
-                                payment_method=payment_method,
-                            )
-                            transactions.append(transaction)
-                            continue
-                        except ValueError:
-                            pass
-
-                    # Last resort: find any number-like pattern
-                    numbers = re.findall(r"[\d,.-]+", after_ref)
-                    if numbers:
-                        for num in reversed(numbers):
-                            try:
-                                # Test if this looks like a valid amount
-                                if "," in num and len(num.split(",")[-1]) == 2:
-                                    test_amount = (
-                                        self._amount_parser.parse_european_format(num)
-                                    )
-                                    if test_amount > 0:
-                                        description = after_ref.replace(num, "").strip()
-                                        full_description = description.strip()
-
-                                        transaction = self._transaction_builder.build_from_pdf_line(
-                                            date_str=date_str,
-                                            description=full_description,
-                                            amount_str=num,
-                                            currency=Currency.ARS,
-                                            payment_method=payment_method,
-                                        )
-                                        transactions.append(transaction)
-                                        break
-                            except ValueError:
-                                continue
+            txn = (
+                self._try_parse_tax(date_str, remaining_line, payment_method)
+                or self._try_parse_fixed_keyword(
+                    date_str,
+                    remaining_line,
+                    payment_method,
+                    trigger="SU PAGO EN PESOS",
+                    description="SU PAGO EN PESOS",
+                    currency=Currency.ARS,
+                )
+                or self._try_parse_fixed_keyword(
+                    date_str,
+                    remaining_line,
+                    payment_method,
+                    trigger="SU PAGO EN USD",
+                    description="SU PAGO EN USD",
+                    currency=Currency.USD,
+                )
+                or self._try_parse_fixed_keyword(
+                    date_str,
+                    remaining_line,
+                    payment_method,
+                    trigger="AJUSTE",
+                    description="AJUSTE P/DESCNTO. EN COMERCIO",
+                    currency=Currency.ARS,
+                    amount_pattern=r"([\d,.]+)-?\s*$",
+                )
+                or self._try_parse_keyword_with_desc(
+                    date_str,
+                    remaining_line,
+                    payment_method,
+                    trigger="BONIF.",
+                )
+                or self._try_parse_promo(date_str, remaining_line, payment_method)
+                or self._try_parse_referenced(date_str, remaining_line, payment_method)
+            )
+            if txn is not None:
+                transactions.append(txn)
 
         return transactions
+
+    def _build(
+        self,
+        date_str: str,
+        description: str,
+        amount_str: str,
+        currency: Currency,
+        payment_method: PaymentMethod,
+    ) -> Transaction | None:
+        """Thin wrapper around TransactionBuilder that swallows ValueError."""
+        try:
+            return self._transaction_builder.build_from_pdf_line(
+                date_str=date_str,
+                description=description,
+                amount_str=amount_str,
+                currency=currency,
+                payment_method=payment_method,
+            )
+        except ValueError:
+            return None
+
+    def _try_parse_tax(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        if not any(tax in remaining_line for tax in _TAX_KEYWORDS):
+            return None
+        amount_match = re.search(r"([\d.,]+)$", remaining_line)
+        if not amount_match:
+            return None
+        amount_str = amount_match.group(1)
+        description = remaining_line.rsplit(amount_str, 1)[0].strip()
+        return self._build(
+            date_str, description, amount_str, Currency.ARS, payment_method
+        )
+
+    def _try_parse_fixed_keyword(
+        self,
+        date_str: str,
+        remaining_line: str,
+        payment_method: PaymentMethod,
+        *,
+        trigger: str,
+        description: str,
+        currency: Currency,
+        amount_pattern: str = r"([\d,.]+)-?\s*_?$",
+    ) -> Transaction | None:
+        if trigger not in remaining_line:
+            return None
+        amount_match = re.search(amount_pattern, remaining_line)
+        if not amount_match:
+            return None
+        amount_str = amount_match.group(1)
+        return self._build(
+            date_str, description, f"-{amount_str}", currency, payment_method
+        )
+
+    def _try_parse_keyword_with_desc(
+        self,
+        date_str: str,
+        remaining_line: str,
+        payment_method: PaymentMethod,
+        *,
+        trigger: str,
+    ) -> Transaction | None:
+        if trigger not in remaining_line:
+            return None
+        amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+        if not amount_match:
+            return None
+        amount_str = amount_match.group(1)
+        description = remaining_line.rsplit(amount_match.group(0), 1)[0].strip()
+        return self._build(
+            date_str, description, f"-{amount_str}", Currency.ARS, payment_method
+        )
+
+    def _try_parse_promo(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        if "OFF " not in remaining_line and "Promo" not in remaining_line:
+            return None
+        amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+        if not amount_match:
+            return None
+        amount_str = amount_match.group(1)
+        description = remaining_line.rsplit(amount_match.group(0), 1)[0].strip()
+        return self._build(
+            date_str, description, f"-{amount_str}", Currency.ARS, payment_method
+        )
+
+    def _try_parse_bbva_mastercard_line(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        if (
+            len(remaining_line.split()) < 2
+            or any(kw in remaining_line for kw in _BBVA_MC_SKIP_KEYWORDS)
+            or remaining_line.count("-") > 2
+            or re.match(
+                r"\d{2}-\w{3}-\d{2}\s+[\d,.]+\s+[\d,.]+\s+[\d,.]+", remaining_line
+            )
+        ):
+            return None
+
+        if "SU PAGO EN PESOS" in remaining_line:
+            amount_match = re.search(r"(-?[\d,.]+)$", remaining_line)
+            if not amount_match:
+                return None
+            amount_str = amount_match.group(1).lstrip("-")
+            return self._build(
+                date_str,
+                "SU PAGO EN PESOS",
+                f"-{amount_str}",
+                Currency.ARS,
+                payment_method,
+            )
+
+        usd_match = re.search(r"USD\s+([\d,.-]+)", remaining_line)
+        if usd_match:
+            amount_str = usd_match.group(1).replace(",", ".")
+            desc_before_usd = remaining_line.split("USD")[0].strip()
+            full_description = f"{desc_before_usd} USD {usd_match.group(1)}".strip()
+            return self._build(
+                date_str, full_description, amount_str, Currency.USD, payment_method
+            )
+
+        amount_match = re.search(r"([\d,.]+)$", remaining_line)
+        if not amount_match:
+            return None
+        amount_str = amount_match.group(1)
+        description = remaining_line.rsplit(amount_str, 1)[0].strip()
+        if len(description.split()) < 2:
+            return None
+        return self._build(
+            date_str, description, amount_str, Currency.ARS, payment_method
+        )
+
+    def _try_parse_referenced(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        ref_match = re.match(r"([A-Z0-9*]+[*KQVF]?)\s+", remaining_line)
+        if not ref_match:
+            return None
+        after_ref = remaining_line[ref_match.end() :].strip()
+
+        usd_match = re.search(r"USD\s+([\d,.-]+)", after_ref)
+        if usd_match:
+            amount_str = usd_match.group(1).replace(",", ".")
+            desc_before_usd = after_ref.split("USD")[0].strip()
+            full_description = f"{desc_before_usd} USD {usd_match.group(1)}".strip()
+            return self._build(
+                date_str, full_description, amount_str, Currency.USD, payment_method
+            )
+
+        for pattern in (
+            r"(\d{1,3}(?:\.\d{3})*,\d{2})$",
+            r"(\d+,\d{2})$",
+            r"(\d+\.\d{2})$",
+            r"(\d+)$",
+        ):
+            amount_match = re.search(pattern, after_ref)
+            if not amount_match:
+                continue
+            amount_str = amount_match.group(1)
+            description = after_ref.rsplit(amount_str, 1)[0].strip()
+            txn = self._build(
+                date_str, description, amount_str, Currency.ARS, payment_method
+            )
+            if txn is not None:
+                return txn
+
+        # Fallback: European amount anywhere in the line
+        european_amounts = re.findall(r"\d{1,3}(?:\.\d{3})*,\d{2}", after_ref)
+        if european_amounts:
+            amount_str = european_amounts[-1]
+            description = after_ref.replace(amount_str, "").strip()
+            txn = self._build(
+                date_str, description, amount_str, Currency.ARS, payment_method
+            )
+            if txn is not None:
+                return txn
+
+        # Last resort: any comma-decimal-looking number
+        for num in reversed(re.findall(r"[\d,.-]+", after_ref)):
+            if "," not in num or len(num.split(",")[-1]) != 2:
+                continue
+            try:
+                if self._amount_parser.parse_european_format(num) <= 0:
+                    continue
+            except ValueError:
+                continue
+            description = after_ref.replace(num, "").strip()
+            txn = self._build(date_str, description, num, Currency.ARS, payment_method)
+            if txn is not None:
+                return txn
+
+        return None
