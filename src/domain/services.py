@@ -11,6 +11,7 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
@@ -219,8 +220,6 @@ class DuplicateDetector:
                duplicated
             3. Return new transaction list with modified descriptions and count
         """
-        from collections import defaultdict
-
         if not transactions:
             return transactions, 0
 

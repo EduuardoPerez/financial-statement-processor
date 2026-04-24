@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Protocol
 
-from .models import Statement
+from .models import ConsolidatedStatement, Statement
 
 
 class FileReader(Protocol):
@@ -114,5 +114,18 @@ class StatementRepository(ABC):
             FileNotFoundError: If the input file does not exist
             PermissionError: If the file cannot be read
             OSError: If there's an I/O error during reading
+        """
+        ...
+
+    @abstractmethod
+    def save_consolidated_statement(
+        self, consolidated: ConsolidatedStatement, output_path: Path
+    ) -> None:
+        """
+        Save a consolidated statement to specified path.
+
+        Raises:
+            ValueError: If the consolidated statement is invalid
+            OSError: If there's an error writing the file
         """
         ...
