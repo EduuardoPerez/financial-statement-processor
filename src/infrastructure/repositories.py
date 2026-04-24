@@ -22,13 +22,29 @@ from infrastructure.config import (
 )
 
 
+class _PathFileReader:
+    def read(self, path: Path) -> bytes:
+        return path.read_bytes()
+
+    def exists(self, path: Path) -> bool:
+        return path.exists()
+
+
+class _PathFileWriter:
+    def write(self, path: Path, content: bytes) -> None:
+        path.write_bytes(content)
+
+    def ensure_directory(self, path: Path) -> None:
+        path.mkdir(parents=True, exist_ok=True)
+
+
 class ExcelStatementRepository(StatementRepository):
     """Excel-based statement repository implementation."""
 
     def __init__(
         self,
-        file_reader: FileReader,
-        file_writer: FileWriter,
+        file_reader: FileReader | None = None,
+        file_writer: FileWriter | None = None,
         payment_method_mapping: PaymentMethodMappingConfig | None = None,
         output_config: OutputConfig | None = None,
         amount_sign_inversion: AmountSignInversionConfig | None = None,
@@ -37,14 +53,14 @@ class ExcelStatementRepository(StatementRepository):
         Initialize the Excel statement repository.
 
         Args:
-            file_reader: File reader implementation for loading raw data
-            file_writer: File writer implementation for saving files
+            file_reader: File reader implementation; defaults to Path-based reader
+            file_writer: File writer implementation; defaults to Path-based writer
             payment_method_mapping: Payment method mapping configuration
             output_config: Output configuration including decimal separator
             amount_sign_inversion: Amount sign inversion configuration
         """
-        self._file_reader = file_reader
-        self._file_writer = file_writer
+        self._file_reader: FileReader = file_reader or _PathFileReader()
+        self._file_writer: FileWriter = file_writer or _PathFileWriter()
         self._payment_method_mapping = (
             payment_method_mapping or PaymentMethodMappingConfig()
         )

@@ -56,33 +56,14 @@ console = Console()
 
 
 def configure_clean_output(verbose: bool = False) -> None:
-    """Configure clean output by suppressing noisy warnings."""
-    if not verbose:
-        # Suppress all PDF library warnings more aggressively
-        warnings.filterwarnings("ignore", category=UserWarning)
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        warnings.filterwarnings("ignore", category=DeprecationWarning)
-
-        # Suppress specific PDF-related warnings
-        warnings.filterwarnings("ignore", message=".*CropBox missing.*")
-        warnings.filterwarnings(
-            "ignore", message=".*Workbook contains no default style.*"
-        )
-        warnings.filterwarnings("ignore", message=".*found in sys.modules.*")
-
-        # Configure logging to reduce noise from all PDF/Excel libraries
-        logging.getLogger("pdfplumber").setLevel(logging.ERROR)
-        logging.getLogger("openpyxl").setLevel(logging.ERROR)
-        logging.getLogger("pandas").setLevel(logging.ERROR)
-        logging.getLogger("pdfminer").setLevel(logging.ERROR)
-        logging.getLogger("fitz").setLevel(logging.ERROR)
-        logging.getLogger("pypdf").setLevel(logging.ERROR)
-
-        # Suppress all warnings from PDF processing libraries
-        for logger_name in ["pdfplumber", "pdfminer", "fitz", "pypdf", "openpyxl"]:
-            logger = logging.getLogger(logger_name)
-            logger.setLevel(logging.ERROR)
-            logger.addFilter(lambda record: False)
+    """Suppress noisy PDF/Excel library warnings unless verbose mode is on."""
+    if verbose:
+        return
+    warnings.filterwarnings("ignore", category=UserWarning)
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    for name in ("pdfplumber", "pdfminer", "fitz", "pypdf", "openpyxl", "pandas"):
+        logging.getLogger(name).setLevel(logging.CRITICAL)
 
 
 class CLIError(Exception):
@@ -91,39 +72,11 @@ class CLIError(Exception):
     pass
 
 
-class SimpleFileReader:
-    """Simple file reader implementation for CLI."""
-
-    def read(self, path: Path) -> bytes:
-        """Read file content as bytes."""
-        return path.read_bytes()
-
-    def exists(self, path: Path) -> bool:
-        """Check if file exists."""
-        return path.exists()
-
-
-class SimpleFileWriter:
-    """Simple file writer implementation for CLI."""
-
-    def write(self, path: Path, content: bytes) -> None:
-        """Write content to file."""
-        path.write_bytes(content)
-
-    def ensure_directory(self, path: Path) -> None:
-        """Ensure directory exists."""
-        path.mkdir(parents=True, exist_ok=True)
-
-
 def load_config(config_path: Path | None) -> ApplicationConfig:
     """Load configuration from file or environment."""
-    try:
-        if config_path:
-            return ApplicationConfig.from_yaml(config_path)
-        else:
-            return ApplicationConfig.from_environment()
-    except Exception as e:
-        raise CLIError(f"Failed to load configuration: {str(e)}") from e
+    if config_path:
+        return ApplicationConfig.from_yaml(config_path)
+    return ApplicationConfig.from_environment()
 
 
 def create_components(
@@ -131,33 +84,20 @@ def create_components(
 ) -> tuple[StatementProcessingService, DefaultParserFactory]:
     """Create and wire up all necessary components."""
     try:
-        # Create detector with all bank detectors
         detector = PaymentMethodDetector()
         detector.register_detector(BBVADetector())
         detector.register_detector(MacroDetector())
 
-        # Create parser factory
         parser_factory = DefaultParserFactory(detector)
-
-        # Create file reader and writer implementations
-        file_reader = SimpleFileReader()
-        file_writer = SimpleFileWriter()
-
-        # Create balance extraction service
         balance_service = build_default_balance_service()
-
-        # Create other components with balance service
         validator = StatementValidator(balance_extraction_service=balance_service)
         filename_generator = FilenameGenerator()
         repository = ExcelStatementRepository(
-            file_reader,
-            file_writer,
-            config.payment_method_mapping,
-            config.output,
-            config.amount_sign_inversion,
+            payment_method_mapping=config.payment_method_mapping,
+            output_config=config.output,
+            amount_sign_inversion=config.amount_sign_inversion,
         )
 
-        # Create main processing service
         processing_service = StatementProcessingService(
             parser_factory=parser_factory,
             repository=repository,
