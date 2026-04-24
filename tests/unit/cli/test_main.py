@@ -296,7 +296,6 @@ class TestCLIGroup:
             mock_config.log_level = "INFO"
             mock_config.input_directory = Path("test_input")
             mock_config.output_directory = Path("test_output")
-            mock_config.enable_async = False
             mock_config.processing = Mock(spec=ProcessingConfig)
             mock_config.processing.max_workers = 4
             mock_config.processing.enable_validation = True
@@ -367,7 +366,6 @@ class TestInfoCommand:
         self.mock_config.input_directory = Path("test_input")
         self.mock_config.output_directory = Path("test_output")
         self.mock_config.log_level = "INFO"
-        self.mock_config.enable_async = False
         self.mock_config.processing = Mock(spec=ProcessingConfig)
         self.mock_config.processing.max_workers = 4
         self.mock_config.processing.enable_validation = True

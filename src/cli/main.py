@@ -250,7 +250,6 @@ def info(ctx: click.Context, output_json_flag: bool) -> None:
                 "input_directory": str(config.input_directory),
                 "output_directory": str(config.output_directory),
                 "log_level": config.log_level,
-                "async_processing": config.enable_async,
                 "max_workers": config.processing.max_workers,
                 "default_format": config.output.default_format,
                 "decimal_separator": config.output.decimal_separator,
@@ -280,7 +279,6 @@ def info(ctx: click.Context, output_json_flag: bool) -> None:
             config_table.add_row("Input Directory", str(config.input_directory))
             config_table.add_row("Output Directory", str(config.output_directory))
             config_table.add_row("Log Level", config.log_level)
-            config_table.add_row("Async Processing", str(config.enable_async))
             config_table.add_row("Max Workers", str(config.processing.max_workers))
             config_table.add_row("Default Format", config.output.default_format)
             config_table.add_row("Decimal Separator", config.output.decimal_separator)

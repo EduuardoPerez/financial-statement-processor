@@ -262,20 +262,3 @@ class DuplicateDetector:
             payment_method=transaction.payment_method,
             reference=transaction.reference,
         )
-
-
-class BalanceExtractorExtended(BalanceExtractor):
-    """Extended balance extractor with additional functionality."""
-
-    @abstractmethod
-    def can_extract(self, payment_method: PaymentMethod) -> bool:
-        """
-        Check if extractor supports the payment method.
-
-        Args:
-            payment_method: Payment method to check
-
-        Returns:
-            True if this extractor can handle the payment method
-        """
-        pass

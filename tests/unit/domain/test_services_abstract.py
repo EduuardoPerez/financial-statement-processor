@@ -13,7 +13,6 @@ import pytest
 from src.domain.models import Currency, PaymentMethod, Statement, Transaction
 from src.domain.services import (
     BalanceExtractor,
-    BalanceExtractorExtended,
     StatementParser,
 )
 
@@ -55,20 +54,6 @@ class ConcreteBalanceExtractor(BalanceExtractor):
     def can_extract(self, payment_method: PaymentMethod) -> bool:
         """Test implementation."""
         return payment_method == PaymentMethod.BBVA_VISA
-
-
-class ConcreteBalanceExtractorExtended(BalanceExtractorExtended):
-    """Concrete implementation for testing."""
-
-    def extract_balance(
-        self, content: str, payment_method: PaymentMethod
-    ) -> dict[str, Decimal]:
-        """Test implementation."""
-        return {"ars": Decimal("200.00"), "usd": Decimal("50.00")}
-
-    def can_extract(self, payment_method: PaymentMethod) -> bool:
-        """Test implementation."""
-        return payment_method in {PaymentMethod.BBVA_VISA, PaymentMethod.MACRO_VISA}
 
 
 class TestStatementParser:
@@ -132,46 +117,6 @@ class TestBalanceExtractor:
         assert result == {"ars": Decimal("100.00"), "usd": Decimal("0.00")}
 
 
-class TestBalanceExtractorExtended:
-    """Test BalanceExtractorExtended abstract base class."""
-
-    def test_cannot_instantiate_abstract_class(self):
-        """Test that abstract class cannot be instantiated."""
-        with pytest.raises(TypeError):
-            BalanceExtractorExtended()
-
-    def test_concrete_implementation_works(self):
-        """Test concrete implementation of extended abstract class."""
-        extractor = ConcreteBalanceExtractorExtended()
-        assert isinstance(extractor, BalanceExtractorExtended)
-        assert isinstance(extractor, BalanceExtractor)  # Should inherit from base
-
-        # Test can_extract
-        assert extractor.can_extract(PaymentMethod.BBVA_VISA) is True
-        assert extractor.can_extract(PaymentMethod.MACRO_VISA) is True
-        assert extractor.can_extract(PaymentMethod.MERCADOPAGO) is False
-
-        # Test extract_balance
-        result = extractor.extract_balance("test content", PaymentMethod.BBVA_VISA)
-        assert result == {"ars": Decimal("200.00"), "usd": Decimal("50.00")}
-
-    def test_extended_functionality(self):
-        """Test extended functionality specific to BalanceExtractorExtended."""
-        extractor = ConcreteBalanceExtractorExtended()
-
-        # Test that it supports multiple payment methods
-        supported_methods = [
-            PaymentMethod.BBVA_VISA,
-            PaymentMethod.MACRO_VISA,
-        ]
-
-        for method in supported_methods:
-            assert extractor.can_extract(method) is True
-            result = extractor.extract_balance("content", method)
-            assert "ars" in result
-            assert "usd" in result
-
-
 class TestAbstractClassInheritance:
     """Test abstract class inheritance behaviors."""
 
@@ -179,19 +124,12 @@ class TestAbstractClassInheritance:
         """Test that subclasses maintain proper relationships."""
         parser = ConcreteStatementParser()
         extractor = ConcreteBalanceExtractor()
-        extended_extractor = ConcreteBalanceExtractorExtended()
 
-        # Test isinstance relationships
         assert isinstance(parser, StatementParser)
         assert isinstance(extractor, BalanceExtractor)
-        assert isinstance(extended_extractor, BalanceExtractorExtended)
-        assert isinstance(extended_extractor, BalanceExtractor)
 
-        # Test class hierarchy
         assert issubclass(ConcreteStatementParser, StatementParser)
         assert issubclass(ConcreteBalanceExtractor, BalanceExtractor)
-        assert issubclass(ConcreteBalanceExtractorExtended, BalanceExtractorExtended)
-        assert issubclass(BalanceExtractorExtended, BalanceExtractor)
 
     def test_abstract_method_enforcement(self):
         """Test that abstract methods are properly enforced."""
