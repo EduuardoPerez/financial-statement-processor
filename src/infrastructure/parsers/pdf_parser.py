@@ -331,13 +331,14 @@ class PDFStatementParser(StatementParser):
     ) -> Transaction | None:
         if not any(tax in remaining_line for tax in _TAX_KEYWORDS):
             return None
-        amount_match = re.search(r"([\d.,]+)$", remaining_line)
+        amount_match = re.search(r"([\d.,]+)(-?)\s*$", remaining_line)
         if not amount_match:
             return None
         amount_str = amount_match.group(1)
-        description = remaining_line.rsplit(amount_str, 1)[0].strip()
+        sign = "-" if amount_match.group(2) else ""
+        description = remaining_line.rsplit(amount_match.group(0), 1)[0].strip()
         return self._build(
-            date_str, description, amount_str, Currency.ARS, payment_method
+            date_str, description, f"{sign}{amount_str}", Currency.ARS, payment_method
         )
 
     def _try_parse_fixed_keyword(
@@ -458,29 +459,43 @@ class PDFStatementParser(StatementParser):
             )
 
         for pattern in (
-            r"(\d{1,3}(?:\.\d{3})*,\d{2})$",
-            r"(\d+,\d{2})$",
-            r"(\d+\.\d{2})$",
-            r"(\d+)$",
+            r"(\d{1,3}(?:\.\d{3})*,\d{2})(-?)\s*$",
+            r"(\d+,\d{2})(-?)\s*$",
+            r"(\d+\.\d{2})(-?)\s*$",
+            r"(\d+)(-?)\s*$",
         ):
             amount_match = re.search(pattern, after_ref)
             if not amount_match:
                 continue
             amount_str = amount_match.group(1)
-            description = after_ref.rsplit(amount_str, 1)[0].strip()
+            sign = "-" if amount_match.group(2) else ""
+            description = after_ref.rsplit(amount_match.group(0), 1)[0].strip()
             txn = self._build(
-                date_str, description, amount_str, Currency.ARS, payment_method
+                date_str,
+                description,
+                f"{sign}{amount_str}",
+                Currency.ARS,
+                payment_method,
             )
             if txn is not None:
                 return txn
 
-        # Fallback: European amount anywhere in the line
-        european_amounts = re.findall(r"\d{1,3}(?:\.\d{3})*,\d{2}", after_ref)
-        if european_amounts:
-            amount_str = european_amounts[-1]
-            description = after_ref.replace(amount_str, "").strip()
+        # Fallback: European amount anywhere in the line. A trailing "-" right
+        # after the amount marks a refund, so propagate it as a negative sign.
+        fallback_matches = list(
+            re.finditer(r"(\d{1,3}(?:\.\d{3})*,\d{2})(-?)", after_ref)
+        )
+        if fallback_matches:
+            last = fallback_matches[-1]
+            amount_str = last.group(1)
+            sign = "-" if last.group(2) else ""
+            description = (after_ref[: last.start()] + after_ref[last.end() :]).strip()
             txn = self._build(
-                date_str, description, amount_str, Currency.ARS, payment_method
+                date_str,
+                description,
+                f"{sign}{amount_str}",
+                Currency.ARS,
+                payment_method,
             )
             if txn is not None:
                 return txn
