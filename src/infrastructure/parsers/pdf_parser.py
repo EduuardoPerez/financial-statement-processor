@@ -331,7 +331,7 @@ class PDFStatementParser(StatementParser):
     ) -> Transaction | None:
         if not any(tax in remaining_line for tax in _TAX_KEYWORDS):
             return None
-        amount_match = re.search(r"([\d.,]+)(-?)\s*$", remaining_line)
+        amount_match = re.search(r"([\d.,]+)(-?)\s*_?$", remaining_line)
         if not amount_match:
             return None
         amount_str = amount_match.group(1)
@@ -372,7 +372,7 @@ class PDFStatementParser(StatementParser):
     ) -> Transaction | None:
         if trigger not in remaining_line:
             return None
-        amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+        amount_match = re.search(r"([\d,.]+)-?\s*_?$", remaining_line)
         if not amount_match:
             return None
         amount_str = amount_match.group(1)
@@ -386,7 +386,7 @@ class PDFStatementParser(StatementParser):
     ) -> Transaction | None:
         if "OFF " not in remaining_line and "Promo" not in remaining_line:
             return None
-        amount_match = re.search(r"([\d,.]+)-?\s*$", remaining_line)
+        amount_match = re.search(r"([\d,.]+)-?\s*_?$", remaining_line)
         if not amount_match:
             return None
         amount_str = amount_match.group(1)

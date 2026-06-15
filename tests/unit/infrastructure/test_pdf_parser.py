@@ -419,6 +419,77 @@ class TestPDFStatementParser:
         assert "BONIF. CUOTA ANUAL" in calls[0][1]["description"]
         assert calls[0][1]["amount_str"] == "-1.500,00"  # Always negative
 
+    def test_parse_transactions_bonification_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Bonification lines ending in a stray ' _' must still be parsed.
+
+        Regression: Macro VISA exports refund/bonification rows with a trailing
+        ' _' after the negative amount, e.g.
+        '30.04.26 BONIF. PROMO BILLETERA 10.590,00- _'. The amount regex must
+        tolerate the trailing underscore or the credit is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 BONIF. PROMO BILLETERA 10.590,00- _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "BONIF. PROMO BILLETERA" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "-10.590,00"  # Always negative
+
+    def test_parse_transactions_promotion_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Promotion lines ending in a stray ' _' must still be parsed.
+
+        Same trailing-underscore export quirk as bonifications; the promo
+        amount regex must tolerate it or the credit is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 OFF DESCUENTO ESPECIAL 200,00 _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "OFF DESCUENTO ESPECIAL" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "-200,00"  # Always negative
+
+    def test_parse_transactions_tax_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Tax lines ending in a stray ' _' must still be parsed.
+
+        Same trailing-underscore export quirk; the tax amount regex must
+        tolerate it or the charge is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 IVA RG 1.234,56 _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "IVA RG" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "1.234,56"
+
     def test_parse_transactions_promotions(self, pdf_parser, mock_transaction_builder):
         """Test parsing of promotion/OFF transactions"""
         # Arrange
