@@ -490,6 +490,79 @@ class TestPDFStatementParser:
         assert "IVA RG" in calls[0][1]["description"]
         assert calls[0][1]["amount_str"] == "1.234,56"
 
+    def test_parse_transactions_commission_without_reference(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Commission lines without a reference code must be parsed as charges.
+
+        Regression: BBVA VISA lists card fees as e.g.
+        '28.05.26 COMISIÓN BLACK 65.206,61' with no comprobante number. The
+        accented 'Ó' breaks the reference-code regex ([A-Z] is ASCII-only),
+        so the charge was silently dropped and the statement failed balance
+        validation by exactly that amount.
+        """
+        # Arrange
+        test_text = """
+        28.05.26 COMISIÓN BLACK 65.206,61
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["description"] == "COMISIÓN BLACK"
+        assert call[1]["amount_str"] == "65.206,61"  # Positive: it's a charge
+
+    def test_parse_transactions_commission_unaccented(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Unaccented commission lines must keep 'COMISION' in the description.
+
+        Without a dedicated handler, 'COMISION' matches the reference-code
+        regex and gets stripped from the description as if it were a
+        comprobante number.
+        """
+        # Arrange
+        test_text = """
+        28.05.26 COMISION MANTENIMIENTO 5.000,00
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["description"] == "COMISION MANTENIMIENTO"
+        assert call[1]["amount_str"] == "5.000,00"
+
+    def test_parse_transactions_commission_refund_keeps_sign(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Commission refund lines (DEV ... -) must stay negative.
+
+        Guards that the commission handler does not intercept refund lines
+        like '02.07.26 DEV COMISIÓN BLACK 65.206,61-', which carry a leading
+        'DEV' reference token and a trailing '-' sign.
+        """
+        # Arrange
+        test_text = """
+        02.07.26 DEV COMISIÓN BLACK 65.206,61-
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["amount_str"] == "-65.206,61"
+
     def test_parse_transactions_promotions(self, pdf_parser, mock_transaction_builder):
         """Test parsing of promotion/OFF transactions"""
         # Arrange

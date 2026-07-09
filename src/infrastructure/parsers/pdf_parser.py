@@ -28,6 +28,7 @@ _TAX_KEYWORDS = (
     "IVA RG",
     "DB.RG",
 )
+_COMMISSION_KEYWORDS = ("COMISIÓN", "COMISION")
 _SKIP_KEYWORDS = ("SALDO ANTERIOR", "Total Consumos")
 _BBVA_MC_SKIP_KEYWORDS = ("SALDO ACTUAL", "VENCIMIENTO", "PAGO MÍNIMO")
 
@@ -299,6 +300,7 @@ class PDFStatementParser(StatementParser):
                     trigger="BONIF.",
                 )
                 or self._try_parse_promo(date_str, remaining_line, payment_method)
+                or self._try_parse_commission(date_str, remaining_line, payment_method)
                 or self._try_parse_referenced(date_str, remaining_line, payment_method)
             )
             if txn is not None:
@@ -331,6 +333,16 @@ class PDFStatementParser(StatementParser):
     ) -> Transaction | None:
         if not any(tax in remaining_line for tax in _TAX_KEYWORDS):
             return None
+        return self._build_from_trailing_signed_amount(
+            date_str, remaining_line, payment_method
+        )
+
+    def _build_from_trailing_signed_amount(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        """Build an ARS transaction from a line ending in an amount with an
+        optional '-' sign (and tolerating a stray trailing '_'); the rest of
+        the line becomes the description."""
         amount_match = re.search(r"([\d.,]+)(-?)\s*_?$", remaining_line)
         if not amount_match:
             return None
@@ -393,6 +405,20 @@ class PDFStatementParser(StatementParser):
         description = remaining_line.rsplit(amount_match.group(0), 1)[0].strip()
         return self._build(
             date_str, description, f"-{amount_str}", Currency.ARS, payment_method
+        )
+
+    def _try_parse_commission(
+        self, date_str: str, remaining_line: str, payment_method: PaymentMethod
+    ) -> Transaction | None:
+        # Card-fee lines carry no reference code, and the accented "Ó" in
+        # "COMISIÓN" falls outside the ASCII-only reference regex, so they
+        # need their own handler. Only lines starting with the keyword are
+        # fees; refunds ("DEV COMISIÓN ...") keep going through the
+        # referenced handler.
+        if not remaining_line.startswith(_COMMISSION_KEYWORDS):
+            return None
+        return self._build_from_trailing_signed_amount(
+            date_str, remaining_line, payment_method
         )
 
     def _try_parse_bbva_mastercard_line(
