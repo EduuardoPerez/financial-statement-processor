@@ -171,7 +171,12 @@ class CSVStatementParser(StatementParser):
         """
         try:
             # Load CSV file using pandas with semicolon separator
-            df = pd.read_csv(file_path, sep=";")
+            try:
+                df = pd.read_csv(file_path, sep=";")
+            except UnicodeDecodeError:
+                # Argentine bank exports (e.g. BBVA Movimientos) ship in
+                # Latin-1, which breaks the default UTF-8 decoding
+                df = pd.read_csv(file_path, sep=";", encoding="latin-1")
 
             if df.empty:
                 raise ValueError(f"No data found in CSV file: {file_path}")
