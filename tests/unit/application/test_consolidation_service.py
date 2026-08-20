@@ -219,7 +219,7 @@ class TestStatementProcessingServiceConsolidation:
                     # Mock save failure
                     mock_dependencies[
                         "repository"
-                    ].save_statement.side_effect = Exception("Save failed")
+                    ].save_consolidated_statement.side_effect = Exception("Save failed")
 
                     result = service.consolidate_statements(input_dir, output_dir)
 

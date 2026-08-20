@@ -1,6 +1,6 @@
 # Infrastructure layer - External adapters and implementations
 
-from .config import ApplicationConfig, DatabaseConfig, OutputConfig, ProcessingConfig
+from .config import ApplicationConfig, OutputConfig, ProcessingConfig
 from .detectors import BBVADetector, MacroDetector, build_default_payment_detector
 from .factories import DefaultParserFactory
 from .observers import ProgressTracker, ValidationReporter
@@ -10,7 +10,6 @@ from .repositories import ExcelStatementRepository
 __all__ = [
     # Configuration
     "ApplicationConfig",
-    "DatabaseConfig",
     "OutputConfig",
     "ProcessingConfig",
     # Detectors

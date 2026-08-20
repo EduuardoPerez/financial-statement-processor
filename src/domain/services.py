@@ -11,6 +11,7 @@ Classes:
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from decimal import Decimal
 from pathlib import Path
 
@@ -219,8 +220,6 @@ class DuplicateDetector:
                duplicated
             3. Return new transaction list with modified descriptions and count
         """
-        from collections import defaultdict
-
         if not transactions:
             return transactions, 0
 
@@ -262,20 +261,3 @@ class DuplicateDetector:
             payment_method=transaction.payment_method,
             reference=transaction.reference,
         )
-
-
-class BalanceExtractorExtended(BalanceExtractor):
-    """Extended balance extractor with additional functionality."""
-
-    @abstractmethod
-    def can_extract(self, payment_method: PaymentMethod) -> bool:
-        """
-        Check if extractor supports the payment method.
-
-        Args:
-            payment_method: Payment method to check
-
-        Returns:
-            True if this extractor can handle the payment method
-        """
-        pass

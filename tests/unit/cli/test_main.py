@@ -20,8 +20,6 @@ from click.testing import CliRunner
 from application.services import ProcessingResult
 from cli.main import (
     CLIError,
-    SimpleFileReader,
-    SimpleFileWriter,
     cli,
     create_components,
     load_config,
@@ -37,70 +35,6 @@ from infrastructure.config import (
     PaymentMethodMappingConfig,
     ProcessingConfig,
 )
-
-
-class TestSimpleFileReader:
-    """Test SimpleFileReader implementation."""
-
-    def test_read_existing_file(self, tmp_path):
-        """Test reading an existing file."""
-        reader = SimpleFileReader()
-        test_file = tmp_path / "test.txt"
-        test_content = b"test content"
-        test_file.write_bytes(test_content)
-
-        result = reader.read(test_file)
-        assert result == test_content
-
-    def test_exists_true(self, tmp_path):
-        """Test exists returns True for existing file."""
-        reader = SimpleFileReader()
-        test_file = tmp_path / "test.txt"
-        test_file.write_text("content")
-
-        assert reader.exists(test_file) is True
-
-    def test_exists_false(self, tmp_path):
-        """Test exists returns False for non-existing file."""
-        reader = SimpleFileReader()
-        test_file = tmp_path / "nonexistent.txt"
-
-        assert reader.exists(test_file) is False
-
-
-class TestSimpleFileWriter:
-    """Test SimpleFileWriter implementation."""
-
-    def test_write_file(self, tmp_path):
-        """Test writing content to file."""
-        writer = SimpleFileWriter()
-        test_file = tmp_path / "test.txt"
-        test_content = b"test content"
-
-        writer.write(test_file, test_content)
-
-        assert test_file.read_bytes() == test_content
-
-    def test_ensure_directory_creates_directory(self, tmp_path):
-        """Test ensure_directory creates directories."""
-        writer = SimpleFileWriter()
-        test_dir = tmp_path / "subdir" / "nested"
-
-        writer.ensure_directory(test_dir)
-
-        assert test_dir.exists()
-        assert test_dir.is_dir()
-
-    def test_ensure_directory_existing_directory(self, tmp_path):
-        """Test ensure_directory with existing directory."""
-        writer = SimpleFileWriter()
-        test_dir = tmp_path / "existing"
-        test_dir.mkdir()
-
-        # Should not raise error
-        writer.ensure_directory(test_dir)
-
-        assert test_dir.exists()
 
 
 class TestLoadConfig:
@@ -139,31 +73,6 @@ log_level: "DEBUG"
 
             mock_from_env.assert_called_once()
             assert result == mock_config
-
-    def test_load_config_yaml_error(self, tmp_path):
-        """Test load_config raises CLIError when YAML loading fails."""
-        config_file = tmp_path / "invalid.yaml"
-        config_file.write_text("invalid: yaml: content:")
-
-        with patch(
-            "infrastructure.config.ApplicationConfig.from_yaml",
-            side_effect=Exception("YAML error"),
-        ):
-            with pytest.raises(
-                CLIError, match="Failed to load configuration: YAML error"
-            ):
-                load_config(config_file)
-
-    def test_load_config_environment_error(self):
-        """Test load_config raises CLIError when environment loading fails."""
-        with patch(
-            "infrastructure.config.ApplicationConfig.from_environment",
-            side_effect=Exception("Env error"),
-        ):
-            with pytest.raises(
-                CLIError, match="Failed to load configuration: Env error"
-            ):
-                load_config(None)
 
 
 class TestCreateComponents:
@@ -296,7 +205,6 @@ class TestCLIGroup:
             mock_config.log_level = "INFO"
             mock_config.input_directory = Path("test_input")
             mock_config.output_directory = Path("test_output")
-            mock_config.enable_async = False
             mock_config.processing = Mock(spec=ProcessingConfig)
             mock_config.processing.max_workers = 4
             mock_config.processing.enable_validation = True
@@ -367,7 +275,6 @@ class TestInfoCommand:
         self.mock_config.input_directory = Path("test_input")
         self.mock_config.output_directory = Path("test_output")
         self.mock_config.log_level = "INFO"
-        self.mock_config.enable_async = False
         self.mock_config.processing = Mock(spec=ProcessingConfig)
         self.mock_config.processing.max_workers = 4
         self.mock_config.processing.enable_validation = True

@@ -240,7 +240,6 @@ class TestStatementProcessingService:
         assert result.statement is None
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Parsing/validation failed" in result.errors[0]
         assert "Failed to extract text from PDF" in result.errors[0]
 
     def test_process_statement_validation_fails(
@@ -310,7 +309,7 @@ class TestStatementProcessingService:
         assert result.statement == sample_statement
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Filename generation failed" in result.errors[0]
+        assert "Failed to generate filename" in result.errors[0]
 
     def test_process_statement_save_fails(self, mock_dependencies, sample_statement):
         """Test error handling when statement saving fails"""
@@ -346,7 +345,6 @@ class TestStatementProcessingService:
         assert result.statement == sample_statement
         assert result.output_path == expected_output_path
         assert len(result.errors) == 1
-        assert "Save failed" in result.errors[0]
         assert "Permission denied" in result.errors[0]
 
     def test_process_statement_unexpected_error(self, mock_dependencies):
@@ -369,7 +367,6 @@ class TestStatementProcessingService:
         assert result.statement is None
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Unexpected error" in result.errors[0]
         assert "Unexpected system error" in result.errors[0]
 
     def test_processing_time_measurement(self, mock_dependencies, sample_statement):
@@ -439,7 +436,6 @@ class TestStatementProcessingService:
         assert result.statement == sample_statement
         assert result.output_path is None
         assert len(result.errors) == 1
-        assert "Parsing/validation failed" in result.errors[0]
         assert "Validation system error" in result.errors[0]
         assert result.validation_result.is_valid is False
         assert "Validation system error" in result.validation_result.errors

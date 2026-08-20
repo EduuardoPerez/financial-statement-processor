@@ -14,8 +14,10 @@ from typing import Any
 import pandas as pd
 
 from domain.builders import TransactionBuilder
-from domain.models import Currency, PaymentMethod, Statement, Transaction
+from domain.models import PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
+
+from ._shared import map_currency_es, parse_ddmmyyyy
 
 
 class CSVStatementParser(StatementParser):
@@ -169,7 +171,12 @@ class CSVStatementParser(StatementParser):
         """
         try:
             # Load CSV file using pandas with semicolon separator
-            df = pd.read_csv(file_path, sep=";")
+            try:
+                df = pd.read_csv(file_path, sep=";")
+            except UnicodeDecodeError:
+                # Argentine bank exports (e.g. BBVA Movimientos) ship in
+                # Latin-1, which breaks the default UTF-8 decoding
+                df = pd.read_csv(file_path, sep=";", encoding="latin-1")
 
             if df.empty:
                 raise ValueError(f"No data found in CSV file: {file_path}")
@@ -201,29 +208,22 @@ class CSVStatementParser(StatementParser):
             >>> transactions = parser._parse_transactions(df, PaymentMethod.BBVA_VISA)
             >>> assert len(transactions) > 0
         """
-        transactions = []
+        if payment_method in (PaymentMethod.BBVA_VISA, PaymentMethod.MACRO_VISA):
+            return self._parse_visa_csv_transactions(df, payment_method)
+        return []
 
-        if payment_method == PaymentMethod.BBVA_VISA:
-            transactions = self._parse_bbva_csv_transactions(df)
-        elif payment_method == PaymentMethod.MACRO_VISA:
-            transactions = self._parse_macro_csv_transactions(df)
-
-        return transactions
-
-    def _parse_bbva_csv_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+    def _parse_visa_csv_transactions(
+        self, df: pd.DataFrame, payment_method: PaymentMethod
+    ) -> list[Transaction]:
         """
-        Parse BBVA VISA CSV transactions.
+        Parse VISA CSV transactions shared by BBVA and Macro.
 
-        BBVA CSV format:
-        - Columns: Fecha, Establecimiento, Moneda, Importe
-        - Date format: DD/MM/YYYY
-        - Currency mapping: "Pesos" → ARS, "Dolares" → USD
-        - Amount format: Remove commas, handle decimals
+        Columns: Fecha (or Fecha Origen), Establecimiento, Moneda, Importe.
+        Date format: DD/MM/YYYY. Amount format: 1,234.56 (commas as thousands).
         """
         transactions = []
 
         for _, row in df.iterrows():
-            # Handle different date column names between file types
             fecha_str = ""
             if "Fecha Origen" in df.columns and pd.notna(row["Fecha Origen"]):
                 fecha_str = str(row["Fecha Origen"]).strip()
@@ -240,102 +240,23 @@ class CSVStatementParser(StatementParser):
                 str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
             )
 
-            if fecha_str and importe_str and importe_str != "nan":
-                try:
-                    # Convert date from DD/MM/YYYY to YYYY-MM-DD
-                    day, month, year = fecha_str.split("/")
-                    formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            if not (fecha_str and importe_str and importe_str != "nan"):
+                continue
 
-                    # Convert amount from European format to float
-                    # Handle format: 4,940.00 -> 4940.00
-                    amount_str = importe_str.replace(",", "")
-                    amount = float(amount_str)
+            try:
+                formatted_date = parse_ddmmyyyy(fecha_str)
+                amount = float(importe_str.replace(",", ""))
+                currency = map_currency_es(moneda)
 
-                    # Map currency
-                    currency = (
-                        Currency.ARS
-                        if moneda == "Pesos"
-                        else Currency.USD
-                        if moneda == "Dolares"
-                        else Currency.ARS
-                    )
-
-                    # Build transaction using TransactionBuilder
-                    transaction = self._transaction_builder.build_from_csv_data(
-                        date_str=formatted_date,
-                        description=establecimiento,
-                        amount_str=str(amount),
-                        currency=currency,
-                        payment_method=PaymentMethod.BBVA_VISA,
-                    )
-                    transactions.append(transaction)
-
-                except (ValueError, IndexError):
-                    continue  # Skip invalid rows
-
-        return transactions
-
-    def _parse_macro_csv_transactions(self, df: pd.DataFrame) -> list[Transaction]:
-        """
-        Parse Macro VISA CSV transactions.
-
-        Macro CSV format:
-        - Columns: Fecha/Fecha Origen, Establecimiento, Moneda, Importe
-        - Date format: DD/MM/YYYY
-        - Currency mapping: "Pesos" → ARS, "Dolares" → USD
-        - Amount format: Remove commas, handle decimals
-        """
-        transactions = []
-
-        for _, row in df.iterrows():
-            # Handle different date column names between file types
-            fecha_str = ""
-            if "Fecha Origen" in df.columns and pd.notna(row["Fecha Origen"]):
-                fecha_str = str(row["Fecha Origen"]).strip()
-            elif "Fecha" in df.columns and pd.notna(row["Fecha"]):
-                fecha_str = str(row["Fecha"]).strip()
-
-            establecimiento = (
-                str(row["Establecimiento"]).strip()
-                if pd.notna(row["Establecimiento"])
-                else ""
-            )
-            moneda = str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
-            importe_str = (
-                str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
-            )
-
-            if fecha_str and importe_str and importe_str != "nan":
-                try:
-                    # Convert date from DD/MM/YYYY to YYYY-MM-DD
-                    day, month, year = fecha_str.split("/")
-                    formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
-
-                    # Convert amount from European format to float
-                    # Handle format: 10,500.00 -> 10500.00
-                    amount_str = importe_str.replace(",", "")
-                    amount = float(amount_str)
-
-                    # Map currency
-                    currency = (
-                        Currency.ARS
-                        if moneda == "Pesos"
-                        else Currency.USD
-                        if moneda == "Dolares"
-                        else Currency.ARS
-                    )
-
-                    # Build transaction using TransactionBuilder
-                    transaction = self._transaction_builder.build_from_csv_data(
-                        date_str=formatted_date,
-                        description=establecimiento,
-                        amount_str=str(amount),
-                        currency=currency,
-                        payment_method=PaymentMethod.MACRO_VISA,
-                    )
-                    transactions.append(transaction)
-
-                except (ValueError, IndexError):
-                    continue  # Skip invalid rows
+                transaction = self._transaction_builder.build_from_csv_data(
+                    date_str=formatted_date,
+                    description=establecimiento,
+                    amount_str=str(amount),
+                    currency=currency,
+                    payment_method=payment_method,
+                )
+                transactions.append(transaction)
+            except (ValueError, IndexError):
+                continue
 
         return transactions

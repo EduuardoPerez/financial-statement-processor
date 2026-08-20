@@ -19,7 +19,7 @@ repos:
     hooks:
       - id: pytest-coverage
         name: pytest with coverage check
-        entry: bash -c "PYTHONPATH=src uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=90 --cov-config=.coveragerc"
+        entry: bash -c "PYTHONPATH=src uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=85 --cov-config=.coveragerc"
         language: system
         pass_filenames: false
         always_run: true

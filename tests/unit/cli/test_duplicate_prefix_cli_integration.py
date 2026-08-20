@@ -200,12 +200,9 @@ processing:
 input_directory: "test_input"
 output_directory: "test_output"
 log_level: "INFO"
-enable_async: false
 
 processing:
   max_workers: 8
-  chunk_size: 2000
-  timeout_seconds: 600
   retry_attempts: 5
   enable_validation: true
   enable_balance_checking: true
@@ -213,8 +210,6 @@ processing:
 
 output:
   default_format: "excel"
-  excel_sheet_name: "TestSheet"
-  include_index: false
   date_format: "%Y-%m-%d"
   decimal_separator: ","
 """
@@ -231,12 +226,9 @@ output:
                 assert config.input_directory == Path("test_input")
                 assert config.output_directory == Path("test_output")
                 assert config.log_level == "INFO"
-                assert config.enable_async is False
 
                 # Verify processing configuration
                 assert config.processing.max_workers == 8
-                assert config.processing.chunk_size == 2000
-                assert config.processing.timeout_seconds == 600
                 assert config.processing.retry_attempts == 5
                 assert config.processing.enable_validation is True
                 assert config.processing.enable_balance_checking is True
@@ -244,7 +236,6 @@ output:
 
                 # Verify output configuration
                 assert config.output.default_format == "excel"
-                assert config.output.excel_sheet_name == "TestSheet"
                 assert config.output.decimal_separator == ","
 
                 # Create components and verify wiring

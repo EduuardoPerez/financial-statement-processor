@@ -140,7 +140,6 @@ class StatementProcessingService:
             ProcessingResult with details of the processing operation
         """
         start_time = time.time()
-        errors: list[str] = []
         statement: Statement | None = None
         output_path: Path | None = None
         validation_result = ValidationResult(
@@ -148,93 +147,32 @@ class StatementProcessingService:
         )
 
         try:
-            # Step 1: Create appropriate parser
-            try:
-                parser = self._parser_factory.create_parser(input_path)
-            except ValueError as e:
-                errors.append(f"No parser available: {str(e)}")
+            parser = self._parser_factory.create_parser(input_path)
+
+            if hasattr(parser, "parse_with_content") and hasattr(
+                self._validator, "validate_with_content"
+            ):
+                statement, raw_content = parser.parse_with_content(input_path)
+                validation_result = self._validator.validate_with_content(
+                    statement, raw_content
+                )
+            else:
+                statement = parser.parse(input_path)
+                validation_result = self._validator.validate(statement)
+
+            if not validation_result.is_valid:
                 return self._create_error_result(
                     input_path,
                     start_time,
-                    errors,
+                    list(validation_result.errors),
                     statement,
                     output_path,
                     validation_result,
                 )
 
-            # Step 2: Parse the statement (with enhanced validation if available)
-            try:
-                # Try enhanced parsing with content if parser supports it
-                if hasattr(parser, "parse_with_content") and hasattr(
-                    self._validator, "validate_with_content"
-                ):
-                    statement, raw_content = parser.parse_with_content(input_path)
+            output_path = output_dir / self._filename_generator.generate(statement)
+            self._repository.save_statement(statement, output_path)
 
-                    # Step 3: Enhanced validation with content
-                    validation_result = self._validator.validate_with_content(
-                        statement, raw_content
-                    )
-                else:
-                    # Fall back to regular parsing
-                    statement = parser.parse(input_path)
-
-                    # Step 3: Regular validation
-                    validation_result = self._validator.validate(statement)
-
-                if not validation_result.is_valid:
-                    errors.extend(validation_result.errors)
-                    return self._create_error_result(
-                        input_path,
-                        start_time,
-                        errors,
-                        statement,
-                        output_path,
-                        validation_result,
-                    )
-            except Exception as e:
-                errors.append(f"Parsing/validation failed: {str(e)}")
-                val_result = ValidationResult(is_valid=False, errors=[str(e)])
-                validation_result = val_result
-                return self._create_error_result(
-                    input_path,
-                    start_time,
-                    errors,
-                    statement,
-                    output_path,
-                    validation_result,
-                )
-
-            # Step 4: Generate output filename
-            try:
-                output_filename = self._filename_generator.generate(statement)
-                output_path = output_dir / output_filename
-            except Exception as e:
-                errors.append(f"Filename generation failed: {str(e)}")
-                return self._create_error_result(
-                    input_path,
-                    start_time,
-                    errors,
-                    statement,
-                    output_path,
-                    validation_result,
-                )
-
-            # Step 5: Save statement via repository
-            try:
-                self._repository.save_statement(statement, output_path)
-            except Exception as e:
-                errors.append(f"Save failed: {str(e)}")
-                return self._create_error_result(
-                    input_path,
-                    start_time,
-                    errors,
-                    statement,
-                    output_path,
-                    validation_result,
-                )
-
-            # Step 6: Return successful result
-            processing_time = time.time() - start_time
             return ProcessingResult(
                 input_path=input_path,
                 output_path=output_path,
@@ -242,16 +180,18 @@ class StatementProcessingService:
                 validation_result=validation_result,
                 success=True,
                 errors=[],
-                processing_time=processing_time,
+                processing_time=time.time() - start_time,
             )
 
         except Exception as e:
-            # Catch any unexpected exceptions
-            errors.append(f"Unexpected error: {str(e)}")
+            # Reflect the exception in validation_result unless we already have
+            # a validation result from the validator (is_valid has been set).
+            if validation_result.errors == ["Processing not completed"]:
+                validation_result = ValidationResult(is_valid=False, errors=[str(e)])
             return self._create_error_result(
                 input_path,
                 start_time,
-                errors,
+                [str(e)],
                 statement,
                 output_path,
                 validation_result,
@@ -394,20 +334,7 @@ class StatementProcessingService:
             )
             output_path = output_dir / filename
 
-            # Save consolidated statement (need to enhance repository)
-            if hasattr(self._repository, "save_consolidated_statement"):
-                self._repository.save_consolidated_statement(consolidated, output_path)
-            else:
-                # Fallback: create a regular statement for now
-                dummy_statement = Statement(
-                    payment_method=(
-                        processed_transactions[0].payment_method
-                        if processed_transactions
-                        else successful_statements[0].payment_method
-                    ),
-                    transactions=processed_transactions,
-                )
-                self._repository.save_statement(dummy_statement, output_path)
+            self._repository.save_consolidated_statement(consolidated, output_path)
 
             return ConsolidationResult(
                 input_directory=input_dir,

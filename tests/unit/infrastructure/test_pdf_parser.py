@@ -419,6 +419,150 @@ class TestPDFStatementParser:
         assert "BONIF. CUOTA ANUAL" in calls[0][1]["description"]
         assert calls[0][1]["amount_str"] == "-1.500,00"  # Always negative
 
+    def test_parse_transactions_bonification_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Bonification lines ending in a stray ' _' must still be parsed.
+
+        Regression: Macro VISA exports refund/bonification rows with a trailing
+        ' _' after the negative amount, e.g.
+        '30.04.26 BONIF. PROMO BILLETERA 10.590,00- _'. The amount regex must
+        tolerate the trailing underscore or the credit is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 BONIF. PROMO BILLETERA 10.590,00- _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "BONIF. PROMO BILLETERA" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "-10.590,00"  # Always negative
+
+    def test_parse_transactions_promotion_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Promotion lines ending in a stray ' _' must still be parsed.
+
+        Same trailing-underscore export quirk as bonifications; the promo
+        amount regex must tolerate it or the credit is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 OFF DESCUENTO ESPECIAL 200,00 _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "OFF DESCUENTO ESPECIAL" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "-200,00"  # Always negative
+
+    def test_parse_transactions_tax_with_trailing_underscore(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Tax lines ending in a stray ' _' must still be parsed.
+
+        Same trailing-underscore export quirk; the tax amount regex must
+        tolerate it or the charge is silently dropped.
+        """
+        # Arrange
+        test_text = """
+        30.04.26 IVA RG 1.234,56 _
+        """
+        payment_method = PaymentMethod.MACRO_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        calls = mock_transaction_builder.build_from_pdf_line.call_args_list
+        assert "IVA RG" in calls[0][1]["description"]
+        assert calls[0][1]["amount_str"] == "1.234,56"
+
+    def test_parse_transactions_commission_without_reference(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Commission lines without a reference code must be parsed as charges.
+
+        Regression: BBVA VISA lists card fees as e.g.
+        '28.05.26 COMISIÓN BLACK 65.206,61' with no comprobante number. The
+        accented 'Ó' breaks the reference-code regex ([A-Z] is ASCII-only),
+        so the charge was silently dropped and the statement failed balance
+        validation by exactly that amount.
+        """
+        # Arrange
+        test_text = """
+        28.05.26 COMISIÓN BLACK 65.206,61
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["description"] == "COMISIÓN BLACK"
+        assert call[1]["amount_str"] == "65.206,61"  # Positive: it's a charge
+
+    def test_parse_transactions_commission_unaccented(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Unaccented commission lines must keep 'COMISION' in the description.
+
+        Without a dedicated handler, 'COMISION' matches the reference-code
+        regex and gets stripped from the description as if it were a
+        comprobante number.
+        """
+        # Arrange
+        test_text = """
+        28.05.26 COMISION MANTENIMIENTO 5.000,00
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["description"] == "COMISION MANTENIMIENTO"
+        assert call[1]["amount_str"] == "5.000,00"
+
+    def test_parse_transactions_commission_refund_keeps_sign(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        """Commission refund lines (DEV ... -) must stay negative.
+
+        Guards that the commission handler does not intercept refund lines
+        like '02.07.26 DEV COMISIÓN BLACK 65.206,61-', which carry a leading
+        'DEV' reference token and a trailing '-' sign.
+        """
+        # Arrange
+        test_text = """
+        02.07.26 DEV COMISIÓN BLACK 65.206,61-
+        """
+        payment_method = PaymentMethod.BBVA_VISA
+
+        # Act
+        transactions = pdf_parser._parse_transactions(test_text, payment_method)
+
+        # Assert
+        assert len(transactions) == 1
+        call = mock_transaction_builder.build_from_pdf_line.call_args
+        assert call[1]["amount_str"] == "-65.206,61"
+
     def test_parse_transactions_promotions(self, pdf_parser, mock_transaction_builder):
         """Test parsing of promotion/OFF transactions"""
         # Arrange

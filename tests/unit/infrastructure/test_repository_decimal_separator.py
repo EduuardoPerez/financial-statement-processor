@@ -68,7 +68,7 @@ class TestExcelRepositoryDecimalSeparator:
             output_config,
         )
 
-        df = repository._statement_to_dataframe(sample_statement)
+        df = repository._transactions_to_dataframe(sample_statement.transactions)
 
         # Check that amounts are formatted with comma separator
         assert df.iloc[0]["Amount"] == "1234,56"
@@ -86,7 +86,7 @@ class TestExcelRepositoryDecimalSeparator:
             output_config,
         )
 
-        df = repository._statement_to_dataframe(sample_statement)
+        df = repository._transactions_to_dataframe(sample_statement.transactions)
 
         # Check that amounts are formatted with dot separator
         assert df.iloc[0]["Amount"] == "1234.56"
@@ -104,7 +104,7 @@ class TestExcelRepositoryDecimalSeparator:
             output_config,
         )
 
-        df = repository._statement_to_dataframe(sample_statement)
+        df = repository._transactions_to_dataframe(sample_statement.transactions)
 
         # Check that amounts are formatted with semicolon separator
         assert df.iloc[0]["Amount"] == "1234;56"
@@ -135,7 +135,7 @@ class TestExcelRepositoryDecimalSeparator:
             output_config,
         )
 
-        df = repository._consolidated_to_dataframe(consolidated)
+        df = repository._transactions_to_dataframe(consolidated.transactions)
 
         # Check that amount is formatted with dot separator
         assert df.iloc[0]["Amount"] == "5678.9"
@@ -175,7 +175,7 @@ class TestExcelRepositoryDecimalSeparator:
             output_config,
         )
 
-        df = repository._statement_to_dataframe(statement)
+        df = repository._transactions_to_dataframe(statement.transactions)
 
         # Check that negative amount is formatted correctly
         assert df.iloc[0]["Amount"] == "-1500,75"
