@@ -114,24 +114,8 @@ class TransactionBuilder:
             # Use injected DateConverter to parse date
             date_clean = date_str.strip()
             # Handle different date formats
-            if "-" in date_clean and any(
-                month in date_clean
-                for month in [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                ]
-            ):
-                # Handle "05-Apr-25" format
+            if "-" in date_clean and len(date_clean.split("-")) == 3:
+                # Handle "05-Apr-25" and Spanish variants such as "05-Ago-25".
                 parsed_date = self._date_converter.convert_dd_mmm_yy(date_clean)
             else:
                 # Handle "05.06.25" format

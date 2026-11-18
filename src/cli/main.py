@@ -92,7 +92,10 @@ def create_components(
 
         parser_factory = DefaultParserFactory(detector)
         balance_service = build_default_balance_service()
-        validator = StatementValidator(balance_extraction_service=balance_service)
+        validator = StatementValidator(
+            balance_extraction_service=balance_service,
+            enable_balance_checking=config.processing.enable_balance_checking,
+        )
         filename_generator = FilenameGenerator()
         repository = ExcelStatementRepository(
             payment_method_mapping=config.payment_method_mapping,

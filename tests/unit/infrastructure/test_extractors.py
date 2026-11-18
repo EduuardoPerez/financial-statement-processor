@@ -120,6 +120,20 @@ class TestPDFBalanceExtractor:
         assert result["ars"] == Decimal("0.0")
         assert result["usd"] == Decimal("0.0")
 
+    def test_extract_opening_balance(self):
+        result = self.extractor.extract_opening_balance(
+            "SALDO ANTERIOR 3.212.555,44 91,99", PaymentMethod.BBVA_VISA
+        )
+
+        assert result == {"ars": Decimal("3212555.44"), "usd": Decimal("91.99")}
+
+    def test_extract_opening_balance_returns_none_when_missing(self):
+        result = self.extractor.extract_opening_balance(
+            "No opening balance", PaymentMethod.BBVA_VISA
+        )
+
+        assert result is None
+
     def test_parse_european_amount_with_thousands_separator(self):
         """Test European amount parsing with thousands separator."""
         result = self.extractor._parse_european_amount("1.234,56")

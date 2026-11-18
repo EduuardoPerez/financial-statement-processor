@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from infrastructure.extractors import BalanceExtractionService
 
-from .models import Currency, Statement
+from .models import Balance, Currency, Statement
 
 
 @dataclass
@@ -84,6 +84,7 @@ class StatementValidator:
         self,
         balance_tolerance: Decimal = Decimal("0.01"),
         balance_extraction_service: BalanceExtractionService | None = None,
+        enable_balance_checking: bool = True,
     ):
         """
         Initialize validator with configurable balance tolerance.
@@ -91,9 +92,11 @@ class StatementValidator:
         Args:
             balance_tolerance: Maximum difference for balance validation
             balance_extraction_service: Service for extracting balances
+            enable_balance_checking: Whether reported balances are reconciled
         """
         self._balance_tolerance = balance_tolerance
         self._balance_service = balance_extraction_service
+        self._enable_balance_checking = enable_balance_checking
 
     def validate(self, statement: Statement) -> ValidationResult:
         """
@@ -121,7 +124,9 @@ class StatementValidator:
         self._validate_basic_structure(statement, result)
 
         # Validate balance consistency if reported balance is available
-        if statement.reported_balance is not None:
+        if not self._enable_balance_checking:
+            result.add_warning("Balance checking is disabled")
+        elif statement.reported_balance is not None:
             self._validate_balance_with_payment_exclusion(statement, result)
         else:
             result.add_warning("No reported balance available for validation")
@@ -140,15 +145,14 @@ class StatementValidator:
         # Basic validation
         self._validate_basic_structure(statement, result)
 
-        # Extract balance from content if service available
+        # Extract balances from content if service available
+        opening_balance = None
         if self._balance_service and raw_content:
             extracted_balance = self._balance_service.extract_balance(
                 raw_content, statement.payment_method
             )
             if extracted_balance:
-                # Create Balance object and set on statement
-                from .models import Balance
-
+                # Create the closing Balance object and set it on the statement.
                 reported_balance = Balance(
                     ars_amount=extracted_balance["ars"],
                     usd_amount=extracted_balance["usd"],
@@ -156,9 +160,22 @@ class StatementValidator:
                 # Set on statement (mutable field)
                 statement.reported_balance = reported_balance
 
+            opening_values = self._balance_service.extract_opening_balance(
+                raw_content, statement.payment_method
+            )
+            if opening_values:
+                opening_balance = Balance(
+                    ars_amount=opening_values["ars"],
+                    usd_amount=opening_values["usd"],
+                )
+
         # Validate balance with payment exclusion
-        if statement.reported_balance:
-            self._validate_balance_with_payment_exclusion(statement, result)
+        if not self._enable_balance_checking:
+            result.add_warning("Balance checking is disabled")
+        elif statement.reported_balance:
+            self._validate_balance_with_payment_exclusion(
+                statement, result, opening_balance
+            )
         else:
             result.add_warning("No reported balance available for validation")
 
@@ -180,17 +197,28 @@ class StatementValidator:
             result.add_warning("Statement has no transactions")
 
     def _validate_balance_with_payment_exclusion(
-        self, statement: Statement, result: ValidationResult
+        self,
+        statement: Statement,
+        result: ValidationResult,
+        opening_balance: Balance | None = None,
     ) -> None:
         """Validate balance with smart payment exclusion logic."""
-        # Try excluding payments first (standard approach)
-        computed_balance_excluded = self._calculate_balance_excluding_payments(
-            statement
-        )
-        # Also calculate including all transactions as fallback
-        computed_balance_included = self._calculate_balance_including_all_transactions(
-            statement
-        )
+        if opening_balance is not None:
+            computed_balance_excluded = (
+                self._calculate_balance_including_all_transactions(statement)
+            )
+            computed_balance_excluded["ars"] += opening_balance.ars_amount
+            computed_balance_excluded["usd"] += opening_balance.usd_amount
+            computed_balance_included = computed_balance_excluded
+        else:
+            # Older formats without an opening balance retain the existing
+            # payment-exclusion reconciliation.
+            computed_balance_excluded = self._calculate_balance_excluding_payments(
+                statement
+            )
+            computed_balance_included = (
+                self._calculate_balance_including_all_transactions(statement)
+            )
         reported_balance = statement.reported_balance
 
         # Ensure reported_balance is not None (should be checked by caller)

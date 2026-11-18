@@ -189,6 +189,7 @@ class TestStatementValidator:
             "ars": Decimal("100.50"),
             "usd": Decimal("0.00"),
         }
+        mock_service.extract_opening_balance.return_value = None
 
         validator = StatementValidator(balance_extraction_service=mock_service)
         statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
@@ -200,6 +201,75 @@ class TestStatementValidator:
         mock_service.extract_balance.assert_called_once_with(
             "raw content", PaymentMethod.BBVA_VISA
         )
+
+    def test_validate_with_content_reconciles_opening_and_closing_balance(self):
+        from unittest.mock import Mock
+
+        service = Mock()
+        service.extract_balance.return_value = {
+            "ars": Decimal("306388.29"),
+            "usd": Decimal("91.99"),
+        }
+        service.extract_opening_balance.return_value = {
+            "ars": Decimal("3212555.44"),
+            "usd": Decimal("0.00"),
+        }
+        validator = StatementValidator(balance_extraction_service=service)
+        statement = Statement(payment_method=PaymentMethod.BBVA_VISA)
+        statement.add_transaction(
+            Transaction(
+                date=date(2026, 8, 7),
+                description="SU PAGO EN PESOS",
+                amount=Decimal("-3212555.44"),
+                currency=Currency.ARS,
+                payment_method=PaymentMethod.BBVA_VISA,
+            )
+        )
+        statement.add_transaction(
+            Transaction(
+                date=date(2026, 8, 26),
+                description="SU PAGO EN PESOS",
+                amount=Decimal("-5781838.31"),
+                currency=Currency.ARS,
+                payment_method=PaymentMethod.BBVA_VISA,
+            )
+        )
+        statement.add_transaction(
+            Transaction(
+                date=date(2026, 8, 3),
+                description="Purchase",
+                amount=Decimal("6088226.60"),
+                currency=Currency.ARS,
+                payment_method=PaymentMethod.BBVA_VISA,
+            )
+        )
+        statement.add_transaction(
+            Transaction(
+                date=date(2026, 8, 10),
+                description="USD purchase",
+                amount=Decimal("91.99"),
+                currency=Currency.USD,
+                payment_method=PaymentMethod.BBVA_VISA,
+            )
+        )
+
+        result = validator.validate_with_content(statement, "statement contents")
+
+        assert result.is_valid is True
+        assert result.errors == []
+
+    def test_balance_checking_can_be_disabled(self, valid_transaction):
+        validator = StatementValidator(enable_balance_checking=False)
+        statement = Statement(
+            payment_method=PaymentMethod.BBVA_VISA,
+            transactions=[valid_transaction],
+            reported_balance=Balance(Decimal("900.00"), Decimal("0.00")),
+        )
+
+        result = validator.validate(statement)
+
+        assert result.is_valid is True
+        assert "Balance checking is disabled" in result.warnings
 
     def test_validate_balance_excluding_payments(self, validator):
         """Test balance calculation excluding payment transactions."""

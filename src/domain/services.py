@@ -170,6 +170,12 @@ class BalanceExtractor(ABC):
         """
         pass
 
+    def extract_opening_balance(
+        self, content: str, payment_method: PaymentMethod
+    ) -> dict[str, Decimal] | None:
+        """Extract an opening balance when the statement format provides one."""
+        return None
+
     @abstractmethod
     def can_extract(self, payment_method: PaymentMethod) -> bool:
         """
