@@ -1,0 +1,4 @@
+interface:
+  display_name: "Add Statement Format"
+  short_description: "Guide adding a statement format"
+  default_prompt: "Use $add-statement-format to onboard a new statement format."

@@ -1,0 +1,26 @@
+# Copy this file to config/local-statements.yaml and adjust it for your machine.
+# The local file is ignored by Git so personal paths and settings stay private.
+input_directory: "input"
+output_directory: "output"
+log_level: "INFO"
+
+processing:
+  max_workers: 4
+  retry_attempts: 3
+  enable_validation: true
+  enable_balance_checking: true
+  duplicate_prefix: "DUPLICATED"
+
+output:
+  default_format: "excel"
+  date_format: "%Y-%m-%d"
+  decimal_separator: ","
+
+# Optional display names keyed by payment method enum name.
+payment_method_mapping: {}
+
+# Optional amount sign rules. Patterns use fnmatch-style wildcards.
+amount_sign_inversion:
+  invert_all: false
+  invert_patterns: []
+  exclude_patterns: []
