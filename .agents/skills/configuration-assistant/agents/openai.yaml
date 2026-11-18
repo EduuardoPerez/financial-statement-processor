@@ -1,0 +1,4 @@
+interface:
+  display_name: "Configuration Assistant"
+  short_description: "Configure statement processing settings"
+  default_prompt: "Use $configuration-assistant to review my statement processor configuration and help me adjust it."
