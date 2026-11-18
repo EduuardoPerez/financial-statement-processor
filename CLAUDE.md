@@ -1,104 +1,40 @@
-# CLAUDE.md
+# Claude Code Notes
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project layout
 
-## Project Overview
+- `src/domain/`: business rules and models
+- `src/application/`: processing and consolidation use cases
+- `src/infrastructure/`: parsers, configuration, and Excel repository
+- `src/cli/`: Click commands
+- `tests/unit/`, `tests/integration/`, `tests/e2e/`: automated tests
+- `tests/test_data/`: statement fixtures and expected results used by tests
 
-A Python CLI tool for processing financial statements from Argentine banks into standardized Excel format. Uses clean hexagonal architecture with 4 layers: domain, application, infrastructure, and CLI.
+Use the CLI and parser implementations under `src/`. The former root-level
+`parse_visa_statement.py` entry point has been removed.
 
-**Supported Banks/Formats:**
-- PDF: Macro VISA, BBVA VISA, BBVA Mastercard
-- XLS: BBVA Account, Macro Account
-- XLSX: Mercadopago, BBVA Mastercard
-- CSV: BBVA/Macro VISA (Autorizaciones, Movimientos)
-
-## Common Commands
+## Common commands
 
 ```bash
-# Install dependencies
 uv sync
-
-# Run CLI commands (PYTHONPATH required)
 PYTHONPATH=src uv run python -m cli.main info
-PYTHONPATH=src uv run python -m cli.main process input/statement.pdf
-PYTHONPATH=src uv run python -m cli.main batch input/
-PYTHONPATH=src uv run python -m cli.main consolidate input/
-PYTHONPATH=src uv run python -m cli.main validate input/statement.pdf
-
-# Run tests
-uv run pytest                                    # All tests
-uv run pytest tests/unit/ -v                     # Unit tests only
-uv run pytest tests/integration/ -v              # Integration tests
-uv run pytest --cov=. --cov-report=term-missing  # With coverage
-uv run pytest tests/unit/domain/test_models.py -v  # Single file
-
-# Code quality
-uv run ruff check .              # Lint
-uv run ruff check . --fix        # Auto-fix
-uv run ruff format .             # Format
-uv run mypy .                    # Type check
-pre-commit run --all-files       # All hooks
+PYTHONPATH=src uv run python -m cli.main process /path/to/statement.pdf
+uv run pytest
+uv run ruff check src tests --ignore=E501
+uv run ruff format src tests
+uv run mypy src/
+pre-commit run --all-files
 ```
 
-## Architecture
+The pre-commit hooks run Ruff and mypy. GitHub Actions runs the complete test
+suite on pushes and pull requests.
 
-```
-src/
-├── domain/           # Core business logic (no external dependencies)
-│   ├── models.py     # Transaction, Statement, PaymentMethod enum, Currency enum
-│   ├── services.py   # DuplicateDetector, abstract parser/validator interfaces
-│   ├── builders.py   # TransactionBuilder, StatementBuilder
-│   ├── detectors.py  # BankDetector interface, PaymentMethodDetector
-│   └── validation.py # StatementValidator, ValidationResult
-├── application/      # Use case orchestration
-│   └── services.py   # StatementProcessingService (main orchestrator)
-├── infrastructure/   # External adapters
-│   ├── parsers/      # PDFStatementParser, XLS/XLSX/CSVStatementParser
-│   ├── detectors.py  # MacroDetector, BBVADetector implementations
-│   ├── factories.py  # DefaultParserFactory
-│   ├── repositories.py # ExcelStatementRepository
-│   └── config.py     # ApplicationConfig, ProcessingConfig, OutputConfig
-└── cli/
-    └── main.py       # Click + Rich UI (5 commands: info, process, validate, batch, consolidate)
-```
+## Working with statements
 
-**Key Patterns:**
-- Strategy: 4 file format parsers selected by extension
-- Factory: DefaultParserFactory auto-registers parsers in `__init__`
-- Builder: TransactionBuilder/StatementBuilder with injected DateConverter, AmountParser
-- Repository: ExcelStatementRepository abstracts Excel output
+Keep personal input files and generated reports in local `input/` and `output/`
+directories; Git ignores these paths. Use only the curated fixtures in
+`tests/test_data/` for automated tests, and avoid adding real account data to
+those fixtures without anonymizing it.
 
-## Key Implementation Details
-
-**Payment Method Detection Flow:**
-1. `PaymentMethodDetector` aggregates multiple `BankDetector` implementations
-2. Detectors check filename keywords and file content
-3. File extension routes to appropriate parser via `DefaultParserFactory`
-
-**Transaction Processing:**
-- European number format (1.234,56) via `AmountParser.parse_european_format()`
-- Multiple date formats: DD.MM.YY, DD-MMM-YY, DD/MM/YYYY, ISO 8601
-- Duplicate detection uses absolute amounts: `(date, abs(amount))` key
-
-**Configuration Priority:**
-1. CLI arguments (highest)
-2. Environment variables (FSP_* prefix)
-3. YAML config files
-4. Built-in defaults
-
-## Testing
-
-Tests organized by layer in `tests/`:
-- `unit/` - Component tests (~15 files)
-- `integration/` - End-to-end workflows (~9 files)
-- `e2e/` - CLI smoke tests
-
-pytest config in `pyproject.toml` sets `pythonpath = ["src"]` so tests can import directly.
-
-## Important Files
-
-- `src/cli/main.py` - CLI entry point and command definitions
-- `src/application/services.py` - Main processing orchestrator
-- `src/domain/models.py` - Core data models
-- `src/infrastructure/parsers/pdf_parser.py` - Complex PDF parsing logic (~200 lines)
-- `config/development.yaml` - Development configuration example
+Put business rules in `src/domain/`, orchestration in `src/application/`, and
+file-format or library details in `src/infrastructure/`. Add or update tests in
+the matching test layer when changing behavior.

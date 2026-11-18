@@ -21,28 +21,14 @@ dependencies = [
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=8.0.0",
-]
-
 [dependency-groups]
 dev = [
     "pytest>=8.4.0",
-    "pytest-cov>=5.0.0",
-    "pytest-asyncio>=0.23.0",
     "ruff>=0.12.0",
     "mypy>=1.8.0",
     "pandas-stubs>=2.1.0",
     "types-openpyxl>=3.1.0",
     "pre-commit>=3.6.0",
-    "python-dotenv>=1.0.0",
     "types-pyyaml>=6.0.12.20250516",
 ]
 
@@ -74,10 +60,8 @@ indent-style = "space"
 filterwarnings = [
     "ignore::UserWarning:openpyxl.styles.stylesheet",
 ]
-# Automatically load environment variables from .env
 addopts = "--import-mode=importlib"
 pythonpath = ["src"]
-asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.11"
@@ -100,7 +84,6 @@ mypy_path = "src"
 # Only exclude documentation and tests
 exclude = [
     "tests/",
-    "memory-bank/",
 ]
 
 # Per-file ignores for specific mypy warnings
