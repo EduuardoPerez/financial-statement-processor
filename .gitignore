@@ -2,6 +2,7 @@
 /input/
 /output/
 /expected_output/
+/config/local-statements.yaml
 
 # Python-generated files
 __pycache__/
