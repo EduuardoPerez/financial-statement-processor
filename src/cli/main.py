@@ -20,6 +20,7 @@ import sys
 import traceback
 import warnings
 from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any
 
@@ -512,30 +513,39 @@ def batch(
     ) as progress:
         task = progress.add_task(f"Processing {len(files)} files...", total=len(files))
 
-        for file_path in files:
-            progress.update(task, description=f"Processing {file_path.name}...")
+        with ThreadPoolExecutor(max_workers=config.processing.max_workers) as pool:
+            futures = {
+                file_path: pool.submit(
+                    processing_service.process_statement,
+                    file_path,
+                    output_path,
+                    unique_output=True,
+                )
+                for file_path in files
+            }
+            for file_path in files:
+                progress.update(task, description=f"Processing {file_path.name}...")
 
-            try:
-                result = processing_service.process_statement(file_path, output_path)
+                try:
+                    result = futures[file_path].result()
+                    if result.success and result.statement:
+                        successful_files.append(
+                            {
+                                "file": str(file_path),
+                                "output": str(result.output_path),
+                                "transactions": len(result.statement.transactions),
+                                "processing_time": result.processing_time,
+                            }
+                        )
+                        total_transactions += len(result.statement.transactions)
+                    else:
+                        failed_files.append(
+                            {"file": str(file_path), "errors": result.errors}
+                        )
+                except Exception as e:
+                    failed_files.append({"file": str(file_path), "errors": [str(e)]})
 
-                if result.success and result.statement:
-                    successful_files.append(
-                        {
-                            "file": str(file_path),
-                            "output": str(result.output_path),
-                            "transactions": len(result.statement.transactions),
-                            "processing_time": result.processing_time,
-                        }
-                    )
-                    total_transactions += len(result.statement.transactions)
-                else:
-                    failed_files.append(
-                        {"file": str(file_path), "errors": result.errors}
-                    )
-            except Exception as e:
-                failed_files.append({"file": str(file_path), "errors": [str(e)]})
-
-            progress.update(task, advance=1)
+                progress.update(task, advance=1)
 
     batch_data = {
         "total_files": len(files),

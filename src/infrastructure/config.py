@@ -18,6 +18,12 @@ class ProcessingConfig:
     enable_balance_checking: bool = True
     duplicate_prefix: str = "DUPLICATED"
 
+    def __post_init__(self) -> None:
+        if self.max_workers < 1:
+            raise ValueError("processing.max_workers must be at least 1")
+        if self.retry_attempts < 0:
+            raise ValueError("processing.retry_attempts cannot be negative")
+
 
 @dataclass
 class PaymentMethodMappingConfig:
@@ -70,6 +76,16 @@ class OutputConfig:
     default_format: str = "excel"
     date_format: str = "%Y-%m-%d"
     decimal_separator: str = ","
+
+    def __post_init__(self) -> None:
+        if self.default_format.lower() not in {"excel", "csv"}:
+            raise ValueError("output.default_format must be 'excel' or 'csv'")
+        try:
+            from datetime import date
+
+            date.today().strftime(self.date_format)
+        except (ValueError, TypeError) as exc:
+            raise ValueError(f"Invalid output.date_format: {self.date_format}") from exc
 
 
 @dataclass

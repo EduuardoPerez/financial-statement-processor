@@ -72,6 +72,29 @@ class TestExcelStatementRepository:
                 output_path, index=False, sheet_name="Sheet1", engine="openpyxl"
             )
 
+    def test_csv_output_uses_configured_date_and_delimiter(
+        self, mock_dependencies, sample_statement
+    ):
+        from infrastructure.config import OutputConfig
+
+        repository = ExcelStatementRepository(
+            **mock_dependencies,
+            output_config=OutputConfig(
+                default_format="csv", date_format="%d/%m/%Y", decimal_separator=","
+            ),
+        )
+        output_path = Path("output/test_statement.csv")
+        with patch("pandas.DataFrame.to_csv") as mock_to_csv:
+            repository.save_statement(sample_statement, output_path)
+            frame = mock_to_csv.call_args
+            assert frame.args[0] == output_path
+            assert frame.kwargs["sep"] == ";"
+            dataframe = repository._transactions_to_dataframe(
+                sample_statement.transactions
+            )
+            assert dataframe.iloc[0]["Date"] == "15/01/2025"
+            assert dataframe.iloc[0]["Amount"] == "100,5"
+
     def test_save_statement_no_transactions_error(self, mock_dependencies):
         """Test saving statement with no transactions raises ValueError."""
         repository = ExcelStatementRepository(**mock_dependencies)

@@ -69,6 +69,10 @@ class ExcelStatementRepository(StatementRepository):
             amount_sign_inversion or AmountSignInversionConfig()
         )
 
+    @property
+    def output_format(self) -> str:
+        return self._output_config.default_format.lower()
+
     def save_statement(self, statement: Statement, output_path: Path) -> None:
         """
         Save statement to Excel file at specified path.
@@ -90,15 +94,26 @@ class ExcelStatementRepository(StatementRepository):
         # Convert statement to DataFrame
         df = self._transactions_to_dataframe(statement.transactions)
 
-        # Save as Excel file using pandas with openpyxl engine
+        self._save_dataframe(df, output_path, "statement")
+
+    def _save_dataframe(self, df: pd.DataFrame, output_path: Path, label: str) -> None:
+        """Write a dataframe in the configured output format."""
         try:
-            df.to_excel(
-                output_path, index=False, sheet_name="Sheet1", engine="openpyxl"
-            )
+            if self._output_config.default_format.lower() == "csv":
+                delimiter = ";" if self._output_config.decimal_separator == "," else ","
+                df.to_csv(output_path, index=False, sep=delimiter)
+            else:
+                df.to_excel(
+                    output_path, index=False, sheet_name="Sheet1", engine="openpyxl"
+                )
         except Exception as e:
-            raise OSError(
-                f"Failed to save Excel file to {output_path}: {str(e)}"
-            ) from e
+            format_name = "CSV" if self.output_format == "csv" else "Excel"
+            subject = (
+                f"{format_name} file"
+                if label == "statement"
+                else f"{label} {format_name} file"
+            )
+            raise OSError(f"Failed to save {subject} to {output_path}: {str(e)}") from e
 
     def load_raw_data(self, input_path: Path) -> bytes:
         """
@@ -153,7 +168,7 @@ class ExcelStatementRepository(StatementRepository):
 
             data.append(
                 {
-                    "Date": transaction.date.strftime("%Y-%m-%d"),
+                    "Date": transaction.date.strftime(self._output_config.date_format),
                     "Description": transaction.description,
                     "Currency": transaction.currency.value,
                     "Amount": amount_str,
@@ -192,12 +207,4 @@ class ExcelStatementRepository(StatementRepository):
         # Convert consolidated statement to DataFrame
         df = self._transactions_to_dataframe(consolidated.transactions)
 
-        # Save as Excel file using pandas with openpyxl engine
-        try:
-            df.to_excel(
-                output_path, index=False, sheet_name="Sheet1", engine="openpyxl"
-            )
-        except Exception as e:
-            raise OSError(
-                f"Failed to save consolidated Excel file to {output_path}: {str(e)}"
-            ) from e
+        self._save_dataframe(df, output_path, "consolidated")

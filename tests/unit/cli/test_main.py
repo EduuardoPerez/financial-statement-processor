@@ -618,7 +618,7 @@ class TestBatchCommand:
         mock_factory.get_supported_extensions.return_value = {".pdf", ".xls", ".xlsx"}
 
         # Create successful results
-        def mock_process_statement(file_path, output_dir):
+        def mock_process_statement(file_path, output_dir, **kwargs):
             mock_statement = Mock()
             mock_statement.transactions = [Mock()] * 10
             mock_result = Mock(spec=ProcessingResult)
