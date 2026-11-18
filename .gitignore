@@ -1,7 +1,7 @@
-# TODO: Uncomment these when no longer needed for development
-# input/
-# output/
-# tests/test_data/
+# Local financial data and generated reports
+/input/
+/output/
+/expected_output/
 
 # Python-generated files
 __pycache__/
@@ -35,7 +35,6 @@ Thumbs.db
 # Environment files
 .env
 .env.*
-!.env.example
 
 # Logs
 *.log

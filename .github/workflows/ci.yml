@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10.3.3
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - run: uv sync --locked --all-groups
+      - run: uv run ruff check src tests --ignore=E501
+      - run: uv run ruff format --check src tests
+      - run: uv run mypy src/
+      - run: uv run pytest

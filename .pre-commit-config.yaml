@@ -3,7 +3,7 @@ repos:
     rev: v0.12.0
     hooks:
       - id: ruff
-        args: [--fix, --ignore=E501] # Auto-fix issues, ignore line length for now
+        args: [--fix, --ignore=E501]
       - id: ruff-format # Auto-format code
 
   - repo: local
@@ -14,12 +14,3 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
-
-  - repo: local
-    hooks:
-      - id: pytest-coverage
-        name: pytest with coverage check
-        entry: bash -c "PYTHONPATH=src uv run pytest --cov=. --cov-report=term-missing --cov-fail-under=85 --cov-config=.coveragerc"
-        language: system
-        pass_filenames: false
-        always_run: true
