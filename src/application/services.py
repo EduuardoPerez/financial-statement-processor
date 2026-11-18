@@ -149,7 +149,10 @@ class StatementProcessingService:
         try:
             parser = self._parser_factory.create_parser(input_path)
 
-            if hasattr(parser, "parse_with_content") and hasattr(
+            if not self._processing_config.enable_validation:
+                statement = parser.parse(input_path)
+                validation_result = ValidationResult(is_valid=True, errors=[])
+            elif hasattr(parser, "parse_with_content") and hasattr(
                 self._validator, "validate_with_content"
             ):
                 statement, raw_content = parser.parse_with_content(input_path)

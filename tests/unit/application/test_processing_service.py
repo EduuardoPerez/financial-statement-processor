@@ -129,6 +129,25 @@ class TestStatementProcessingService:
             sample_statement, expected_output_path
         )
 
+    def test_process_statement_skips_validation_when_disabled(
+        self, mock_dependencies, sample_statement
+    ):
+        mock_dependencies["processing_config"].enable_validation = False
+        service = StatementProcessingService(**mock_dependencies)
+        parser = Mock(spec=StatementParser)
+        parser.parse.return_value = sample_statement
+        mock_dependencies["parser_factory"].create_parser.return_value = parser
+        mock_dependencies["filename_generator"].generate.return_value = "statement.xlsx"
+
+        result = service.process_statement(Path("statement.pdf"), Path("output"))
+
+        assert result.success is True
+        assert result.statement is sample_statement
+        assert result.validation_result.is_valid is True
+        mock_dependencies["validator"].validate.assert_not_called()
+        mock_dependencies["validator"].validate_with_content.assert_not_called()
+        parser.parse.assert_called_once_with(Path("statement.pdf"))
+
     def test_processing_result_has_transactions(
         self, mock_dependencies, sample_statement
     ):

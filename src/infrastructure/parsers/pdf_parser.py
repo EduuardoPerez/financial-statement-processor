@@ -27,6 +27,7 @@ _TAX_KEYWORDS = (
     "IIBB PERCEP",
     "IVA RG",
     "DB.RG",
+    "CR.RG",
 )
 _COMMISSION_KEYWORDS = ("COMISIÓN", "COMISION")
 _SKIP_KEYWORDS = ("SALDO ANTERIOR", "Total Consumos")

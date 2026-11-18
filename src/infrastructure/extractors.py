@@ -72,6 +72,19 @@ class PDFBalanceExtractor(BalanceExtractor):
 
         return balance
 
+    def extract_opening_balance(
+        self, content: str, payment_method: PaymentMethod
+    ) -> dict[str, Decimal] | None:
+        """Extract the prior-cycle balance from a card statement PDF."""
+        match = re.search(r"SALDO ANTERIOR\s+([\d.,]+)\s+([\d.,]+)", content)
+        if not match:
+            return None
+
+        return {
+            "ars": self._parse_european_amount(match.group(1)),
+            "usd": self._parse_european_amount(match.group(2)),
+        }
+
     def can_extract(self, payment_method: PaymentMethod) -> bool:
         """Check if extractor supports PDF-based payment methods."""
         pdf_methods = {
@@ -183,6 +196,19 @@ class BalanceExtractionService:
         for extractor in self._extractors:
             if extractor.can_extract(payment_method):
                 return extractor.extract_balance(content, payment_method)
+        return None
+
+    def extract_opening_balance(
+        self, content: str, payment_method: PaymentMethod
+    ) -> dict[str, Decimal] | None:
+        """Extract an optional opening balance when a registered extractor supports it."""
+        for extractor in self._extractors:
+            if extractor.can_extract(payment_method):
+                opening_balance = extractor.extract_opening_balance(
+                    content, payment_method
+                )
+                if opening_balance is not None:
+                    return opening_balance
         return None
 
 

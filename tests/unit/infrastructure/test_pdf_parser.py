@@ -706,6 +706,20 @@ class TestPDFStatementParser:
         call = mock_transaction_builder.build_from_pdf_line.call_args
         assert "VALID TRANSACTION" in call[1]["description"]
 
+    def test_parse_credit_rg_trailing_dash_as_negative(
+        self, pdf_parser, mock_transaction_builder
+    ):
+        transactions = pdf_parser._parse_transactions(
+            "07.09.26 CR.RG 5617 30% M (M) 41.781,85-",
+            PaymentMethod.BBVA_VISA,
+        )
+
+        assert len(transactions) == 1
+        assert (
+            mock_transaction_builder.build_from_pdf_line.call_args.kwargs["amount_str"]
+            == "-41.781,85"
+        )
+
     @patch("infrastructure.parsers.pdf_parser.pdfplumber")
     def test_extract_text_pdfplumber_exception(self, mock_pdfplumber, pdf_parser):
         """Test text extraction when pdfplumber raises an exception"""

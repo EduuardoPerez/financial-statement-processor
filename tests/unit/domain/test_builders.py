@@ -411,6 +411,18 @@ class TestTransactionBuilder:
         assert transaction.currency == Currency.ARS
         assert transaction.payment_method == PaymentMethod.BBVA_VISA
 
+    def test_build_from_pdf_line_spanish_month_abbreviation(self, transaction_builder):
+        transaction = transaction_builder.build_from_pdf_line(
+            date_str="02-Ago-26",
+            description="DLO*PLATZI 007491",
+            amount_str="15.725,00",
+            currency=Currency.ARS,
+            payment_method=PaymentMethod.BBVA_MASTERCARD,
+        )
+
+        assert transaction.date == date(2026, 8, 2)
+        assert transaction.amount == Decimal("15725.00")
+
     def test_build_from_pdf_line_validation_errors(self, transaction_builder):
         """Test validation errors in TransactionBuilder."""
         # Empty date string
