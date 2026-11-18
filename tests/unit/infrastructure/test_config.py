@@ -37,6 +37,17 @@ class TestProcessingConfig:
         assert config.enable_validation is False
         assert config.enable_balance_checking is False
 
+    @pytest.mark.parametrize(
+        ("kwargs", "message"),
+        [
+            ({"max_workers": 0}, "max_workers must be at least 1"),
+            ({"retry_attempts": -1}, "retry_attempts cannot be negative"),
+        ],
+    )
+    def test_rejects_invalid_processing_values(self, kwargs, message):
+        with pytest.raises(ValueError, match=message):
+            ProcessingConfig(**kwargs)
+
 
 class TestOutputConfig:
     """Test OutputConfig dataclass functionality."""
@@ -58,6 +69,10 @@ class TestOutputConfig:
         assert config.default_format == "csv"
         assert config.date_format == "%d/%m/%Y"
         assert config.decimal_separator == "."
+
+    def test_rejects_invalid_output_format(self):
+        with pytest.raises(ValueError, match="default_format"):
+            OutputConfig(default_format="pdf")
 
 
 class TestApplicationConfig:

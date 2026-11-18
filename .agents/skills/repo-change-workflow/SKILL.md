@@ -21,3 +21,5 @@ First inspect repository instructions, Git status and branch, CI workflows, pre-
 ## Authorization and reporting
 
 A request to implement code authorizes the necessary local edits, but does not by itself authorize committing, pushing, opening a PR, or other external mutations. Respect repository and environment permission gates. If a required action is blocked, finish the independent local work, explain the exact gate, and stop before the blocked action. Do not claim a check passed unless it completed successfully. Report the changed files, stages run or skipped with a brief reason, check results, commit/branch details, and PR link when applicable.
+
+If a plan or request explicitly excludes commit, push, or PR creation, treat those stages as out of scope for the current authorization. Before concluding the implementation, ask the user whether they want to include any of those stages. Do not perform them unless the user explicitly authorizes them. If the user confirms they are out of scope, finish with the local changes and report that no publication occurred.

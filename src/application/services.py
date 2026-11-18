@@ -11,7 +11,10 @@ Classes:
     StatementProcessingService: Main orchestrator service
 """
 
+import hashlib
+import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -125,7 +128,14 @@ class StatementProcessingService:
         self._processing_config = processing_config
         self._balance_extraction_service = balance_extraction_service
 
-    def process_statement(self, input_path: Path, output_dir: Path) -> ProcessingResult:
+    def process_statement(
+        self,
+        input_path: Path,
+        output_dir: Path,
+        *,
+        unique_output: bool = False,
+        _attempt: int = 0,
+    ) -> ProcessingResult:
         """
         Process a statement file end-to-end.
 
@@ -173,7 +183,16 @@ class StatementProcessingService:
                     validation_result,
                 )
 
-            output_path = output_dir / self._filename_generator.generate(statement)
+            filename = self._filename_generator.generate(statement)
+            extension = ".csv" if self._repository_output_format() == "csv" else ".xlsx"
+            filename = str(Path(filename).with_suffix(extension))
+            if unique_output:
+                digest = hashlib.sha256(str(input_path.resolve()).encode()).hexdigest()[
+                    :8
+                ]
+                stem = re.sub(r"[^A-Za-z0-9_-]+", "_", input_path.stem).strip("_")
+                filename = f"{Path(filename).stem}_{stem}_{digest}{extension}"
+            output_path = output_dir / filename
             self._repository.save_statement(statement, output_path)
 
             return ProcessingResult(
@@ -187,6 +206,16 @@ class StatementProcessingService:
             )
 
         except Exception as e:
+            if (
+                self._is_io_error(e)
+                and _attempt < self._processing_config.retry_attempts
+            ):
+                return self.process_statement(
+                    input_path,
+                    output_dir,
+                    unique_output=unique_output,
+                    _attempt=_attempt + 1,
+                )
             # Reflect the exception in validation_result unless we already have
             # a validation result from the validator (is_valid has been set).
             if validation_result.errors == ["Processing not completed"]:
@@ -199,6 +228,17 @@ class StatementProcessingService:
                 output_path,
                 validation_result,
             )
+
+    def _repository_output_format(self) -> str:
+        return getattr(self._repository, "output_format", "excel")
+
+    @staticmethod
+    def _is_io_error(error: Exception) -> bool:
+        """Recognize I/O failures without retrying parser or validation errors."""
+        cause: BaseException | None = error
+        while cause is not None and cause.__cause__ is not None:
+            cause = cause.__cause__
+        return isinstance(cause, OSError)
 
     def _create_error_result(
         self,
@@ -277,8 +317,12 @@ class StatementProcessingService:
         successful_files: list[dict[str, Any]] = []
         failed_files: list[dict[str, Any]] = []
 
-        for file_path in files:
-            statement, errors = self._process_individual_file(file_path)
+        with ThreadPoolExecutor(
+            max_workers=self._processing_config.max_workers
+        ) as pool:
+            processed = list(pool.map(self._process_individual_file, files))
+
+        for file_path, (statement, errors) in zip(files, processed):
             if statement:
                 successful_statements.append(statement)
                 successful_files.append(
@@ -337,7 +381,17 @@ class StatementProcessingService:
             )
             output_path = output_dir / filename
 
-            self._repository.save_consolidated_statement(consolidated, output_path)
+            extension = ".csv" if self._repository_output_format() == "csv" else ".xlsx"
+            output_path = output_path.with_suffix(extension)
+            for attempt in range(self._processing_config.retry_attempts + 1):
+                try:
+                    self._repository.save_consolidated_statement(
+                        consolidated, output_path
+                    )
+                    break
+                except OSError:
+                    if attempt >= self._processing_config.retry_attempts:
+                        raise
 
             return ConsolidationResult(
                 input_directory=input_dir,
@@ -379,7 +433,7 @@ class StatementProcessingService:
     ) -> tuple[Statement | None, list[str]]:
         """Process single file and return statement or errors."""
         try:
-            result = self.process_statement(file_path, Path("temp"))
+            result = self.process_statement(file_path, Path("temp"), unique_output=True)
             if result.success and result.statement:
                 return result.statement, []
             else:
