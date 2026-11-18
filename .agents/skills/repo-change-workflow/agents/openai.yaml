@@ -1,0 +1,4 @@
+interface:
+  display_name: "Repository Change Workflow"
+  short_description: "Coordinate code, checks, and PR delivery"
+  default_prompt: "Use $repo-change-workflow to implement and validate this repository change."
