@@ -179,7 +179,7 @@ class ExcelStatementRepository(StatementRepository):
         return pd.DataFrame(data)
 
     def save_consolidated_statement(
-        self, consolidated: "ConsolidatedStatement", output_path: Path
+        self, consolidated: ConsolidatedStatement, output_path: Path
     ) -> None:
         """
         Save consolidated statement to Excel file.

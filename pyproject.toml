@@ -7,10 +7,10 @@ name = "financial-statement-processor"
 version = "0.1.0"
 description = "A Python tool for processing financial statements from various banks into structured Excel format"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.15"
 dependencies = [
     "openpyxl>=3.1.5",
-    "pandas>=2.3.0",
+    "pandas>=3.0.6",
     "pdfplumber>=0.11.6",
     "xlrd>=2.0.2",
     "click>=8.1.0",
@@ -34,7 +34,7 @@ dev = [
 
 [tool.ruff]
 line-length = 88
-target-version = "py311"
+target-version = "py315"
 
 [tool.ruff.lint]
 # Enable flake8-equivalent rules plus additional modern checks
@@ -64,7 +64,7 @@ addopts = "--import-mode=importlib"
 pythonpath = ["src"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.15"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false

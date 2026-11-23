@@ -15,7 +15,6 @@ jobs:
 
       - uses: astral-sh/setup-uv@v10.3.3
         with:
-          python-version: "3.11"
           enable-cache: true
 
       - run: uv sync --locked --all-groups

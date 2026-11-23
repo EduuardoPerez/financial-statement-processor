@@ -6,7 +6,7 @@ and Excel files. The application code is organized into four layers:
 
 ## Requirements
 
-- Python 3.11 or later
+- Python 3.15 or later
 - [uv](https://docs.astral.sh/uv/)
 
 ## Installation

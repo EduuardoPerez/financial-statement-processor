@@ -256,7 +256,7 @@ class CSVStatementParser(StatementParser):
                     payment_method=payment_method,
                 )
                 transactions.append(transaction)
-            except (ValueError, IndexError):
+            except ValueError, IndexError:
                 continue
 
         return transactions
