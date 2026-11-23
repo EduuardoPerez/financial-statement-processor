@@ -232,29 +232,29 @@ class XLSXStatementParser(StatementParser):
 
         # Process each row
         for _, row in df.iterrows():
-            fecha_str = (
+            date_str = (
                 str(row["Fecha de Pago"]).strip()
                 if pd.notna(row["Fecha de Pago"])
                 else ""
             )
-            tipo_operacion = (
+            operation_type = (
                 str(row["Tipo de Operación"]).strip()
                 if pd.notna(row["Tipo de Operación"])
                 else ""
             )
-            importe = row["Importe"] if pd.notna(row["Importe"]) else 0
+            amount_value = row["Importe"] if pd.notna(row["Importe"]) else 0
 
-            if fecha_str and tipo_operacion:
+            if date_str and operation_type:
                 try:
                     # Convert ISO 8601 timestamp to YYYY-MM-DD format
                     # Extract date part from "2025-02-01T17:45:36Z"
-                    formatted_date = fecha_str.split("T")[0]
+                    formatted_date = date_str.split("T")[0]
 
                     # Build transaction using TransactionBuilder
                     transaction = self._transaction_builder.build_from_xls_data(
                         date_str=formatted_date,
-                        description=tipo_operacion,
-                        amount_str=str(float(importe)),
+                        description=operation_type,
+                        amount_str=str(float(amount_value)),
                         currency=Currency.ARS,
                         payment_method=PaymentMethod.MERCADOPAGO,
                     )
@@ -281,28 +281,28 @@ class XLSXStatementParser(StatementParser):
 
         # Process each row
         for _, row in df.iterrows():
-            fecha_str = (
+            date_str = (
                 str(row["Fecha y hora"]).strip()
                 if pd.notna(row["Fecha y hora"])
                 else ""
             )
-            movimientos = (
+            transaction_description = (
                 str(row["Movimientos"]).strip() if pd.notna(row["Movimientos"]) else ""
             )
-            monto_str = str(row["Monto"]).strip() if pd.notna(row["Monto"]) else ""
+            amount_str = str(row["Monto"]).strip() if pd.notna(row["Monto"]) else ""
 
-            if fecha_str and movimientos and monto_str:
+            if date_str and transaction_description and amount_str:
                 try:
                     # Parse date from DD/MM/YY to YYYY-MM-DD
-                    formatted_date = self._convert_bbva_date(fecha_str)
+                    formatted_date = self._convert_bbva_date(date_str)
 
-                    # Parse currency and amount from monto string
-                    currency, amount_str = self._parse_bbva_amount(monto_str)
+                    # Parse currency and amount from the source string
+                    currency, amount_str = self._parse_bbva_amount(amount_str)
 
                     # Build transaction using TransactionBuilder
                     transaction = self._transaction_builder.build_from_xls_data(
                         date_str=formatted_date,
-                        description=movimientos,
+                        description=transaction_description,
                         amount_str=amount_str,
                         currency=currency,
                         payment_method=PaymentMethod.BBVA_MASTERCARD,
@@ -330,29 +330,29 @@ class XLSXStatementParser(StatementParser):
         date_obj = datetime.strptime(date_str, "%d/%m/%y")
         return date_obj.strftime("%Y-%m-%d")
 
-    def _parse_bbva_amount(self, monto_str: str) -> tuple[Currency, str]:
+    def _parse_bbva_amount(self, amount_str: str) -> tuple[Currency, str]:
         """
         Parse BBVA amount string to extract currency and amount.
 
         Args:
-            monto_str: Amount string (e.g., "USD 35,00", "$ 107.970,00")
+            amount_str: Amount string (e.g., "USD 35,00", "$ 107.970,00")
 
         Returns:
             Tuple of (Currency, amount_string)
         """
         # Clean the string
-        monto_clean = monto_str.strip()
+        amount_clean = amount_str.strip()
 
         # Check for USD prefix
-        if monto_clean.startswith("USD "):
+        if amount_clean.startswith("USD "):
             currency = Currency.USD
-            amount_str = monto_clean[4:]  # Remove "USD " prefix
-        elif monto_clean.startswith("$ "):
+            amount_str = amount_clean[4:]  # Remove "USD " prefix
+        elif amount_clean.startswith("$ "):
             currency = Currency.ARS
-            amount_str = monto_clean[2:]  # Remove "$ " prefix
+            amount_str = amount_clean[2:]  # Remove "$ " prefix
         else:
             # Default to ARS if no clear currency indicator
             currency = Currency.ARS
-            amount_str = monto_clean
+            amount_str = amount_clean
 
         return currency, amount_str

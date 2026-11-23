@@ -17,7 +17,7 @@ from domain.builders import TransactionBuilder
 from domain.models import PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 
-from ._shared import map_currency_es, parse_ddmmyyyy
+from ._shared import map_currency_spanish, parse_ddmmyyyy
 
 
 class CSVStatementParser(StatementParser):
@@ -224,33 +224,33 @@ class CSVStatementParser(StatementParser):
         transactions = []
 
         for _, row in df.iterrows():
-            fecha_str = ""
+            date_str = ""
             if "Fecha Origen" in df.columns and pd.notna(row["Fecha Origen"]):
-                fecha_str = str(row["Fecha Origen"]).strip()
+                date_str = str(row["Fecha Origen"]).strip()
             elif "Fecha" in df.columns and pd.notna(row["Fecha"]):
-                fecha_str = str(row["Fecha"]).strip()
+                date_str = str(row["Fecha"]).strip()
 
-            establecimiento = (
+            merchant = (
                 str(row["Establecimiento"]).strip()
                 if pd.notna(row["Establecimiento"])
                 else ""
             )
-            moneda = str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
-            importe_str = (
-                str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
+            currency_name = (
+                str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
             )
+            amount_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
 
-            if not (fecha_str and importe_str and importe_str != "nan"):
+            if not (date_str and amount_str and amount_str != "nan"):
                 continue
 
             try:
-                formatted_date = parse_ddmmyyyy(fecha_str)
-                amount = float(importe_str.replace(",", ""))
-                currency = map_currency_es(moneda)
+                formatted_date = parse_ddmmyyyy(date_str)
+                amount = float(amount_str.replace(",", ""))
+                currency = map_currency_spanish(currency_name)
 
                 transaction = self._transaction_builder.build_from_csv_data(
                     date_str=formatted_date,
-                    description=establecimiento,
+                    description=merchant,
                     amount_str=str(amount),
                     currency=currency,
                     payment_method=payment_method,

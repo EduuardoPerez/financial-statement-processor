@@ -123,12 +123,12 @@ class CSVBalanceExtractor(BalanceExtractor):
             total = Decimal("0.0")
 
             for _, row in df.iterrows():
-                importe_str = str(row["Importe"]).strip()
-                if importe_str and importe_str != "nan":
+                amount_str = str(row["Importe"]).strip()
+                if amount_str and amount_str != "nan":
                     try:
                         # Handle European format
-                        amount_str = importe_str.replace(",", "")
-                        amount = Decimal(amount_str)
+                        normalized_amount = amount_str.replace(",", "")
+                        amount = Decimal(normalized_amount)
                         total += amount
                     except (ValueError, TypeError, Exception):
                         continue
@@ -161,9 +161,9 @@ class XLSXBalanceExtractor(BalanceExtractor):
             total = Decimal("0.0")
 
             for _, row in df.iterrows():
-                importe = row["Importe"] if pd.notna(row["Importe"]) else 0
+                amount_value = row["Importe"] if pd.notna(row["Importe"]) else 0
                 try:
-                    amount = Decimal(str(importe))
+                    amount = Decimal(str(amount_value))
                     total += amount
                 except (ValueError, TypeError, Exception):
                     continue

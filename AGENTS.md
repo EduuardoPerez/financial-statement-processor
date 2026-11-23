@@ -1,5 +1,13 @@
 # Repository Guidelines
 
+## Language
+
+English is the default language for all project-authored content committed to
+this repository. Write documentation, instructions, comments, identifiers,
+tests, commit messages, pull request descriptions, and user-facing messages in
+English. Preserve non-English source data and exact external-format labels when
+they are required to parse, recognize, or test supported statement formats.
+
 ## Project Structure & Module Organization
 
 The maintained application uses a `src/` layout with four layers: `src/domain/` holds business rules and models, `src/application/` coordinates use cases, `src/infrastructure/` contains parsers and external adapters, and `src/cli/` exposes commands. Tests live under `tests/unit/`, `tests/integration/`, and `tests/e2e/`; shared fixtures and expected results are in `tests/test_data/`. Bank configuration is in `config/`. Local `input/`, `output/`, and `expected_output/` directories are ignored by Git; do not commit personal statements or generated reports.
