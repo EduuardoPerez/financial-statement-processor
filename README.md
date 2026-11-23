@@ -1,53 +1,52 @@
 # Financial Statement Processor
 
-CLI para convertir extractos bancarios en transacciones estructuradas y archivos
-Excel. El código de aplicación está organizado en `src/domain`, `src/application`,
-`src/infrastructure` y `src/cli`.
+A command-line tool for converting bank statements into structured transactions
+and Excel files. The application code is organized into four layers:
+`src/domain`, `src/application`, `src/infrastructure`, and `src/cli`.
 
-## Requisitos
+## Requirements
 
-- Python 3.11 o superior
+- Python 3.11 or later
 - [uv](https://docs.astral.sh/uv/)
 
-## Instalación
+## Installation
 
 ```bash
 uv sync
 ```
 
-## Uso
+## Usage
 
 ```bash
-# Ver formatos y métodos de pago reconocidos
+# List recognized formats and payment methods
 PYTHONPATH=src uv run python -m cli.main info
 
-# Procesar un archivo
-PYTHONPATH=src uv run python -m cli.main process /ruta/al/extracto.pdf
+# Process a statement file
+PYTHONPATH=src uv run python -m cli.main process /path/to/statement.pdf
 
-# Validar un archivo sin generar la salida
-PYTHONPATH=src uv run python -m cli.main validate /ruta/al/extracto.pdf
+# Validate a file without generating output
+PYTHONPATH=src uv run python -m cli.main validate /path/to/statement.pdf
 
-# Procesar los archivos compatibles de una carpeta
-PYTHONPATH=src uv run python -m cli.main batch /ruta/a/extractos/
+# Process supported files in a directory
+PYTHONPATH=src uv run python -m cli.main batch /path/to/statements/
 
-# Consolidar transacciones de una carpeta
-PYTHONPATH=src uv run python -m cli.main consolidate /ruta/a/extractos/
+# Consolidate transactions from a directory
+PYTHONPATH=src uv run python -m cli.main consolidate /path/to/statements/
 ```
 
-Se puede indicar una configuración YAML con `--config` antes del comando. Sin
-esa opción, la CLI lee variables de entorno con prefijo `FSP_`. Los valores
-disponibles y sus valores predeterminados están definidos en
-`src/infrastructure/config.py`; `config/development.yaml` y
-`config/production.yaml` son ejemplos.
-Para personalizar los nombres de métodos de pago, consulta
+Pass a YAML configuration with `--config` before the command. Without that
+option, the CLI reads environment variables prefixed with `FSP_`. Available
+settings and their defaults are defined in `src/infrastructure/config.py`; the
+files `config/development.yaml` and `config/production.yaml` are examples. To
+customize payment method names, see
 [`docs/PAYMENT_METHOD_MAPPING.md`](docs/PAYMENT_METHOD_MAPPING.md).
 
-Los archivos procesados se guardan en `output/` por defecto. Los directorios
-`input/`, `output/` y `expected_output/` son locales de trabajo y están excluidos
-de Git. No guardes extractos personales en el repositorio. Las muestras
-necesarias para las pruebas se mantienen bajo `tests/test_data/`.
+Processed files are saved to `output/` by default. The `input/`, `output/`, and
+`expected_output/` directories are local working directories excluded from Git.
+Do not store personal statements in the repository. Test samples are kept in
+`tests/test_data/`.
 
-## Desarrollo
+## Development
 
 ```bash
 uv sync
@@ -57,5 +56,5 @@ uv run ruff format --check src tests
 uv run mypy src/
 ```
 
-Ruff y mypy se ejecutan en los hooks de pre-commit. La suite de pytest se ejecuta
-en GitHub Actions para no alargar cada commit local.
+Ruff and mypy run in the pre-commit hooks. The pytest suite runs in GitHub
+Actions to keep local commits fast.

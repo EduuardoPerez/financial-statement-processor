@@ -231,21 +231,21 @@ class XLSStatementParser(StatementParser):
         for _, row in data_rows.iterrows():
             # Check if Date and Amount are not null
             if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
-                fecha_str = str(row.iloc[0]).strip()
-                concepto_str = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
-                importe_str = str(row.iloc[3]).strip()
+                date_str = str(row.iloc[0]).strip()
+                description = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
+                amount_str = str(row.iloc[3]).strip()
 
-                if fecha_str and importe_str and importe_str != "nan":
+                if date_str and amount_str and amount_str != "nan":
                     try:
                         # Convert date from DD/MM/YYYY to YYYY-MM-DD
-                        day, month, year = fecha_str.split("/")
+                        day, month, year = date_str.split("/")
                         formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
                         # Build transaction using TransactionBuilder
                         transaction = self._transaction_builder.build_from_xls_data(
                             date_str=formatted_date,
-                            description=concepto_str,
-                            amount_str=importe_str,
+                            description=description,
+                            amount_str=amount_str,
                             currency=Currency.ARS,
                             payment_method=PaymentMethod.BBVA_ACCOUNT,
                         )
@@ -275,20 +275,20 @@ class XLSStatementParser(StatementParser):
         for _, row in data_rows.iterrows():
             # Check if Date and Amount are not null
             if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
-                fecha = row.iloc[0]  # Already a datetime object
-                descripcion = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
-                importe = row.iloc[3]  # Already a number
+                date_value = row.iloc[0]  # Already a datetime object
+                description = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
+                amount_value = row.iloc[3]  # Already a number
 
-                if fecha and pd.notna(importe):
+                if date_value and pd.notna(amount_value):
                     try:
                         # Convert datetime to YYYY-MM-DD format
-                        formatted_date = fecha.strftime("%Y-%m-%d")
+                        formatted_date = date_value.strftime("%Y-%m-%d")
 
                         # Build transaction using TransactionBuilder
                         transaction = self._transaction_builder.build_from_xls_data(
                             date_str=formatted_date,
-                            description=descripcion,
-                            amount_str=str(float(importe)),
+                            description=description,
+                            amount_str=str(float(amount_value)),
                             currency=Currency.ARS,
                             payment_method=PaymentMethod.MACRO_ACCOUNT,
                         )

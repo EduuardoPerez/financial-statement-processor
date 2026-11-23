@@ -33,7 +33,7 @@ class TestCSVStatementParserLoading:
         """CSV files exported in Latin-1 (ISO-8859-1) must load correctly.
 
         Regression: BBVA exports 'Movimientos' CSVs in Latin-1. Rows with
-        accented characters (e.g. 'COMISIÓN BLACK') contain bytes like 0xD3
+        accented source text (e.g. 'COMISIÓN BLACK') contain bytes like 0xD3
         that are invalid UTF-8, so loading with the default encoding fails
         and the whole file is rejected.
         """

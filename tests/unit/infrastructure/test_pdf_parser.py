@@ -496,7 +496,7 @@ class TestPDFStatementParser:
         """Commission lines without a reference code must be parsed as charges.
 
         Regression: BBVA VISA lists card fees as e.g.
-        '28.05.26 COMISIÓN BLACK 65.206,61' with no comprobante number. The
+        '28.05.26 COMISIÓN BLACK 65.206,61' with no receipt number. The
         accented 'Ó' breaks the reference-code regex ([A-Z] is ASCII-only),
         so the charge was silently dropped and the statement failed balance
         validation by exactly that amount.
@@ -523,7 +523,7 @@ class TestPDFStatementParser:
 
         Without a dedicated handler, 'COMISION' matches the reference-code
         regex and gets stripped from the description as if it were a
-        comprobante number.
+        receipt number.
         """
         # Arrange
         test_text = """

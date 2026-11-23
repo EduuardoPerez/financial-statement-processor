@@ -9,6 +9,6 @@ def parse_ddmmyyyy(date_str: str) -> str:
     return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
 
-def map_currency_es(moneda: str) -> Currency:
+def map_currency_spanish(currency_name: str) -> Currency:
     """Map the Spanish currency name used by Argentine banks to the Currency enum."""
-    return Currency.USD if moneda == "Dolares" else Currency.ARS
+    return Currency.USD if currency_name == "Dolares" else Currency.ARS
