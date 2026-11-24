@@ -1,0 +1,4 @@
+# Skill source and installation: https://github.com/EduuardoPerez/agent-skills#install-in-codex
+
+[context]
+map_path = "multi-repo-coordination/repository-map.md"
