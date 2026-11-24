@@ -251,7 +251,7 @@ class XLSStatementParser(StatementParser):
                         )
                         transactions.append(transaction)
 
-                    except (ValueError, IndexError):
+                    except ValueError, IndexError:
                         continue  # Skip invalid rows
 
         return transactions
@@ -294,7 +294,7 @@ class XLSStatementParser(StatementParser):
                         )
                         transactions.append(transaction)
 
-                    except (ValueError, AttributeError):
+                    except ValueError, AttributeError:
                         continue  # Skip invalid rows
 
         return transactions

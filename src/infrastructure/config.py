@@ -105,7 +105,7 @@ class ApplicationConfig:
     log_level: str = "INFO"
 
     @classmethod
-    def from_yaml(cls, config_path: Path) -> "ApplicationConfig":
+    def from_yaml(cls, config_path: Path) -> ApplicationConfig:
         """Load configuration from YAML file"""
         with open(config_path) as file:
             config_data = yaml.safe_load(file)
@@ -131,7 +131,7 @@ class ApplicationConfig:
         )
 
     @classmethod
-    def from_environment(cls) -> "ApplicationConfig":
+    def from_environment(cls) -> ApplicationConfig:
         """Load configuration from environment variables"""
         return cls(
             input_directory=Path(os.getenv("FSP_INPUT_DIR", "input")),
