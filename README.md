@@ -46,6 +46,10 @@ Processed files are saved to `output/` by default. The `input/`, `output/`, and
 Do not store personal statements in the repository. Test samples are kept in
 `tests/test_data/`.
 
+The planned structured reconciliation output is specified in
+[`docs/RECONCILIATION_DATA_CONTRACT_V1.md`](docs/RECONCILIATION_DATA_CONTRACT_V1.md).
+The current CLI does not emit that format yet.
+
 ## Development
 
 ```bash
