@@ -1,0 +1,148 @@
+{
+  "schema_version": "1.0",
+  "batch_id": "synthetic-batch-001",
+  "generated_at": "2026-11-25T12:00:00Z",
+  "movements": {
+    "path": "movements.jsonl",
+    "sha256": "fb14db7d6e7af141287d9959072a9c3ac97dee9c5f46da9a3fee373c356c6ce7",
+    "record_count": 7
+  },
+  "expected_files": [
+    {
+      "file_id": "balance-a",
+      "path": "synthetic-input/balance-a.xlsx",
+      "system": "mercado_pago_balance",
+      "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "expected_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-10-01",
+          "end": "2026-10-31"
+        }
+      ],
+      "status": "complete",
+      "observed_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-10-01",
+          "end": "2026-10-31"
+        }
+      ],
+      "rows_read": 2,
+      "rows_emitted": 2,
+      "rows_discarded": 0,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "file_id": "balance-b",
+      "path": "synthetic-input/balance-b.xlsx",
+      "system": "mercado_pago_balance",
+      "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "expected_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-10-01",
+          "end": "2026-10-31"
+        }
+      ],
+      "status": "complete",
+      "observed_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-10-01",
+          "end": "2026-10-31"
+        }
+      ],
+      "rows_read": 1,
+      "rows_emitted": 1,
+      "rows_discarded": 0,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "file_id": "visa-oct",
+      "path": "synthetic-input/visa-oct.pdf",
+      "system": "bbva_visa",
+      "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "expected_coverage": [
+        {
+          "kind": "statement_cycle",
+          "start": "2026-10-02",
+          "end": "2026-10-29"
+        }
+      ],
+      "status": "complete",
+      "observed_coverage": [
+        {
+          "kind": "statement_cycle",
+          "start": "2026-10-02",
+          "end": "2026-10-29"
+        }
+      ],
+      "rows_read": 3,
+      "rows_emitted": 3,
+      "rows_discarded": 0,
+      "errors": [],
+      "warnings": []
+    },
+    {
+      "file_id": "activity",
+      "path": "synthetic-input/activity.csv",
+      "system": "mercado_pago_activity",
+      "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "expected_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      ],
+      "status": "complete",
+      "observed_coverage": [
+        {
+          "kind": "transaction_dates",
+          "start": "2026-09-01",
+          "end": "2026-09-30"
+        }
+      ],
+      "rows_read": 1,
+      "rows_emitted": 1,
+      "rows_discarded": 0,
+      "errors": [],
+      "warnings": [
+        {
+          "code": "SOURCE_SIGN_CONFLICT",
+          "locator": "row:4",
+          "message": "The receipt establishes a payment while Activity displays a positive amount."
+        }
+      ]
+    },
+    {
+      "file_id": "visa-nov",
+      "path": "synthetic-input/visa-nov.pdf",
+      "system": "bbva_visa",
+      "sha256": null,
+      "expected_coverage": [
+        {
+          "kind": "statement_cycle",
+          "start": "2026-10-30",
+          "end": "2026-11-29"
+        }
+      ],
+      "status": "missing",
+      "observed_coverage": [],
+      "rows_read": 0,
+      "rows_emitted": 0,
+      "rows_discarded": 0,
+      "errors": [
+        {
+          "code": "EXPECTED_FILE_MISSING",
+          "message": "The declared statement was not supplied."
+        }
+      ],
+      "warnings": []
+    }
+  ],
+  "complete": false
+}
