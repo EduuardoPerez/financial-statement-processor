@@ -52,6 +52,7 @@ from infrastructure.detectors import (
 )
 from infrastructure.extractors import build_default_balance_service
 from infrastructure.factories import DefaultParserFactory
+from infrastructure.reconciliation_export import export_reconciliation
 from infrastructure.repositories import ExcelStatementRepository
 
 
@@ -229,6 +230,27 @@ def cli(ctx: click.Context, config: Path | None, verbose: bool) -> None:
     except Exception as e:
         output_error(f"Unexpected error: {str(e)}", verbose=verbose, exception=e)
         sys.exit(1)
+
+
+@cli.command()
+@click.argument(
+    "declaration", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.option("--output-dir", required=True, type=click.Path(path_type=Path))
+@cli_command("Export failed")
+def export(ctx: click.Context, declaration: Path, output_dir: Path) -> None:
+    """Export declared source observations as JSONL and a v1 manifest."""
+    _, factory = create_components(ctx.obj["config"])
+    manifest = export_reconciliation(declaration, output_dir, factory)
+    click.echo(
+        json.dumps(
+            {
+                "complete": manifest["complete"],
+                "record_count": manifest["movements"]["record_count"],
+                "manifest": str(output_dir / "manifest.json"),
+            }
+        )
+    )
 
 
 @cli.command()

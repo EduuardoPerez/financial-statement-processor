@@ -64,6 +64,46 @@ def test_csv_preserves_original_values_and_accounts_for_invalid_rows(
     assert statement.extraction.diagnostics[0].reason
 
 
+def test_mastercard_header_dates_define_cycle_without_discarded_rows() -> None:
+    class MastercardDetector:
+        def detect_from_content(self, content: str) -> PaymentMethod:
+            return PaymentMethod.BBVA_MASTERCARD
+
+    parser = PDFStatementParser(MastercardDetector(), builder())
+    content = (
+        "CIERRE ACTUAL VENCIMIENTO ACTUAL SALDO ACTUAL $\n"
+        "30-Jun-26 10-Jul-26 1.000,00 0,00 100,00\n"
+        "CIERRE ANTERIOR VENCIMIENTO ANTERIOR PRÓXIMO CIERRE PRÓXIMO VENCIMIENTO\n"
+        "Otros períodos\n"
+        "31-May-26 10-Jun-26 31-Jul-26 10-Ago-26\n"
+        "05-Apr-26 123456* STORE Cuota 03/06 25,00\n"
+    )
+    from domain.models import ExtractionResult
+
+    report = ExtractionResult("a" * 64)
+    transactions = parser._parse_transactions(
+        content, PaymentMethod.BBVA_MASTERCARD, report
+    )
+    assert len(transactions) == 1
+    assert (report.rows_read, report.rows_emitted, report.rows_discarded) == (1, 1, 0)
+    assert parser.statement_cycle(content) == (date(2026, 6, 1), date(2026, 6, 30))
+    assert transactions[0].date == date(2026, 4, 5)
+
+
+def test_mastercard_cycle_requires_close_labels() -> None:
+    parser = PDFStatementParser(Detector(), builder())
+    content = (
+        "30-Jun-26 10-Jul-26 1.000,00 0,00 100,00\n"
+        "31-May-26 10-Jun-26 31-Jul-26 10-Ago-26\n"
+    )
+    assert parser.statement_cycle(content) is None
+    from domain.models import ExtractionResult
+
+    report = ExtractionResult("a" * 64)
+    parser._parse_transactions(content, PaymentMethod.BBVA_MASTERCARD, report)
+    assert report.rows_discarded == 2
+
+
 def test_csv_blank_record_is_excluded_from_logical_locator(tmp_path: Path) -> None:
     path = tmp_path / "synthetic.csv"
     path.write_text(
