@@ -87,7 +87,13 @@ class TestXLSXStatementParser:
         # Assert
         assert isinstance(result_df, pd.DataFrame)
         assert len(result_df) == 2
-        mock_read_excel.assert_called_once_with(test_file, engine="openpyxl", header=2)
+        mock_read_excel.assert_called_once_with(
+            test_file,
+            engine="openpyxl",
+            header=2,
+            dtype=object,
+            keep_default_na=False,
+        )
 
     @patch("pandas.read_excel")
     def test_load_xlsx_data_mercadopago(self, mock_read_excel, xlsx_parser):
@@ -109,7 +115,9 @@ class TestXLSXStatementParser:
         # Assert
         assert isinstance(result_df, pd.DataFrame)
         assert len(result_df) == 1
-        mock_read_excel.assert_called_once_with(test_file, engine="openpyxl")
+        mock_read_excel.assert_called_once_with(
+            test_file, engine="openpyxl", dtype=object, keep_default_na=False
+        )
 
     def test_convert_bbva_date_valid_formats(self, xlsx_parser):
         """Test BBVA date conversion from DD/MM/YY to YYYY-MM-DD"""
@@ -337,11 +345,17 @@ class TestXLSXStatementParser:
 
     @patch("pandas.read_excel")
     def test_parse_full_workflow_bbva_mastercard(
-        self, mock_read_excel, xlsx_parser, mock_detector, mock_transaction_builder
+        self,
+        mock_read_excel,
+        xlsx_parser,
+        mock_detector,
+        mock_transaction_builder,
+        tmp_path,
     ):
         """Test full parsing workflow for BBVA Mastercard XLSX"""
         # Arrange
-        test_file = Path("BBVA-Mastercard-test.xlsx")
+        test_file = tmp_path / "BBVA-Mastercard-test.xlsx"
+        test_file.write_bytes(b"synthetic workbook bytes")
         mock_df = pd.DataFrame(
             {
                 "Fecha y hora": ["07/07/25"],
@@ -363,17 +377,13 @@ class TestXLSXStatementParser:
         )
         mock_transaction_builder.build_from_xls_data.return_value = transaction
 
-        # Mock file existence
-        with patch.object(Path, "exists", return_value=True):
-            # Act
-            statement = xlsx_parser.parse(test_file)
+        statement = xlsx_parser.parse(test_file)
 
-            # Assert
-            assert isinstance(statement, Statement)
-            assert statement.payment_method == PaymentMethod.BBVA_MASTERCARD
-            assert len(statement.transactions) == 1
-            assert statement.transactions[0].description == "internation-site.Com"
-            assert statement.transactions[0].currency == Currency.USD
+        assert isinstance(statement, Statement)
+        assert statement.payment_method == PaymentMethod.BBVA_MASTERCARD
+        assert len(statement.transactions) == 1
+        assert statement.transactions[0].description == "internation-site.Com"
+        assert statement.transactions[0].currency == Currency.USD
 
     def test_parse_file_not_found(self, xlsx_parser):
         """Test parsing when file doesn't exist"""

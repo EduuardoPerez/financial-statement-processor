@@ -43,7 +43,7 @@ from application.services import (
 )
 from domain.detectors import PaymentMethodDetector
 from domain.filename import FilenameGenerator
-from domain.models import PaymentMethod
+from domain.models import ExtractionResult, PaymentMethod
 from domain.validation import StatementValidator
 from infrastructure.config import ApplicationConfig
 from infrastructure.detectors import (
@@ -53,6 +53,33 @@ from infrastructure.detectors import (
 from infrastructure.extractors import build_default_balance_service
 from infrastructure.factories import DefaultParserFactory
 from infrastructure.repositories import ExcelStatementRepository
+
+
+def extraction_data(report: Any) -> dict[str, Any] | None:
+    """Serialize the internal extraction report for command output."""
+    if not isinstance(report, ExtractionResult):
+        return None
+    return {
+        "rows_read": report.rows_read,
+        "rows_emitted": report.rows_emitted,
+        "rows_discarded": report.rows_discarded,
+        "diagnostics": [
+            {"locator": item.locator, "reason": item.reason}
+            for item in report.diagnostics
+        ],
+    }
+
+
+def print_extraction_summary(report: Any, *, prefix: str = "   ") -> None:
+    if not isinstance(report, ExtractionResult):
+        return
+    console.print(
+        f"{prefix}Rows: {report.rows_read} read, "
+        f"{report.rows_emitted} retained, {report.rows_discarded} discarded"
+    )
+    for item in report.diagnostics:
+        console.print(f"{prefix}• {item.locator}: {item.reason}")
+
 
 # Global console for rich output
 console = Console()
@@ -330,6 +357,8 @@ def process(
             ),
             "processing_time": result.processing_time,
         }
+        if report_data := extraction_data(getattr(result, "extraction", None)):
+            result_data["extraction"] = report_data
 
         if output_json_flag:
             output_json(result_data)
@@ -340,6 +369,7 @@ def process(
                 f"   Transactions: {len(result.statement.transactions) if result.statement else 0}"
             )
             console.print(f"   Processing time: {result.processing_time:.2f}s")
+            print_extraction_summary(getattr(result, "extraction", None))
     else:
         error_data = {
             "success": False,
@@ -347,6 +377,8 @@ def process(
             "errors": result.errors,
             "processing_time": result.processing_time,
         }
+        if report_data := extraction_data(getattr(result, "extraction", None)):
+            error_data["extraction"] = report_data
 
         if output_json_flag:
             output_json(error_data)
@@ -354,6 +386,7 @@ def process(
             console.print(f"[red]❌ Failed to process {input_file.name}[/red]")
             for error in result.errors:
                 console.print(f"   • {error}")
+            print_extraction_summary(getattr(result, "extraction", None))
 
         sys.exit(1)
 
@@ -500,8 +533,8 @@ def batch(
         console.print(f"Supported extensions: {', '.join(supported_extensions)}")
         return
 
-    successful_files = []
-    failed_files = []
+    successful_files: list[dict[str, Any]] = []
+    failed_files: list[dict[str, Any]] = []
     total_transactions = 0
 
     with Progress(
@@ -529,19 +562,28 @@ def batch(
                 try:
                     result = futures[file_path].result()
                     if result.success and result.statement:
-                        successful_files.append(
-                            {
-                                "file": str(file_path),
-                                "output": str(result.output_path),
-                                "transactions": len(result.statement.transactions),
-                                "processing_time": result.processing_time,
-                            }
-                        )
+                        detail = {
+                            "file": str(file_path),
+                            "output": str(result.output_path),
+                            "transactions": len(result.statement.transactions),
+                            "processing_time": result.processing_time,
+                        }
+                        if report_data := extraction_data(
+                            getattr(result, "extraction", None)
+                        ):
+                            detail["extraction"] = report_data
+                        successful_files.append(detail)
                         total_transactions += len(result.statement.transactions)
                     else:
-                        failed_files.append(
-                            {"file": str(file_path), "errors": result.errors}
-                        )
+                        failure: dict[str, Any] = {
+                            "file": str(file_path),
+                            "errors": result.errors,
+                        }
+                        if report_data := extraction_data(
+                            getattr(result, "extraction", None)
+                        ):
+                            failure["extraction"] = report_data
+                        failed_files.append(failure)
                 except Exception as e:
                     failed_files.append({"file": str(file_path), "errors": [str(e)]})
 
@@ -563,6 +605,17 @@ def batch(
         console.print(f"   Processed: {len(successful_files)}/{len(files)} files")
         console.print(f"   Failed: {len(failed_files)}/{len(files)} files")
         console.print(f"   Total Transactions: {total_transactions}")
+        for file_detail in successful_files:
+            if report_data := file_detail.get("extraction"):
+                console.print(
+                    f"   {Path(file_detail['file']).name}: {report_data['rows_read']} read, "
+                    f"{report_data['rows_emitted']} retained, "
+                    f"{report_data['rows_discarded']} discarded"
+                )
+                for diagnostic in report_data["diagnostics"]:
+                    console.print(
+                        f"   • {diagnostic['locator']}: {diagnostic['reason']}"
+                    )
 
         if failed_files:
             console.print("\n[red]Failed Files:[/red]")
@@ -575,6 +628,11 @@ def batch(
                     else str(errors)
                 )
                 console.print(f"   • {file_path.name}: {error_str}")
+                if report_data := failed.get("extraction"):
+                    for diagnostic in report_data["diagnostics"]:
+                        console.print(
+                            f"   • {diagnostic['locator']}: {diagnostic['reason']}"
+                        )
 
     if failed_files:
         sys.exit(1)
@@ -652,6 +710,14 @@ def consolidate(
             "successful_file_details": result.successful_files,
             "failed_file_details": result.failed_files,
             "errors": result.errors,
+            "extractions": {
+                path: extraction_data(report)
+                for path, report in (
+                    result.extractions.items()
+                    if isinstance(getattr(result, "extractions", None), dict)
+                    else []
+                )
+            },
         }
 
         if output_json_flag:
@@ -677,12 +743,28 @@ def consolidate(
                         console.print(
                             f"   • {Path(file_info['file']).name}: {file_info['transactions']} transactions ({file_info['payment_method']})"
                         )
+                        print_extraction_summary(
+                            (
+                                result.extractions.get(file_info["file"])
+                                if isinstance(
+                                    getattr(result, "extractions", None), dict
+                                )
+                                else None
+                            ),
+                            prefix="      ",
+                        )
 
             else:
                 console.print("\n[bold red]❌ Consolidation Failed[/bold red]")
                 if result.errors:
                     for error in result.errors:
                         console.print(f"   • {error}")
+                failed_paths = {item["file"] for item in result.failed_files}
+                if isinstance(getattr(result, "extractions", None), dict):
+                    for file_path, report in result.extractions.items():
+                        if file_path not in failed_paths:
+                            console.print(f"   {Path(file_path).name}:")
+                            print_extraction_summary(report, prefix="      ")
 
             # Show failed files with comprehensive alerts
             if result.failed_files:
@@ -697,6 +779,10 @@ def consolidate(
                     else:
                         error_msg = str(errors)
                     console.print(f"   • [red]{file_name}[/red]: {error_msg}")
+                    if isinstance(getattr(result, "extractions", None), dict):
+                        print_extraction_summary(
+                            result.extractions.get(failed["file"]), prefix="      "
+                        )
 
     # Exit with error code if consolidation failed or had file failures
     if not result.success:

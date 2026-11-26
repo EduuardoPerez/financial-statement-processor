@@ -19,6 +19,8 @@ from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 from domain.utils import AmountParser
 
+from ._shared import extraction_for_file, retain_transaction, verify_file_unchanged
+
 _DATE_PATTERN = r"(\d{2}\.\d{2}\.\d{2})\s+"
 _DATE_PATTERN_MMM = r"(\d{2}-\w{3}-\d{2})\s+"
 _TAX_KEYWORDS = (
@@ -150,6 +152,7 @@ class PDFStatementParser(StatementParser):
             raise FileNotFoundError(f"PDF file not found: {file_path}")
 
         try:
+            report = extraction_for_file(file_path)
             # Extract raw text from PDF
             raw_text = self._extract_text(file_path)
 
@@ -158,14 +161,16 @@ class PDFStatementParser(StatementParser):
 
             # Create statement
             statement = Statement(payment_method=payment_method)
+            statement.extraction = report
 
             # Parse transactions from text
-            transactions = self._parse_transactions(raw_text, payment_method)
+            transactions = self._parse_transactions(raw_text, payment_method, report)
 
             # Add transactions to statement
             for transaction in transactions:
                 statement.add_transaction(transaction)
 
+            verify_file_unchanged(file_path, report)
             return statement, raw_text
 
         except PermissionError as e:
@@ -232,12 +237,12 @@ class PDFStatementParser(StatementParser):
             ) from e
 
     def _parse_transactions(
-        self, text: str, payment_method: PaymentMethod
+        self, text: str, payment_method: PaymentMethod, report=None
     ) -> list[Transaction]:
         """Parse transaction lines from PDF text into Transaction objects."""
         transactions: list[Transaction] = []
 
-        for raw_line in text.split("\n"):
+        for line_number, raw_line in enumerate(text.split("\n"), start=1):
             line = raw_line.strip()
             if not line:
                 continue
@@ -258,13 +263,69 @@ class PDFStatementParser(StatementParser):
 
             if any(kw in remaining_line for kw in _SKIP_KEYWORDS):
                 continue
+            if payment_method == PaymentMethod.BBVA_MASTERCARD and any(
+                kw in remaining_line for kw in _BBVA_MC_SKIP_KEYWORDS
+            ):
+                continue
+
+            locator = f"line:{line_number}"
+
+            def record(transaction: Transaction | None) -> None:
+                if transaction is None:
+                    if report is not None:
+                        report.discard(
+                            locator, "Unrecognized or invalid transaction line"
+                        )
+                    return
+                source_amount = (
+                    re.search(r"USD\s+([\d,.-]+)", remaining_line)
+                    if transaction.currency == Currency.USD
+                    else None
+                )
+                if source_amount:
+                    raw_amount = source_amount.group(1)
+                else:
+                    trailing_amount = re.search(
+                        r"([+-]?[\d.,]+-?)\s*_?$", remaining_line
+                    )
+                    raw_amount = trailing_amount.group(1) if trailing_amount else ""
+                if not raw_amount:
+                    for candidate in reversed(re.findall(r"[\d.,]+-?", remaining_line)):
+                        try:
+                            if abs(
+                                self._amount_parser.parse_european_format(candidate)
+                            ) == abs(transaction.amount):
+                                raw_amount = candidate
+                                break
+                        except ValueError:
+                            continue
+                source_reference = re.match(
+                    r"((?=[A-Z0-9*]*\d)[A-Z0-9*]+)\s+", remaining_line
+                )
+                installment = re.search(r"\bCuota\s+(\d+/\d+)\b", remaining_line)
+                references = {}
+                if source_reference:
+                    references["source_reference"] = source_reference.group(1)
+                if installment:
+                    references["Cuota"] = installment.group(1)
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        date_str,
+                        raw_amount,
+                        remaining_line,
+                        raw_currency="USD" if "USD " in remaining_line else None,
+                        references=references,
+                    )
+                )
 
             if payment_method == PaymentMethod.BBVA_MASTERCARD and is_mmm_date:
                 txn = self._try_parse_bbva_mastercard_line(
                     date_str, remaining_line, payment_method
                 )
-                if txn is not None:
-                    transactions.append(txn)
+                record(txn)
                 continue
 
             txn = (
@@ -304,8 +365,7 @@ class PDFStatementParser(StatementParser):
                 or self._try_parse_commission(date_str, remaining_line, payment_method)
                 or self._try_parse_referenced(date_str, remaining_line, payment_method)
             )
-            if txn is not None:
-                transactions.append(txn)
+            record(txn)
 
         return transactions
 

@@ -16,8 +16,22 @@ from typing import Any
 import pandas as pd
 
 from domain.builders import TransactionBuilder
-from domain.models import Currency, PaymentMethod, Statement, Transaction
+from domain.models import (
+    Currency,
+    ExtractionResult,
+    PaymentMethod,
+    Statement,
+    Transaction,
+)
 from domain.services import StatementParser
+
+from ._shared import (
+    extraction_for_file,
+    is_blank_row,
+    retain_transaction,
+    source_text,
+    verify_file_unchanged,
+)
 
 
 class XLSStatementParser(StatementParser):
@@ -111,18 +125,21 @@ class XLSStatementParser(StatementParser):
             payment_method = self._detector.detect_from_filename(file_path)
 
             # Load Excel data
+            report = extraction_for_file(file_path)
             df = self._load_excel_data(file_path)
 
             # Create statement
             statement = Statement(payment_method=payment_method)
+            statement.extraction = report
 
             # Parse transactions based on payment method
-            transactions = self._parse_transactions(df, payment_method)
+            transactions = self._parse_transactions(df, payment_method, report)
 
             # Add transactions to statement
             for transaction in transactions:
                 statement.add_transaction(transaction)
 
+            verify_file_unchanged(file_path, report)
             return statement
 
         except PermissionError as e:
@@ -171,7 +188,7 @@ class XLSStatementParser(StatementParser):
         """
         try:
             # Load Excel file using pandas with automatic engine detection
-            df = pd.read_excel(file_path)
+            df = pd.read_excel(file_path, dtype=object, keep_default_na=False)
 
             if df.empty:
                 raise ValueError(f"No data found in Excel file: {file_path}")
@@ -184,7 +201,10 @@ class XLSStatementParser(StatementParser):
             ) from e
 
     def _parse_transactions(
-        self, df: pd.DataFrame, payment_method: PaymentMethod
+        self,
+        df: pd.DataFrame,
+        payment_method: PaymentMethod,
+        report: ExtractionResult | None = None,
     ) -> list[Transaction]:
         """
         Parse transaction data from Excel DataFrame based on payment method.
@@ -206,13 +226,15 @@ class XLSStatementParser(StatementParser):
         transactions = []
 
         if payment_method == PaymentMethod.BBVA_ACCOUNT:
-            transactions = self._parse_bbva_account_transactions(df)
+            transactions = self._parse_bbva_account_transactions(df, report)
         elif payment_method == PaymentMethod.MACRO_ACCOUNT:
-            transactions = self._parse_macro_account_transactions(df)
+            transactions = self._parse_macro_account_transactions(df, report)
 
         return transactions
 
-    def _parse_bbva_account_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+    def _parse_bbva_account_transactions(
+        self, df: pd.DataFrame, report: ExtractionResult | None = None
+    ) -> list[Transaction]:
         """
         Parse BBVA Account XLS transactions.
 
@@ -228,35 +250,51 @@ class XLSStatementParser(StatementParser):
         # Skip header rows and get actual data (start from row 2)
         data_rows = df.iloc[2:]
 
-        for _, row in data_rows.iterrows():
+        for row_number, (_, row) in enumerate(data_rows.iterrows(), start=4):
+            locator = f"row:{row_number}"
+            if is_blank_row(row):
+                continue
             # Check if Date and Amount are not null
-            if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
-                date_str = str(row.iloc[0]).strip()
-                description = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else ""
-                amount_str = str(row.iloc[3]).strip()
+            raw_date = source_text(row.iloc[0])
+            raw_description = source_text(row.iloc[1])
+            raw_amount = source_text(row.iloc[3])
+            date_str = raw_date.strip()
+            description = raw_description.strip()
+            amount_str = raw_amount.strip()
 
-                if date_str and amount_str and amount_str != "nan":
-                    try:
-                        # Convert date from DD/MM/YYYY to YYYY-MM-DD
-                        day, month, year = date_str.split("/")
-                        formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+            try:
+                # Convert date from DD/MM/YYYY to YYYY-MM-DD
+                day, month, year = date_str.split("/")
+                formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 
-                        # Build transaction using TransactionBuilder
-                        transaction = self._transaction_builder.build_from_xls_data(
-                            date_str=formatted_date,
-                            description=description,
-                            amount_str=amount_str,
-                            currency=Currency.ARS,
-                            payment_method=PaymentMethod.BBVA_ACCOUNT,
-                        )
-                        transactions.append(transaction)
+                # Build transaction using TransactionBuilder
+                transaction = self._transaction_builder.build_from_xls_data(
+                    date_str=formatted_date,
+                    description=description,
+                    amount_str=amount_str,
+                    currency=Currency.ARS,
+                    payment_method=PaymentMethod.BBVA_ACCOUNT,
+                )
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        raw_date,
+                        raw_amount,
+                        raw_description,
+                    )
+                )
 
-                    except ValueError, IndexError:
-                        continue  # Skip invalid rows
+            except (ValueError, IndexError, TypeError) as error:
+                if report is not None:
+                    report.discard(locator, str(error))
 
         return transactions
 
-    def _parse_macro_account_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+    def _parse_macro_account_transactions(
+        self, df: pd.DataFrame, report: ExtractionResult | None = None
+    ) -> list[Transaction]:
         """
         Parse Macro Account XLS transactions.
 
@@ -272,29 +310,42 @@ class XLSStatementParser(StatementParser):
         # Skip header rows and get actual data (start from row 3)
         data_rows = df.iloc[3:]
 
-        for _, row in data_rows.iterrows():
+        for row_number, (_, row) in enumerate(data_rows.iterrows(), start=5):
+            locator = f"row:{row_number}"
+            if is_blank_row(row):
+                continue
             # Check if Date and Amount are not null
-            if pd.notna(row.iloc[0]) and pd.notna(row.iloc[3]):
-                date_value = row.iloc[0]  # Already a datetime object
-                description = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else ""
-                amount_value = row.iloc[3]  # Already a number
+            date_value = row.iloc[0]
+            raw_description = source_text(row.iloc[2])
+            raw_amount = source_text(row.iloc[3])
+            description = raw_description.strip()
+            amount_str = raw_amount.strip()
 
-                if date_value and pd.notna(amount_value):
-                    try:
-                        # Convert datetime to YYYY-MM-DD format
-                        formatted_date = date_value.strftime("%Y-%m-%d")
+            try:
+                # Convert datetime to YYYY-MM-DD format
+                formatted_date = date_value.strftime("%Y-%m-%d")
 
-                        # Build transaction using TransactionBuilder
-                        transaction = self._transaction_builder.build_from_xls_data(
-                            date_str=formatted_date,
-                            description=description,
-                            amount_str=str(float(amount_value)),
-                            currency=Currency.ARS,
-                            payment_method=PaymentMethod.MACRO_ACCOUNT,
-                        )
-                        transactions.append(transaction)
+                # Build transaction using TransactionBuilder
+                transaction = self._transaction_builder.build_from_xls_data(
+                    date_str=formatted_date,
+                    description=description,
+                    amount_str=amount_str,
+                    currency=Currency.ARS,
+                    payment_method=PaymentMethod.MACRO_ACCOUNT,
+                )
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        source_text(date_value),
+                        raw_amount,
+                        raw_description,
+                    )
+                )
 
-                    except ValueError, AttributeError:
-                        continue  # Skip invalid rows
+            except (ValueError, AttributeError, TypeError) as error:
+                if report is not None:
+                    report.discard(locator, str(error))
 
         return transactions

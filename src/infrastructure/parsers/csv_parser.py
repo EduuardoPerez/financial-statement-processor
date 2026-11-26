@@ -14,10 +14,18 @@ from typing import Any
 import pandas as pd
 
 from domain.builders import TransactionBuilder
-from domain.models import PaymentMethod, Statement, Transaction
+from domain.models import ExtractionResult, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
 
-from ._shared import map_currency_spanish, parse_ddmmyyyy
+from ._shared import (
+    extraction_for_file,
+    is_blank_row,
+    map_currency_spanish,
+    parse_ddmmyyyy,
+    retain_transaction,
+    source_text,
+    verify_file_unchanged,
+)
 
 
 class CSVStatementParser(StatementParser):
@@ -111,18 +119,21 @@ class CSVStatementParser(StatementParser):
             payment_method = self._detector.detect_from_filename(file_path)
 
             # Load CSV data
+            report = extraction_for_file(file_path)
             df = self._load_csv_data(file_path)
 
             # Create statement
             statement = Statement(payment_method=payment_method)
+            statement.extraction = report
 
             # Parse transactions based on payment method
-            transactions = self._parse_transactions(df, payment_method)
+            transactions = self._parse_transactions(df, payment_method, report)
 
             # Add transactions to statement
             for transaction in transactions:
                 statement.add_transaction(transaction)
 
+            verify_file_unchanged(file_path, report)
             return statement
 
         except PermissionError as e:
@@ -172,11 +183,17 @@ class CSVStatementParser(StatementParser):
         try:
             # Load CSV file using pandas with semicolon separator
             try:
-                df = pd.read_csv(file_path, sep=";")
+                df = pd.read_csv(file_path, sep=";", dtype=str, keep_default_na=False)
             except UnicodeDecodeError:
                 # Argentine bank exports (e.g. BBVA Movimientos) ship in
                 # Latin-1, which breaks the default UTF-8 decoding
-                df = pd.read_csv(file_path, sep=";", encoding="latin-1")
+                df = pd.read_csv(
+                    file_path,
+                    sep=";",
+                    encoding="latin-1",
+                    dtype=str,
+                    keep_default_na=False,
+                )
 
             if df.empty:
                 raise ValueError(f"No data found in CSV file: {file_path}")
@@ -189,7 +206,10 @@ class CSVStatementParser(StatementParser):
             ) from e
 
     def _parse_transactions(
-        self, df: pd.DataFrame, payment_method: PaymentMethod
+        self,
+        df: pd.DataFrame,
+        payment_method: PaymentMethod,
+        report: ExtractionResult | None = None,
     ) -> list[Transaction]:
         """
         Parse transaction data from CSV DataFrame based on payment method.
@@ -209,11 +229,14 @@ class CSVStatementParser(StatementParser):
             >>> assert len(transactions) > 0
         """
         if payment_method in (PaymentMethod.BBVA_VISA, PaymentMethod.MACRO_VISA):
-            return self._parse_visa_csv_transactions(df, payment_method)
+            return self._parse_visa_csv_transactions(df, payment_method, report)
         return []
 
     def _parse_visa_csv_transactions(
-        self, df: pd.DataFrame, payment_method: PaymentMethod
+        self,
+        df: pd.DataFrame,
+        payment_method: PaymentMethod,
+        report: ExtractionResult | None = None,
     ) -> list[Transaction]:
         """
         Parse VISA CSV transactions shared by BBVA and Macro.
@@ -223,40 +246,70 @@ class CSVStatementParser(StatementParser):
         """
         transactions = []
 
-        for _, row in df.iterrows():
-            date_str = ""
-            if "Fecha Origen" in df.columns and pd.notna(row["Fecha Origen"]):
-                date_str = str(row["Fecha Origen"]).strip()
-            elif "Fecha" in df.columns and pd.notna(row["Fecha"]):
-                date_str = str(row["Fecha"]).strip()
-
-            merchant = (
-                str(row["Establecimiento"]).strip()
-                if pd.notna(row["Establecimiento"])
-                else ""
-            )
-            currency_name = (
-                str(row["Moneda"]).strip() if pd.notna(row["Moneda"]) else ""
-            )
-            amount_str = str(row["Importe"]).strip() if pd.notna(row["Importe"]) else ""
-
-            if not (date_str and amount_str and amount_str != "nan"):
+        for row_number, (_, row) in enumerate(df.iterrows(), start=2):
+            locator = f"row:{row_number}"
+            if is_blank_row(row):
                 continue
+            raw_date = ""
+            if "Fecha Origen" in df.columns and pd.notna(row["Fecha Origen"]):
+                raw_date = source_text(row["Fecha Origen"])
+            elif "Fecha" in df.columns and pd.notna(row["Fecha"]):
+                raw_date = source_text(row["Fecha"])
+            date_str = raw_date.strip()
+
+            raw_merchant = source_text(row["Establecimiento"])
+            raw_currency = source_text(row["Moneda"])
+            raw_amount = source_text(row["Importe"])
+            merchant = raw_merchant.strip()
+            currency_name = raw_currency.strip()
+            amount_str = raw_amount.strip()
 
             try:
                 formatted_date = parse_ddmmyyyy(date_str)
-                amount = float(amount_str.replace(",", ""))
                 currency = map_currency_spanish(currency_name)
 
                 transaction = self._transaction_builder.build_from_csv_data(
                     date_str=formatted_date,
                     description=merchant,
-                    amount_str=str(amount),
+                    amount_str=amount_str.replace(",", ""),
                     currency=currency,
                     payment_method=payment_method,
                 )
-                transactions.append(transaction)
-            except ValueError, IndexError:
-                continue
+                native_ids = {
+                    name: source_text(row[name])
+                    for name in (
+                        "SOURCE_ID",
+                        "Número de Movimiento",
+                        "Operación Relacionada",
+                    )
+                    if name in row and source_text(row[name])
+                }
+                raw_dates = {
+                    name: source_text(row[name])
+                    for name in ("Fecha", "Fecha Origen")
+                    if name in row and source_text(row[name])
+                }
+                references = {
+                    name: source_text(row[name])
+                    for name in ("Numero Comprobante", "Tipo Transaccion")
+                    if name in row and source_text(row[name])
+                }
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        raw_date,
+                        raw_amount,
+                        raw_merchant,
+                        raw_currency=raw_currency,
+                        raw_dates=raw_dates,
+                        native_ids=native_ids,
+                        references=references,
+                    )
+                )
+            except (ValueError, IndexError, TypeError) as error:
+                if report is not None:
+                    report.discard(locator, str(error))
 
         return transactions
