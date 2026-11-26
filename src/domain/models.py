@@ -13,10 +13,76 @@ Classes:
     Statement: Statement aggregate root
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 from enum import Enum
+from types import MappingProxyType
+
+
+@dataclass(frozen=True)
+class SourceProvenance:
+    """Evidence from one byte-exact input record."""
+
+    file_sha256: str
+    locator: str
+    raw_date: str
+    raw_amount: str
+    raw_description: str
+    raw_currency: str | None = None
+    raw_dates: Mapping[str, str] = field(default_factory=dict)
+    native_ids: Mapping[str, str] = field(default_factory=dict)
+    references: Mapping[str, str] = field(default_factory=dict)
+    source_identity_key: str | None = None
+
+    def __post_init__(self) -> None:
+        for name in ("raw_dates", "native_ids", "references"):
+            object.__setattr__(self, name, MappingProxyType(dict(getattr(self, name))))
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.file_sha256,
+                self.locator,
+                self.raw_date,
+                self.raw_amount,
+                self.raw_description,
+                self.raw_currency,
+                tuple(sorted(self.raw_dates.items())),
+                tuple(sorted(self.native_ids.items())),
+                tuple(sorted(self.references.items())),
+                self.source_identity_key,
+            )
+        )
+
+
+@dataclass(frozen=True)
+class ExtractionDiagnostic:
+    locator: str
+    reason: str
+
+
+@dataclass
+class ExtractionResult:
+    """Counts data candidates only; known headers, footers and blank rows are excluded."""
+
+    file_sha256: str
+    rows_read: int = 0
+    rows_emitted: int = 0
+    diagnostics: list[ExtractionDiagnostic] = field(default_factory=list)
+
+    @property
+    def rows_discarded(self) -> int:
+        return len(self.diagnostics)
+
+    def retain(self) -> None:
+        self.rows_read += 1
+        self.rows_emitted += 1
+
+    def discard(self, locator: str, reason: str) -> None:
+        self.rows_read += 1
+        self.diagnostics.append(ExtractionDiagnostic(locator, reason))
 
 
 class Currency(Enum):
@@ -66,6 +132,7 @@ class Transaction:
     currency: Currency
     payment_method: PaymentMethod
     reference: str | None = None
+    provenance: SourceProvenance | None = None
 
     def __post_init__(self) -> None:
         """Validate transaction data after initialization."""
@@ -158,6 +225,7 @@ class Statement:
     payment_method: PaymentMethod
     transactions: list[Transaction] = field(default_factory=list)
     reported_balance: Balance | None = None
+    extraction: ExtractionResult | None = None
 
     def add_transaction(self, transaction: Transaction) -> None:
         """

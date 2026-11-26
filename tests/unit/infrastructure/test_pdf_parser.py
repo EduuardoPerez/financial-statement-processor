@@ -227,11 +227,17 @@ class TestPDFStatementParser:
 
     @patch("infrastructure.parsers.pdf_parser.pdfplumber")
     def test_parse_complete_workflow(
-        self, mock_pdfplumber, pdf_parser, mock_detector, mock_transaction_builder
+        self,
+        mock_pdfplumber,
+        pdf_parser,
+        mock_detector,
+        mock_transaction_builder,
+        tmp_path,
     ):
         """Test complete parse workflow with mocked dependencies"""
         # Arrange
-        test_file = Path("test.pdf")
+        test_file = tmp_path / "test.pdf"
+        test_file.write_bytes(b"synthetic pdf bytes")
         test_text = "09.05.25 TEST TRANSACTION 1.234,56"
 
         # Mock file existence

@@ -50,6 +50,18 @@ The planned structured reconciliation output is specified in
 [`docs/RECONCILIATION_DATA_CONTRACT_V1.md`](docs/RECONCILIATION_DATA_CONTRACT_V1.md).
 The current CLI does not emit that format yet.
 
+Processing results now retain per-transaction source evidence and report rows
+read, retained, and discarded. The CLI displays each discarded row's locator and
+reason; `--json` includes the same internal extraction summary. CSV locators
+use logical record numbers after blank lines are skipped, with the header as
+record 1. Workbook locators use one-based physical row numbers. Headers and
+completely blank rows are excluded from counts. XLS account
+exports also exclude their known title/header rows. PDF locators use extracted
+text line numbers; blank lines, lines without a leading transaction date, and
+known balance/header lines are excluded. Any other candidate line that cannot
+be parsed counts as discarded. These diagnostics do not yet form the versioned
+manifest specified by the reconciliation contract.
+
 ## Development
 
 ```bash

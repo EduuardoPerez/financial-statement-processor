@@ -21,7 +21,12 @@ from typing import Any
 
 from domain.factories import ParserFactory
 from domain.filename import FilenameGenerator
-from domain.models import ConsolidatedStatement, Statement, Transaction
+from domain.models import (
+    ConsolidatedStatement,
+    ExtractionResult,
+    Statement,
+    Transaction,
+)
 from domain.repositories import StatementRepository
 from domain.services import DuplicateDetector
 from domain.validation import StatementValidator, ValidationResult
@@ -51,6 +56,7 @@ class ProcessingResult:
     success: bool
     errors: list[str] = field(default_factory=list)
     processing_time: float = 0.0
+    extraction: ExtractionResult | None = None
 
 
 @dataclass
@@ -81,6 +87,7 @@ class ConsolidationResult:
     processing_time: float = 0.0
     success: bool = False
     errors: list[str] = field(default_factory=list)
+    extractions: dict[str, ExtractionResult] = field(default_factory=dict)
 
 
 class StatementProcessingService:
@@ -203,6 +210,7 @@ class StatementProcessingService:
                 success=True,
                 errors=[],
                 processing_time=time.time() - start_time,
+                extraction=statement.extraction,
             )
 
         except Exception as e:
@@ -272,6 +280,7 @@ class StatementProcessingService:
             success=False,
             errors=errors,
             processing_time=processing_time,
+            extraction=statement.extraction if statement else None,
         )
 
     def consolidate_statements(
@@ -316,13 +325,16 @@ class StatementProcessingService:
         successful_statements: list[Statement] = []
         successful_files: list[dict[str, Any]] = []
         failed_files: list[dict[str, Any]] = []
+        extractions: dict[str, ExtractionResult] = {}
 
         with ThreadPoolExecutor(
             max_workers=self._processing_config.max_workers
         ) as pool:
             processed = list(pool.map(self._process_individual_file, files))
 
-        for file_path, (statement, errors) in zip(files, processed):
+        for file_path, (statement, errors, extraction) in zip(files, processed):
+            if extraction:
+                extractions[str(file_path)] = extraction
             if statement:
                 successful_statements.append(statement)
                 successful_files.append(
@@ -348,6 +360,7 @@ class StatementProcessingService:
                 consolidated_statement=None,
                 successful_files=successful_files,
                 failed_files=failed_files,
+                extractions=extractions,
                 success=False,
                 processing_time=time.time() - start_time,
                 errors=["No valid statements could be processed"],
@@ -399,6 +412,7 @@ class StatementProcessingService:
                 consolidated_statement=consolidated,
                 successful_files=successful_files,
                 failed_files=failed_files,
+                extractions=extractions,
                 total_transactions=len(processed_transactions),
                 duplicate_count=duplicate_count,
                 processing_time=time.time() - start_time,
@@ -412,6 +426,7 @@ class StatementProcessingService:
                 consolidated_statement=consolidated,
                 successful_files=successful_files,
                 failed_files=failed_files,
+                extractions=extractions,
                 total_transactions=len(processed_transactions),
                 duplicate_count=duplicate_count,
                 processing_time=time.time() - start_time,
@@ -430,16 +445,16 @@ class StatementProcessingService:
 
     def _process_individual_file(
         self, file_path: Path
-    ) -> tuple[Statement | None, list[str]]:
+    ) -> tuple[Statement | None, list[str], ExtractionResult | None]:
         """Process single file and return statement or errors."""
         try:
             result = self.process_statement(file_path, Path("temp"), unique_output=True)
             if result.success and result.statement:
-                return result.statement, []
+                return result.statement, [], result.extraction
             else:
-                return None, result.errors
+                return None, result.errors, result.extraction
         except Exception as e:
-            return None, [str(e)]
+            return None, [str(e)], None
 
     def _collect_all_transactions(
         self, statements: list[Statement]

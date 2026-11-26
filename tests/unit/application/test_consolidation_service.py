@@ -98,12 +98,14 @@ class TestStatementProcessingServiceConsolidation:
             mock_result.success = True
             mock_result.statement = sample_statement
             mock_result.errors = []
+            mock_result.extraction = None
             mock_process.return_value = mock_result
 
-            statement, errors = service._process_individual_file(file_path)
+            statement, errors, extraction = service._process_individual_file(file_path)
 
         assert statement == sample_statement
         assert errors == []
+        assert extraction is None
 
     def test_process_individual_file_failure(self, mock_dependencies):
         """Test _process_individual_file with failed processing"""
@@ -116,12 +118,14 @@ class TestStatementProcessingServiceConsolidation:
             mock_result.success = False
             mock_result.statement = None
             mock_result.errors = ["Parse error"]
+            mock_result.extraction = None
             mock_process.return_value = mock_result
 
-            statement, errors = service._process_individual_file(file_path)
+            statement, errors, extraction = service._process_individual_file(file_path)
 
         assert statement is None
         assert errors == ["Parse error"]
+        assert extraction is None
 
     def test_process_individual_file_exception(self, mock_dependencies):
         """Test _process_individual_file with exception"""
@@ -132,10 +136,11 @@ class TestStatementProcessingServiceConsolidation:
         with patch.object(service, "process_statement") as mock_process:
             mock_process.side_effect = Exception("Unexpected error")
 
-            statement, errors = service._process_individual_file(file_path)
+            statement, errors, extraction = service._process_individual_file(file_path)
 
         assert statement is None
         assert errors == ["Unexpected error"]
+        assert extraction is None
 
     def test_collect_all_transactions(self, mock_dependencies):
         """Test _collect_all_transactions method"""
@@ -182,7 +187,7 @@ class TestStatementProcessingServiceConsolidation:
 
         with patch.object(Path, "glob", return_value=[Path("file1.pdf")]):
             with patch.object(service, "_process_individual_file") as mock_process:
-                mock_process.return_value = (None, ["Parse error"])
+                mock_process.return_value = (None, ["Parse error"], None)
 
                 result = service.consolidate_statements(input_dir, output_dir)
 
@@ -209,7 +214,7 @@ class TestStatementProcessingServiceConsolidation:
 
         with patch.object(Path, "glob", return_value=[Path("file1.pdf")]):
             with patch.object(service, "_process_individual_file") as mock_process:
-                mock_process.return_value = (sample_statement, [])
+                mock_process.return_value = (sample_statement, [], None)
 
                 with patch("domain.services.DuplicateDetector") as mock_detector_class:
                     mock_detector = Mock()

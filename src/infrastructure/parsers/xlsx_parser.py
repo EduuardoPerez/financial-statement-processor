@@ -14,8 +14,22 @@ from typing import Any
 import pandas as pd
 
 from domain.builders import TransactionBuilder
-from domain.models import Currency, PaymentMethod, Statement, Transaction
+from domain.models import (
+    Currency,
+    ExtractionResult,
+    PaymentMethod,
+    Statement,
+    Transaction,
+)
 from domain.services import StatementParser
+
+from ._shared import (
+    extraction_for_file,
+    is_blank_row,
+    retain_transaction,
+    source_text,
+    verify_file_unchanged,
+)
 
 
 class XLSXStatementParser(StatementParser):
@@ -109,18 +123,24 @@ class XLSXStatementParser(StatementParser):
             payment_method = self._detector.detect_from_filename(file_path)
 
             # Load XLSX data
+            report = extraction_for_file(file_path)
             df = self._load_xlsx_data(file_path)
+            first_data_row = 4 if payment_method == PaymentMethod.BBVA_MASTERCARD else 2
 
             # Create statement
             statement = Statement(payment_method=payment_method)
+            statement.extraction = report
 
             # Parse transactions based on payment method
-            transactions = self._parse_transactions(df, payment_method)
+            transactions = self._parse_transactions(
+                df, payment_method, report, first_data_row
+            )
 
             # Add transactions to statement
             for transaction in transactions:
                 statement.add_transaction(transaction)
 
+            verify_file_unchanged(file_path, report)
             return statement
 
         except PermissionError as e:
@@ -174,10 +194,18 @@ class XLSXStatementParser(StatementParser):
                 and "MASTERCARD" in file_path.name.upper()
             ):
                 # Load with third row as header (skip first two rows)
-                df = pd.read_excel(file_path, engine="openpyxl", header=2)
+                df = pd.read_excel(
+                    file_path,
+                    engine="openpyxl",
+                    header=2,
+                    dtype=object,
+                    keep_default_na=False,
+                )
             else:
                 # Load normally for Mercadopago
-                df = pd.read_excel(file_path, engine="openpyxl")
+                df = pd.read_excel(
+                    file_path, engine="openpyxl", dtype=object, keep_default_na=False
+                )
 
             if df.empty:
                 raise ValueError(f"No data found in XLSX file: {file_path}")
@@ -190,7 +218,11 @@ class XLSXStatementParser(StatementParser):
             ) from e
 
     def _parse_transactions(
-        self, df: pd.DataFrame, payment_method: PaymentMethod
+        self,
+        df: pd.DataFrame,
+        payment_method: PaymentMethod,
+        report: ExtractionResult | None = None,
+        first_data_row: int = 2,
     ) -> list[Transaction]:
         """
         Parse transaction data from XLSX DataFrame based on payment method.
@@ -212,13 +244,22 @@ class XLSXStatementParser(StatementParser):
         transactions = []
 
         if payment_method == PaymentMethod.MERCADOPAGO:
-            transactions = self._parse_mercadopago_transactions(df)
+            transactions = self._parse_mercadopago_transactions(
+                df, report, first_data_row
+            )
         elif payment_method == PaymentMethod.BBVA_MASTERCARD:
-            transactions = self._parse_bbva_mastercard_transactions(df)
+            transactions = self._parse_bbva_mastercard_transactions(
+                df, report, first_data_row
+            )
 
         return transactions
 
-    def _parse_mercadopago_transactions(self, df: pd.DataFrame) -> list[Transaction]:
+    def _parse_mercadopago_transactions(
+        self,
+        df: pd.DataFrame,
+        report: ExtractionResult | None = None,
+        first_data_row: int = 2,
+    ) -> list[Transaction]:
         """
         Parse Mercadopago XLSX transactions.
 
@@ -231,42 +272,61 @@ class XLSXStatementParser(StatementParser):
         transactions = []
 
         # Process each row
-        for _, row in df.iterrows():
-            date_str = (
-                str(row["Fecha de Pago"]).strip()
-                if pd.notna(row["Fecha de Pago"])
-                else ""
-            )
-            operation_type = (
-                str(row["Tipo de Operación"]).strip()
-                if pd.notna(row["Tipo de Operación"])
-                else ""
-            )
-            amount_value = row["Importe"] if pd.notna(row["Importe"]) else 0
+        for row_number, (_, row) in enumerate(df.iterrows(), start=first_data_row):
+            locator = f"row:{row_number}"
+            if is_blank_row(row):
+                continue
+            raw_date = source_text(row["Fecha de Pago"])
+            raw_description = source_text(row["Tipo de Operación"])
+            date_str = raw_date.strip()
+            operation_type = raw_description.strip()
+            amount_str = source_text(row["Importe"])
 
-            if date_str and operation_type:
-                try:
-                    # Convert ISO 8601 timestamp to YYYY-MM-DD format
-                    # Extract date part from "2025-02-01T17:45:36Z"
-                    formatted_date = date_str.split("T")[0]
+            try:
+                # Convert ISO 8601 timestamp to YYYY-MM-DD format
+                # Extract date part from "2025-02-01T17:45:36Z"
+                formatted_date = date_str.split("T")[0]
 
-                    # Build transaction using TransactionBuilder
-                    transaction = self._transaction_builder.build_from_xls_data(
-                        date_str=formatted_date,
-                        description=operation_type,
-                        amount_str=str(float(amount_value)),
-                        currency=Currency.ARS,
-                        payment_method=PaymentMethod.MERCADOPAGO,
+                # Build transaction using TransactionBuilder
+                transaction = self._transaction_builder.build_from_xls_data(
+                    date_str=formatted_date,
+                    description=operation_type,
+                    amount_str=amount_str,
+                    currency=Currency.ARS,
+                    payment_method=PaymentMethod.MERCADOPAGO,
+                )
+                native_ids = {
+                    name: source_text(row[name])
+                    for name in (
+                        "Número de Movimiento",
+                        "Operación Relacionada",
+                        "SOURCE_ID",
                     )
-                    transactions.append(transaction)
+                    if name in row and source_text(row[name])
+                }
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        raw_date,
+                        amount_str,
+                        raw_description,
+                        native_ids=native_ids,
+                    )
+                )
 
-                except ValueError, IndexError, TypeError:
-                    continue  # Skip invalid rows
+            except (ValueError, IndexError, TypeError) as error:
+                if report is not None:
+                    report.discard(locator, str(error))
 
         return transactions
 
     def _parse_bbva_mastercard_transactions(
-        self, df: pd.DataFrame
+        self,
+        df: pd.DataFrame,
+        report: ExtractionResult | None = None,
+        first_data_row: int = 2,
     ) -> list[Transaction]:
         """
         Parse BBVA Mastercard XLSX transactions.
@@ -280,37 +340,59 @@ class XLSXStatementParser(StatementParser):
         transactions = []
 
         # Process each row
-        for _, row in df.iterrows():
-            date_str = (
-                str(row["Fecha y hora"]).strip()
-                if pd.notna(row["Fecha y hora"])
-                else ""
-            )
-            transaction_description = (
-                str(row["Movimientos"]).strip() if pd.notna(row["Movimientos"]) else ""
-            )
-            amount_str = str(row["Monto"]).strip() if pd.notna(row["Monto"]) else ""
+        for row_number, (_, row) in enumerate(df.iterrows(), start=first_data_row):
+            locator = f"row:{row_number}"
+            if is_blank_row(row):
+                continue
+            raw_date = source_text(row["Fecha y hora"])
+            raw_description = source_text(row["Movimientos"])
+            raw_amount = source_text(row["Monto"])
+            date_str = raw_date.strip()
+            transaction_description = raw_description.strip()
+            amount_str = raw_amount.strip()
 
-            if date_str and transaction_description and amount_str:
-                try:
-                    # Parse date from DD/MM/YY to YYYY-MM-DD
-                    formatted_date = self._convert_bbva_date(date_str)
+            try:
+                # Parse date from DD/MM/YY to YYYY-MM-DD
+                formatted_date = self._convert_bbva_date(date_str)
 
-                    # Parse currency and amount from the source string
-                    currency, amount_str = self._parse_bbva_amount(amount_str)
+                # Parse currency and amount from the source string
+                currency, amount_str = self._parse_bbva_amount(amount_str)
 
-                    # Build transaction using TransactionBuilder
-                    transaction = self._transaction_builder.build_from_xls_data(
-                        date_str=formatted_date,
-                        description=transaction_description,
-                        amount_str=amount_str,
-                        currency=currency,
-                        payment_method=PaymentMethod.BBVA_MASTERCARD,
+                # Build transaction using TransactionBuilder
+                transaction = self._transaction_builder.build_from_xls_data(
+                    date_str=formatted_date,
+                    description=transaction_description,
+                    amount_str=amount_str,
+                    currency=currency,
+                    payment_method=PaymentMethod.BBVA_MASTERCARD,
+                )
+                references = (
+                    {"Cuota": source_text(row["Cuota"])}
+                    if "Cuota" in row and source_text(row["Cuota"])
+                    else {}
+                )
+                transactions.append(
+                    retain_transaction(
+                        transaction,
+                        report,
+                        locator,
+                        raw_date,
+                        raw_amount,
+                        raw_description,
+                        raw_currency=(
+                            "USD"
+                            if raw_amount.startswith("USD ")
+                            else "$"
+                            if raw_amount.startswith("$ ")
+                            else None
+                        ),
+                        references=references,
                     )
-                    transactions.append(transaction)
+                )
 
-                except ValueError, IndexError, TypeError:
-                    continue  # Skip invalid rows
+            except (ValueError, IndexError, TypeError) as error:
+                if report is not None:
+                    report.discard(locator, str(error))
 
         return transactions
 

@@ -266,4 +266,5 @@ class DuplicateDetector:
             currency=transaction.currency,
             payment_method=transaction.payment_method,
             reference=transaction.reference,
+            provenance=transaction.provenance,
         )
