@@ -9,6 +9,7 @@ Classes:
 """
 
 import re
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -34,6 +35,11 @@ _TAX_KEYWORDS = (
 _COMMISSION_KEYWORDS = ("COMISIÓN", "COMISION")
 _SKIP_KEYWORDS = ("SALDO ANTERIOR", "Total Consumos")
 _BBVA_MC_SKIP_KEYWORDS = ("SALDO ACTUAL", "VENCIMIENTO", "PAGO MÍNIMO")
+_MC_DATE = r"\d{2}-[A-Za-z]{3}-\d{2}"
+_MC_CURRENT_ROW = re.compile(
+    rf"^({_MC_DATE})\s+{_MC_DATE}\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+$"
+)
+_MC_PREVIOUS_ROW = re.compile(rf"^({_MC_DATE})(?:\s+{_MC_DATE}){{3}}$")
 
 
 class PDFStatementParser(StatementParser):
@@ -241,10 +247,19 @@ class PDFStatementParser(StatementParser):
     ) -> list[Transaction]:
         """Parse transaction lines from PDF text into Transaction objects."""
         transactions: list[Transaction] = []
+        lines = text.split("\n")
 
-        for line_number, raw_line in enumerate(text.split("\n"), start=1):
+        for line_number, raw_line in enumerate(lines, start=1):
             line = raw_line.strip()
             if not line:
+                continue
+            preceding = " ".join(
+                lines[max(0, line_number - 3) : line_number - 1]
+            ).upper()
+            if payment_method == PaymentMethod.BBVA_MASTERCARD and (
+                (_MC_CURRENT_ROW.fullmatch(line) and "CIERRE ACTUAL" in preceding)
+                or (_MC_PREVIOUS_ROW.fullmatch(line) and "CIERRE ANTERIOR" in preceding)
+            ):
                 continue
 
             match = re.match(_DATE_PATTERN, line)
@@ -368,6 +383,25 @@ class PDFStatementParser(StatementParser):
             record(txn)
 
         return transactions
+
+    @staticmethod
+    def statement_cycle(content: str) -> tuple[date, date] | None:
+        """Return the verified previous-to-current Mastercard close interval."""
+        current: date | None = None
+        previous: date | None = None
+        lines = content.splitlines()
+        for index, line in enumerate(lines):
+            stripped = line.strip()
+            current_match = _MC_CURRENT_ROW.fullmatch(stripped)
+            previous_match = _MC_PREVIOUS_ROW.fullmatch(stripped)
+            preceding = " ".join(lines[max(0, index - 2) : index]).upper()
+            if current_match and "CIERRE ACTUAL" in preceding:
+                current = datetime.strptime(current_match.group(1), "%d-%b-%y").date()
+            if previous_match and "CIERRE ANTERIOR" in preceding:
+                previous = datetime.strptime(previous_match.group(1), "%d-%b-%y").date()
+        if current is None or previous is None or previous >= current:
+            return None
+        return previous + timedelta(days=1), current
 
     def _build(
         self,

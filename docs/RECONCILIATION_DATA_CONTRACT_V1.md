@@ -1,11 +1,48 @@
 # Reconciliation data contract v1
 
-This document specifies the processor's future structured output for reconciliation
+This document specifies the processor's structured output for reconciliation
 ([issue #9](https://github.com/EduuardoPerez/financial-statement-processor/issues/9)).
-It is a contract for subsequent implementation, not a description of the current
-CLI or Excel output. The processor will continue to produce Excel while the
-structured exporter is built in issues #12 and #11. Examples under
+The `export` command implements the source observation and manifest package;
+the existing Excel commands remain available. Examples under
 [`docs/examples/reconciliation-v1/`](examples/reconciliation-v1/) are synthetic.
+
+## Export command
+
+Run `PYTHONPATH=src uv run python -m cli.main export declaration.json --output-dir output/reconciliation-v1`.
+The declaration is UTF-8 JSON. File paths are relative to the declaration file.
+For example:
+
+```json
+{
+  "schema_version": "1.0",
+  "files": [
+    {
+      "path": "statement.pdf",
+      "system": "bbva_mastercard",
+      "expected_coverage": [
+        {"kind": "statement_cycle", "start": "2026-06-01", "end": "2026-06-30"}
+      ]
+    },
+    {
+      "path": "activity.csv",
+      "system": "bbva_visa",
+      "expected_coverage": [
+        {"kind": "transaction_dates", "start": "2026-07-01", "end": "2026-07-31"}
+      ],
+      "confirmed_export_range": {"start": "2026-07-01", "end": "2026-07-31"}
+    }
+  ]
+}
+```
+
+Declare every expected input, including files that may be missing. The optional
+`confirmed_export_range` applies only to tabular exports and must come from an
+independently confirmed export request. The exporter never treats first and last
+transaction dates as proof of coverage. A missing or unreadable file, discarded
+transaction row, unverified Mastercard close cycle, or unmet expected interval
+makes the batch incomplete. An export without confirmed tabular coverage records
+a warning; when no interval was required, its rows may still be complete relative
+to the declaration. The command refuses to overwrite an existing package.
 
 ## Package and version
 
