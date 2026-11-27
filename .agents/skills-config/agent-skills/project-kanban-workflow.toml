@@ -4,5 +4,6 @@
 url = "https://github.com/users/EduuardoPerez/projects/1"
 
 [context]
-# This local plan is Git-ignored; use it to interpret the Project's current work.
+# This Git-ignored plan is historical context; verify current work in the Project.
 project_context_path = "../../../.local-notes/from-extracts-to-Google-Sheets/plan-conciliacion-actualizado.md"
+handoff_index_path = "../../../../.local-notes/financial-reconciliation/index.md"
