@@ -1,6 +1,10 @@
 # Repository coordination map
 
 This map covers the planned statement reconciliation workflow. Consult each repository for its current interfaces and checks.
+For work that depends on the synchronizer, look for its checkout beside this
+repository or in the contributor's configured workspace. Confirm its Git remote
+and working-tree state, then read its current contracts, code, and tests. Use
+GitHub when no local checkout is available.
 
 | Repository | Responsibility | State |
 | --- | --- | --- |
