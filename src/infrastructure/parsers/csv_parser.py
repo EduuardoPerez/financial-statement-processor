@@ -8,13 +8,21 @@ Classes:
     CSVStatementParser: CSV statement parser using pandas for data extraction
 """
 
+from datetime import datetime
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 
 from domain.builders import TransactionBuilder
-from domain.models import ExtractionResult, PaymentMethod, Statement, Transaction
+from domain.models import (
+    Currency,
+    ExtractionResult,
+    PaymentMethod,
+    Statement,
+    Transaction,
+)
 from domain.services import StatementParser
 
 from ._shared import (
@@ -26,6 +34,81 @@ from ._shared import (
     source_text,
     verify_file_unchanged,
 )
+
+_MERCADO_PAGO_COLUMNS = {
+    "SOURCE_ID",
+    "TRANSACTION_DATE",
+    "SETTLEMENT_DATE",
+    "TRANSACTION_TYPE",
+    "TRANSACTION_CURRENCY",
+    "TRANSACTION_AMOUNT",
+    "REAL_AMOUNT",
+}
+
+
+def _mercado_pago_transactions(
+    df: pd.DataFrame, report: ExtractionResult
+) -> list[Transaction]:
+    transactions = []
+    for number, (_, row) in enumerate(df.iterrows(), start=2):
+        if is_blank_row(row):
+            continue
+        locator = f"row:{number}"
+        raw_date = row["TRANSACTION_DATE"]
+        raw_amount = row["TRANSACTION_AMOUNT"]
+        operation = row["TRANSACTION_TYPE"]
+        try:
+            amount = Decimal(raw_amount)
+            if not amount.is_finite():
+                raise ValueError("Non-finite TRANSACTION_AMOUNT")
+            transaction = Transaction(
+                date=datetime.fromisoformat(raw_date).date(),
+                description=operation.strip(),
+                amount=amount,
+                currency=Currency(row["TRANSACTION_CURRENCY"]),
+                payment_method=PaymentMethod.MERCADOPAGO,
+            )
+        except (ValueError, InvalidOperation) as error:
+            report.discard(locator, str(error))
+            continue
+
+        transactions.append(
+            retain_transaction(
+                transaction,
+                report,
+                locator,
+                raw_date,
+                raw_amount,
+                operation,
+                raw_currency=row["TRANSACTION_CURRENCY"],
+                raw_dates={
+                    key: row[key]
+                    for key in ("TRANSACTION_DATE", "SETTLEMENT_DATE")
+                    if row[key]
+                },
+                native_ids={
+                    key: row[key]
+                    for key in ("SOURCE_ID", "PURCHASE_ID")
+                    if row.get(key)
+                },
+                references={
+                    key: row[key]
+                    for key in (
+                        "TRANSACTION_TYPE",
+                        "REAL_AMOUNT",
+                        "PAYMENT_METHOD_TYPE",
+                        "PAYMENT_METHOD",
+                        "ISSUER_NAME",
+                        "FRANCHISE",
+                        "CARD_INITIAL_NUMBER",
+                        "LAST_FOUR_DIGITS",
+                        "EXTERNAL_REFERENCE",
+                    )
+                    if row.get(key)
+                },
+            )
+        )
+    return transactions
 
 
 class CSVStatementParser(StatementParser):
@@ -91,7 +174,7 @@ class CSVStatementParser(StatementParser):
 
         Loads structured data from the CSV file using pandas and creates a
         Statement object with the detected payment method and parsed transactions.
-        Supports both BBVA VISA and Macro VISA CSV formats.
+        Supports Mercado Pago transactions and BBVA and Macro VISA CSV exports.
 
         Args:
             file_path: Path to the CSV file to parse
@@ -115,19 +198,17 @@ class CSVStatementParser(StatementParser):
             raise FileNotFoundError(f"CSV file not found: {file_path}")
 
         try:
-            # Detect payment method from filename
-            payment_method = self._detector.detect_from_filename(file_path)
-
-            # Load CSV data
             report = extraction_for_file(file_path)
             df = self._load_csv_data(file_path)
+            if _MERCADO_PAGO_COLUMNS.issubset(df.columns):
+                payment_method = PaymentMethod.MERCADOPAGO
+                transactions = _mercado_pago_transactions(df, report)
+            else:
+                payment_method = self._detector.detect_from_filename(file_path)
+                transactions = self._parse_transactions(df, payment_method, report)
 
-            # Create statement
             statement = Statement(payment_method=payment_method)
             statement.extraction = report
-
-            # Parse transactions based on payment method
-            transactions = self._parse_transactions(df, payment_method, report)
 
             # Add transactions to statement
             for transaction in transactions:
