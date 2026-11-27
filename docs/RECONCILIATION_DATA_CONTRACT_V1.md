@@ -99,6 +99,15 @@ Do not interpret an unverified timestamp suffix or substitute posting date for
 purchase date. A source-specific time zone can be retained in `raw` until its
 meaning is established.
 
+For a Mercado Pago transaction CSV, `raw.amount` and `parsed.amount` use
+`TRANSACTION_AMOUNT`. The exact `references.REAL_AMOUNT` supports comparison
+with the net of related balance movements. `raw.dates` retains the original
+transaction and settlement timestamps when present. The parsed `transaction`
+date is the calendar date printed by the source, without timezone conversion.
+The description is the source operation type. `SOURCE_ID` and any `PURCHASE_ID`
+are native identifiers. A payment method such as `credit_card` is evidence
+about funding and leaves purchase identity unconfirmed.
+
 The producer assigns `observation_id` deterministically from a source-system
 namespace, the source file's SHA-256 digest, and its locator. The encoding and
 hash algorithm for the final opaque ID are implementation details; equality

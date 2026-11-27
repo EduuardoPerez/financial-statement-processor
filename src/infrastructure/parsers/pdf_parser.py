@@ -9,7 +9,7 @@ Classes:
 """
 
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -18,7 +18,7 @@ import pdfplumber
 from domain.builders import TransactionBuilder
 from domain.models import Currency, PaymentMethod, Statement, Transaction
 from domain.services import StatementParser
-from domain.utils import AmountParser
+from domain.utils import AmountParser, DateConverter
 
 from ._shared import extraction_for_file, retain_transaction, verify_file_unchanged
 
@@ -389,16 +389,24 @@ class PDFStatementParser(StatementParser):
         """Return the verified previous-to-current Mastercard close interval."""
         current: date | None = None
         previous: date | None = None
+        converter = DateConverter()
         lines = content.splitlines()
         for index, line in enumerate(lines):
             stripped = line.strip()
             current_match = _MC_CURRENT_ROW.fullmatch(stripped)
             previous_match = _MC_PREVIOUS_ROW.fullmatch(stripped)
             preceding = " ".join(lines[max(0, index - 2) : index]).upper()
-            if current_match and "CIERRE ACTUAL" in preceding:
-                current = datetime.strptime(current_match.group(1), "%d-%b-%y").date()
-            if previous_match and "CIERRE ANTERIOR" in preceding:
-                previous = datetime.strptime(previous_match.group(1), "%d-%b-%y").date()
+            try:
+                if current_match and "CIERRE ACTUAL" in preceding:
+                    current = converter.convert_dd_mmm_yy(
+                        current_match.group(1).title()
+                    )
+                if previous_match and "CIERRE ANTERIOR" in preceding:
+                    previous = converter.convert_dd_mmm_yy(
+                        previous_match.group(1).title()
+                    )
+            except ValueError:
+                return None
         if current is None or previous is None or previous >= current:
             return None
         return previous + timedelta(days=1), current

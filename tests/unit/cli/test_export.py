@@ -56,6 +56,76 @@ def test_export_preserves_raw_values_and_overlap(tmp_path: Path) -> None:
     assert all(item["status"] == "complete" for item in manifest["expected_files"])
 
 
+def test_mercado_pago_csv_preserves_transaction_evidence(tmp_path: Path) -> None:
+    name = "arbitrary-export.csv"
+    transaction_date = "2025-04-30T23:45:00.000-03:00"
+    settlement_date = "2025-05-02T09:00:00.000-03:00"
+    (tmp_path / name).write_text(
+        "TRANSACTION_DATE;SETTLEMENT_DATE;TRANSACTION_TYPE;TRANSACTION_CURRENCY;"
+        "TRANSACTION_AMOUNT;SOURCE_ID;REAL_AMOUNT;PAYMENT_METHOD_TYPE;PURCHASE_ID;"
+        "EXTERNAL_REFERENCE\n"
+        f"{transaction_date};{settlement_date};SETTLEMENT;ARS;"
+        "1234.56789012345678900;00042;1230.00;credit_card;;00005\n"
+        f"{transaction_date};;PAYOUTS;USD;-3.50;00043;-3.50;;0008;\n"
+        f"invalid;;SETTLEMENT;ARS;5.00;00044;5.00;;;\n"
+    )
+    manifest, records = export_batch(
+        tmp_path,
+        [
+            {
+                "path": name,
+                "system": "mercado_pago_transactions",
+                "expected_coverage": [],
+            }
+        ],
+    )
+    (entry,) = manifest["expected_files"]
+    assert (entry["rows_read"], entry["rows_emitted"], entry["rows_discarded"]) == (
+        3,
+        2,
+        1,
+    )
+    assert entry["status"] == "partial"
+    assert entry["observed_coverage"] == []
+    assert ("discarded_row", "row:4") in [
+        (w["code"], w.get("locator")) for w in entry["warnings"]
+    ]
+    first, second = records
+    assert first["source"]["locator"] == "row:2"
+    assert first["native_ids"] == {"SOURCE_ID": "00042"}
+    assert first["source_identity"] == {
+        "status": "unconfirmed",
+        "key": None,
+        "basis": [],
+    }
+    assert first["raw"] == {
+        "date": transaction_date,
+        "dates": {
+            "TRANSACTION_DATE": transaction_date,
+            "SETTLEMENT_DATE": settlement_date,
+        },
+        "description": "SETTLEMENT",
+        "currency": "ARS",
+        "amount": "1234.56789012345678900",
+    }
+    assert first["parsed"] == {
+        "amount": "1234.56789012345678900",
+        "currency": "ARS",
+        "description": "SETTLEMENT",
+        "dates": [{"role": "transaction", "value": "2025-04-30"}],
+    }
+    assert first["references"] == {
+        "REAL_AMOUNT": "1230.00",
+        "PAYMENT_METHOD_TYPE": "credit_card",
+        "EXTERNAL_REFERENCE": "00005",
+        "TRANSACTION_TYPE": "SETTLEMENT",
+    }
+    assert second["native_ids"] == {"SOURCE_ID": "00043", "PURCHASE_ID": "0008"}
+    assert second["parsed"]["amount"] == "-3.50"
+    assert second["parsed"]["currency"] == "USD"
+    assert second["raw"]["dates"] == {"TRANSACTION_DATE": transaction_date}
+
+
 def test_missing_and_unverified_coverage_make_batch_incomplete(tmp_path: Path) -> None:
     (tmp_path / "BBVA-Visa-Autorizaciones.csv").write_text(
         "Fecha;Establecimiento;Moneda;Importe\n01/02/2025;Store;Pesos;3.00\n"
@@ -150,9 +220,9 @@ def test_mastercard_export_uses_close_cycle_and_preserves_old_installment(
     )
     parser._extract_text = lambda path: (
         "CIERRE ACTUAL VENCIMIENTO ACTUAL SALDO ACTUAL $\n"
-        "30-Jun-26 10-Jul-26 1.000,00 0,00 100,00\n"
+        "28-Ago-26 10-Sep-26 1.000,00 0,00 100,00\n"
         "CIERRE ANTERIOR VENCIMIENTO ANTERIOR PRÓXIMO CIERRE PRÓXIMO VENCIMIENTO\n"
-        "31-May-26 10-Jun-26 31-Jul-26 10-Ago-26\n"
+        "31-Jul-26 10-Ago-26 30-Sep-26 10-Oct-26\n"
         "05-Apr-26 123456* STORE Cuota 03/06 25,00\n"
     )
     declaration = tmp_path / "declaration.json"
@@ -167,8 +237,8 @@ def test_mastercard_export_uses_close_cycle_and_preserves_old_installment(
                         "expected_coverage": [
                             {
                                 "kind": "statement_cycle",
-                                "start": "2026-06-01",
-                                "end": "2026-06-30",
+                                "start": "2026-08-01",
+                                "end": "2026-08-28",
                             }
                         ],
                     }
@@ -182,7 +252,7 @@ def test_mastercard_export_uses_close_cycle_and_preserves_old_installment(
     assert manifest["expected_files"][0]["rows_discarded"] == 0
     assert record["parsed"]["dates"] == [
         {"role": "purchase", "value": "2026-04-05"},
-        {"role": "statement_close", "value": "2026-06-30"},
+        {"role": "statement_close", "value": "2026-08-28"},
     ]
     assert record["raw"]["description"] == "STORE Cuota 03/06"
     assert record["references"]["Cuota"] == "03/06"

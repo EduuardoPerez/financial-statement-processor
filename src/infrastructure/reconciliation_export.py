@@ -51,14 +51,12 @@ def _observation(
     identity = _digest(
         f"{system}\0{provenance.file_sha256}\0{provenance.locator}".encode()
     )
-    dates = [
-        {
-            "role": "purchase"
-            if transaction.payment_method == PaymentMethod.BBVA_MASTERCARD
-            else "posted",
-            "value": transaction.date.isoformat(),
-        }
-    ]
+    date_role = "posted"
+    if "TRANSACTION_DATE" in provenance.raw_dates:
+        date_role = "transaction"
+    elif transaction.payment_method == PaymentMethod.BBVA_MASTERCARD:
+        date_role = "purchase"
+    dates = [{"role": date_role, "value": transaction.date.isoformat()}]
     references = dict(provenance.references)
     if statement_close:
         dates.append({"role": "statement_close", "value": statement_close})
